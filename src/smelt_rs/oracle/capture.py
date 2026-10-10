@@ -16,7 +16,10 @@ from smelt_rs.worker_client import run_worker
 EDGE_STRINGS = ["", "a", "aa", "aaa", "aab", "abb", "abab", "a" * 8, "a" * 33,
                 "ab" * 16, "aabb", " b ", "  ", "1", "11", "112", "x1y", "zzz",
                 "éé", "héllo", "🎃", "🎃🎃", "a🚀b", "a a a", "aaaaaaaaaaaaaaaaaaaa"]
-EDGE_INTS = [0, 1, -1, 7, 255, 2 ** 31, 2 ** 63 - 1, 2 ** 63, -(2 ** 63) - 1, 10 ** 30]
+# i64 domain policy: generated ints stay inside the 64-bit range so the Rust i64
+# mapping can hold every generated case; out-of-range inputs are outside the tested
+# domain (documented in the README limits). Big Python ints are NOT silently truncated.
+EDGE_INTS = [0, 1, -1, 7, 255, 10 ** 6, 2 ** 31, 2 ** 63 - 1, -(2 ** 63)]
 EDGE_FLOATS = [0.0, -0.0, 1.5, -2.25, 3.14159, 1e-12]
 EDGE_LISTS_INT = [[], [0], [1, 2, 3], list(range(32))]
 

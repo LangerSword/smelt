@@ -30,6 +30,18 @@ RUST_RET_TYPES = {"str": "String", "int": "i64", "float": "f64", "bool": "bool"}
 
 RETRY_STATUS = (429, 500, 502, 503, 504)
 
+# Process-local provider-call counter (the eval runner caps + reports these).
+CALLS: dict = {"attempts": 0, "ok": 0, "by_model": {}}
+
+
+def _count_call(kind: str, model: str | None) -> None:
+    if kind == "attempt":
+        CALLS["attempts"] += 1
+    elif kind == "ok":
+        CALLS["ok"] += 1
+        if model:
+            CALLS["by_model"][model] = CALLS["by_model"].get(model, 0) + 1
+
 
 # ------------------------------------------------------------------ secrets
 
@@ -148,13 +160,19 @@ def _log_transcript(path: str | None, model: str | None, prompt_chars: int, d: d
 def _post_with_retries(url: str, body: dict, headers: dict, timeout: int, *,
                        transcript_path: str | None = None, model: str | None = None,
                        prompt_chars: int = 0, retries: int = 3) -> dict:
-    """POST JSON with backoff on 429/5xx (honors Retry-After). Raises ProviderError."""
+    """POST JSON with backoff on 429/5xx (honors Retry-After). Raises ProviderError.
+
+    SMELT_RETRIES env var overrides the retry count (for patient eval runs).
+    """
+    retries = int(os.environ.get("SMELT_RETRIES", str(retries)))
     last_err = "unknown provider failure"
     for attempt in range(retries + 1):
+        _count_call("attempt", model)
         req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers)
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 d = json.loads(r.read())
+            _count_call("ok", model)
             _log_transcript(transcript_path, model, prompt_chars, d)
             return d
         except urllib.error.HTTPError as e:

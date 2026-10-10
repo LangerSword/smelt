@@ -27,7 +27,7 @@ app = typer.Typer(no_args_is_help=True, add_completion=False,
 
 @app.command()
 def run(target: str,
-        provider: str = typer.Option("local", help="local | gemini | do | openai | file | fake"),
+        provider: str = typer.Option("gemini", help="gemini | local | do | openai | file | fake"),
         model: str = typer.Option(None, help="model name for the provider"),
         candidate: str = typer.Option(None, help="candidate lib.rs path (file/fake providers)"),
         runs_dir: str = typer.Option("runs", help="directory for run artifacts"),
@@ -162,8 +162,13 @@ def doctor(probe: bool = typer.Option(False, "--probe", help="send tiny live tes
         "http://127.0.0.1:8080" if local_up else "not reachable (start llama-server)", required=False)
 
     gkey = resolve_secret("GEMINI_API_KEY")
-    add("gemini key", bool(gkey),
-        "present (GEMINI_API_KEY)" if gkey else "missing — set GEMINI_API_KEY", required=False)
+    gkey_alt = resolve_secret("GOOGLE_API_KEY")
+    if gkey:
+        add("gemini key", True, "present (GEMINI_API_KEY)")
+    elif gkey_alt:
+        add("gemini key", True, "present via GOOGLE_API_KEY fallback (prefer GEMINI_API_KEY)", required=False)
+    else:
+        add("gemini key", False, "missing — set GEMINI_API_KEY", required=False)
     dtoken = resolve_secret("DIGITALOCEAN_TOKEN")
     add("digitalocean token", bool(dtoken),
         "present (DIGITALOCEAN_TOKEN)" if dtoken else "missing — set DIGITALOCEAN_TOKEN", required=False)
@@ -171,8 +176,9 @@ def doctor(probe: bool = typer.Option(False, "--probe", help="send tiny live tes
     add("openai-compat key", bool(okey), "present" if okey else "not set (optional)", required=False)
 
     if probe:
-        if gkey:
-            ok, detail = _probe_gemini(gkey)
+        probe_key = gkey or gkey_alt
+        if probe_key:
+            ok, detail = _probe_gemini(probe_key)
             add("gemini probe", ok, detail, required=False)
         if dtoken:
             ok, detail = _probe_do(dtoken)
@@ -198,6 +204,26 @@ def doctor(probe: bool = typer.Option(False, "--probe", help="send tiny live tes
         else:
             rprint("[green]all checks green[/green]")
     raise typer.Exit(1 if fails else 0)
+
+
+@app.command()
+def evals(corpus: str = typer.Option("evals/corpus", help="corpus dir: <category>/<function>.py"),
+          runs_dir: str = typer.Option("evals/runs", help="where per-task runs go"),
+          provider: str = typer.Option("gemini", help="provider used for generation"),
+          model: str = typer.Option(None, help="model override"),
+          max_calls: int = typer.Option(120, help="global provider-call cap (HTTP attempts)"),
+          pause_s: float = typer.Option(3.0, help="pause between tasks (rate-limit courtesy)"),
+          max_attempts: int = typer.Option(3, help="generation attempts per task"),
+          cases: int = typer.Option(200, help="oracle size target"),
+          json_out: bool = typer.Option(False, "--json", help="machine-readable summary")):
+    """Run the frozen corpus sequentially; writes evals/results.json + results.md."""
+    from smelt_rs import evals as evals_mod
+    code, info = evals_mod.run_corpus(corpus_dir=corpus, runs_dir=runs_dir, provider=provider,
+                                      model=model, max_calls=max_calls, pause_s=pause_s,
+                                      max_attempts=max_attempts, cases=cases, quiet=json_out)
+    if json_out:
+        print(json.dumps(info["summary"], default=str))
+    raise typer.Exit(code)
 
 
 def main():
