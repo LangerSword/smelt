@@ -1,0 +1,21 @@
+[project]
+name = "smelt-rs"
+version = "0.1.0"
+description = "Smelt a slow pure Python function into a verified Rust extension. Oracle first, speedup measured — only proven metal ships. Not a networking tool."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "typer>=0.12",
+    "rich>=13",
+]
+
+[project.scripts]
+smelt = "smelt_rs.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/smelt_rs"]

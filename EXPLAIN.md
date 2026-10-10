@@ -1,0 +1,76 @@
+# EXPLAIN — how every module works (for the developer, and for judges)
+
+Written during the event; keep this current after every phase. One section per module:
+what it does, why it exists, how it can fail. Plain words.
+
+## core/orchestrator.py — the deterministic loop
+Runs: purity probe → oracle capture → attempts loop (generate → scan+build → verify) → bench → decide → report.
+The model is only consulted inside `provider.generate()`; every other decision is code. Attempts are capped
+(default 3); every stage writes `state.json` + `events.jsonl`, so `smelt resume` can continue a run.
+Failures are typed exceptions → status refused/rejected/error. Exit codes: 0 accepted, 3 refused, 4 rejected, 5 error.
+How it fails: provider outage → ProviderError (halts honestly); bad candidates → typed BuildError/VerifyMismatch (fed to next attempt).
+
+## core/state.py — checkpoint + event stream
+`RunState` dataclass persisted as `state.json` (target hash, oracle hash, attempts, status); `EventLog` appends one
+JSON record per transition to `events.jsonl` (CLI prints from it today; the TUI will subscribe later). sha256 helpers
+hash files for tamper checks. Failure mode: none material — it is pure data.
+
+## core/failures.py — typed failures
+One class per outcome kind (`refused_impure`, `build_error`, `verify_mismatch`, …). Reports and tests switch on
+`kind`, never on message text. Failure mode: an unmapped error becomes `internal_error` — still reported, never silent.
+
+## core/purity.py — refusal rules
+AST scan of the target: blocked imports (os, io, socket, subprocess, time, random, secrets, …), blocked calls
+(open/input/eval/exec/compile), any global/nonlocal state. Conservative by design: refusing a pure function is
+annoying, accepting an impure one is dangerous. Failure mode: too strict — the message lists every reason, so a
+false refusal is easy to fix.
+
+## oracle/capture.py — the ground truth
+Generates 200+ cases (seeded random + fixed edge battery: empty string, repeats, long runs, unicode) and RUNS the
+current Python function in the sandboxed worker to record answers — never trusting the spec. Re-runs 3 cases to
+catch nondeterminism; checks argument mutation. Freezes `oracle.jsonl` + `meta.json` + `sha256` (files chmod 444).
+`load_oracle` re-hashes and refuses to proceed on any mismatch. Failure mode: unsupported types → CaptureFailed with a clear note.
+
+## oracle/verify.py — comparison semantics
+Outcome parity (returned vs raised) + exact value equality (ints/str/bool/None exact; floats with rtol 1e-9;
+NaN==NaN; lists element-wise). Documented limits: exception TYPE equality is not required (pyo3 maps errors
+differently), and equivalence is only proven on the frozen inputs — that is the honest claim.
+
+## scaffold/templates.py — pinned scaffold
+`Cargo.toml` (pyo3 `=0.29.3`, cdylib, crate `smelt_ext`) + a golden compiling `lib.rs`. The model never writes
+Cargo.toml; it fills in one function body only. This is the designed fix for the #1 observed failure (pyo3 API drift).
+
+## build/cargo.py — safety scan + build
+Static scan refuses: `unsafe`, std net/process/fs, `include_*!`, `env!`, `Command`, `extern crate`, `libc`, >200KB,
+and missing function/module glue. Then `cargo build --release` in the attempt's scratch dir with a dedicated
+`CARGO_TARGET_DIR` and `PYO3_PYTHON`. Failure mode: scanner false-positives (pattern list is explicit and reviewable);
+a refused candidate is saved under `_rejected/` for inspection.
+
+## build/worker.py — sandboxed execution
+One JSON request in, one JSON out. Sets RLIMIT_AS (1 GiB) + RLIMIT_CPU (180 s). Loads the Python target or the
+generated `.so` and runs cases; target stdout is swallowed so it can never corrupt the protocol. Failure mode: any
+crash → typed worker error to the parent — never a silent wrong result.
+
+## bench/protocol.py — honest timing
+Warmup runs discarded; ≥7 measured reps; median + percentile-bootstrap 95% CI (seed 7). Acceptance requires the
+CONSERVATIVE lower bound ≥ 1.5x. Flags: `suspicious_scaling` (ratios >100x re-checked at 4x workload) and
+`timer_limited` (Rust median < 0.5 ms). Failure mode: a noisy machine widens the CI — the conservative bound
+protects the claim.
+
+## providers/providers.py — where candidates come from
+`file` provider injects hand-written candidates (gate checks, fixtures, meta-eval). `local` provider talks to any
+OpenAI-compatible server (llama.cpp now; DigitalOcean Inference `gemma-4-31B-it` later — same code path). The prompt
+embeds the Python source, the required Rust signature, and the golden example. Transcripts log sizes/usage only —
+never keys. Failure mode: HTTP errors raise ProviderError.
+
+## worker_client.py — parent side of the sandbox
+Spawns the worker with the run's Python, feeds the JSON request, parses the JSON response. Non-zero exit or
+unparsable output → typed VerifyCrash.
+
+## report.py — the honest report
+Markdown table of EVERY attempt (including failures), benchmark medians + CI + flags, and the outcome line:
+accepted / rejected / refused. Nothing is rounded up. This is what goes into submissions.
+
+## cli.py — the interface
+`smelt run | resume | report`; exit codes distinguish accepted / refused / rejected / error so CI and scripts can
+react without parsing text.
