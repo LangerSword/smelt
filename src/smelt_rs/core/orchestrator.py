@@ -79,7 +79,7 @@ def _finish(run_dir: str, st: RunState, events: EventLog, bench) -> None:
     st.save(run_dir)
 
 
-def _halt(st, run_dir, events, e: SmeltFailure) -> int:
+def _halt(st, run_dir, events, e: SmeltFailure, quiet: bool = False) -> int:
     status = "refused" if e.kind == "refused_impure" else "error"
     if st is not None:
         st.status = status
@@ -87,15 +87,33 @@ def _halt(st, run_dir, events, e: SmeltFailure) -> int:
         if run_dir and events:
             events.emit("halt", kind=e.kind, message=e.message[:300])
             _finish(run_dir, st, events, None)
-    print(f"[smelt] {status}: {e.kind}: {e.message}")
+    if not quiet:
+        print(f"[smelt] {status}: {e.kind}: {e.message}")
     return EXIT_CODES.get(status, 5)
+
+
+def _run_info(run_dir, st) -> dict:
+    info: dict = {"run_dir": run_dir, "status": st.status if st else "error"}
+    if st is not None:
+        info.update({"run_id": st.run_id, "stop_reason": st.stop_reason,
+                     "target": st.target, "oracle": st.oracle, "attempts": st.attempts,
+                     "config": st.config})
+        if run_dir:
+            bench_path = os.path.join(run_dir, "bench.json")
+            if os.path.exists(bench_path):
+                try:
+                    info["bench"] = json.load(open(bench_path))
+                except Exception:
+                    pass
+    return info
 
 
 # ---------------------------------------------------------------- entry points
 
 def run(*, target: str, provider_name: str, model: str | None = None, candidate: str | None = None,
         runs_dir: str = "runs", max_attempts: int = 3, target_cases: int = 200,
-        seed: int | None = None, bench_min_s: float = 0.1, python_exe: str | None = None) -> int:
+        seed: int | None = None, bench_min_s: float = 0.1, python_exe: str | None = None,
+        quiet: bool = False) -> tuple[int, dict]:
     python_exe = python_exe or sys.executable
     st = None
     run_dir = None
@@ -118,21 +136,27 @@ def run(*, target: str, provider_name: str, model: str | None = None, candidate:
                               "bench_min_s": bench_min_s})
         st.save(run_dir)
         events.emit("run_start", target=f"{path}:{func}", provider=provider_name, model=model or "-")
-        print(f"[smelt] run {run_id} · {path}:{func} · provider={provider_name}")
+        if not quiet:
+            print(f"[smelt] run {run_id} · {path}:{func} · provider={provider_name}")
         code = _drive(st, run_dir, events, path, func, provider_name, model, candidate,
-                      max_attempts, target_cases, seed, bench_min_s, python_exe)
-        print(f"[smelt] {st.status.upper()}: {st.stop_reason}")
-        return code
+                      max_attempts, target_cases, seed, bench_min_s, python_exe, quiet)
+        if not quiet:
+            print(f"[smelt] {st.status.upper()}: {st.stop_reason}")
+        return code, _run_info(run_dir, st)
     except ConfigError as e:
-        print(f"[smelt] config error: {e.message}")
-        return 2
+        if not quiet:
+            print(f"[smelt] config error: {e.message}")
+        return 2, {"status": "config_error", "reason": e.message}
     except SmeltFailure as e:
-        return _halt(st, run_dir, events, e)
+        code = _halt(st, run_dir, events, e, quiet)
+        return code, _run_info(run_dir, st)
     except Exception as e:
-        return _halt(st, run_dir, events, SmeltFailure(f"internal error: {e!r}"))
+        code = _halt(st, run_dir, events, SmeltFailure(f"internal error: {e!r}"), quiet)
+        return code, _run_info(run_dir, st)
 
 
-def resume(*, run_dir: str, max_attempts: int = 3, python_exe: str | None = None) -> int:
+def resume(*, run_dir: str, max_attempts: int = 3, python_exe: str | None = None,
+           quiet: bool = False) -> tuple[int, dict]:
     python_exe = python_exe or sys.executable
     st = None
     events = None
@@ -157,21 +181,25 @@ def resume(*, run_dir: str, max_attempts: int = 3, python_exe: str | None = None
         code = _loop(st, run_dir, events, st.target["path"], meta["module"], st.target["qualname"],
                      provider, prompt, entries, python_exe,
                      float(st.config.get("bench_min_s", 0.1)), max_attempts)
-        print(f"[smelt] {st.status.upper()}: {st.stop_reason}")
-        return code
+        if not quiet:
+            print(f"[smelt] {st.status.upper()}: {st.stop_reason}")
+        return code, _run_info(run_dir, st)
     except ConfigError as e:
-        print(f"[smelt] config error: {e.message}")
-        return 2
+        if not quiet:
+            print(f"[smelt] config error: {e.message}")
+        return 2, {"status": "config_error", "reason": e.message}
     except SmeltFailure as e:
-        return _halt(st, run_dir, events, e)
+        code = _halt(st, run_dir, events, e, quiet)
+        return code, _run_info(run_dir, st)
     except Exception as e:
-        return _halt(st, run_dir, events, SmeltFailure(f"internal error: {e!r}"))
+        code = _halt(st, run_dir, events, SmeltFailure(f"internal error: {e!r}"), quiet)
+        return code, _run_info(run_dir, st)
 
 
 # ---------------------------------------------------------------- pipeline stages
 
 def _drive(st, run_dir, events, path, func, provider_name, model, candidate,
-           max_attempts, target_cases, seed, bench_min_s, python_exe) -> int:
+           max_attempts, target_cases, seed, bench_min_s, python_exe, quiet: bool = False) -> int:
     reasons = purity.probe(path, func)
     if reasons:
         raise RefusedImpure("impure target: " + "; ".join(reasons[:4]), details="; ".join(reasons))
@@ -185,7 +213,8 @@ def _drive(st, run_dir, events, path, func, provider_name, model, candidate,
     st.oracle = {"dir": "oracle", "sha256": oh, "n_cases": meta["n_cases"], "seed": seeded}
     st.save(run_dir)
     events.emit("capture_done", n_cases=meta["n_cases"], sha256=oh[:16])
-    print(f"[smelt] oracle captured: {meta['n_cases']} cases (sha {oh[:12]}…)")
+    if not quiet:
+        print(f"[smelt] oracle captured: {meta['n_cases']} cases (sha {oh[:12]}…)")
 
     entries = _load_entries(run_dir)
     args_rs, ret_rs, sig_err = map_signature(meta["params"], meta.get("return_annotation"))
@@ -363,3 +392,56 @@ def _bench(*, python_exe, path, module_name, so, func, entries, bench_min_s, run
     with open(os.path.join(run_dir, "bench.json"), "w") as f:
         json.dump(summary, f, indent=2)
     return summary
+
+
+# ---------------------------------------------------------------- capture-only mode
+
+def capture_only(*, target: str, runs_dir: str = "runs", target_cases: int = 200,
+                 seed: int | None = None, python_exe: str | None = None,
+                 quiet: bool = False) -> tuple[int, dict]:
+    """Freeze the oracle for a target without any generation or build."""
+    python_exe = python_exe or sys.executable
+    try:
+        path, func = parse_target(target)
+        if not os.path.exists(path):
+            raise ConfigError(f"target file not found: {path}")
+        os.makedirs(runs_dir, exist_ok=True)
+        run_id = new_run_id(path, func)
+        run_dir = os.path.join(runs_dir, run_id)
+        os.makedirs(run_dir, exist_ok=True)
+        events = EventLog(os.path.join(run_dir, "events.jsonl"))
+        st = RunState(run_id=run_id, created_at=time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                      smelt_version=SMELT_VERSION,
+                      target={"path": path, "qualname": func, "source_sha256": sha256_file(path)},
+                      oracle={}, config={"provider": "-", "model": None, "max_attempts": 0,
+                                         "cases": target_cases, "bench_min_s": None})
+        st.save(run_dir)
+        reasons = purity.probe(path, func)
+        if reasons:
+            raise RefusedImpure("impure target: " + "; ".join(reasons[:4]))
+        seeded = seed if seed is not None else int(time.time_ns() % (10 ** 9))
+        module_name = os.path.splitext(os.path.basename(path))[0]
+        meta, oh = capture_oracle(run_dir=run_dir, target_path=path, module_name=module_name,
+                                  func_name=func, python_exe=python_exe,
+                                  target_cases=target_cases, seed=seeded)
+        st.oracle = {"dir": "oracle", "sha256": oh, "n_cases": meta["n_cases"], "seed": seeded}
+        st.status = "captured"
+        st.stop_reason = f"oracle captured: {meta['n_cases']} cases"
+        events.emit("capture_done", n_cases=meta["n_cases"], sha256=oh[:16])
+        st.save(run_dir)
+        if not quiet:
+            print(f"[smelt] oracle captured: {meta['n_cases']} cases · {run_dir}/oracle "
+                  f"(sha {oh[:12]}…)")
+        return 0, _run_info(run_dir, st)
+    except ConfigError as e:
+        if not quiet:
+            print(f"[smelt] config error: {e.message}")
+        return 2, {"status": "config_error", "reason": e.message}
+    except SmeltFailure as e:
+        if not quiet:
+            print(f"[smelt] {e.kind}: {e.message}")
+        return (3 if e.kind == "refused_impure" else 5), {"status": e.kind, "reason": e.message}
+    except Exception as e:
+        if not quiet:
+            print(f"[smelt] internal error: {e!r}")
+        return 5, {"status": "error", "reason": repr(e)[:200]}

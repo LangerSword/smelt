@@ -1,16 +1,26 @@
 """Provider layer: thin, fake-able, transcript-logged.
 
-One clean interface (`generate(prompt) -> list[str]` of complete lib.rs contents).
-The `file` provider injects hand-written candidates (tests, gate checks, meta-eval).
-The `local` provider talks to any OpenAI-compatible server (llama.cpp now; DigitalOcean
-Inference `gemma-4-31B-it` later — same code path, different base URL + key).
+One interface: `generate(prompt) -> list[str]` (complete lib.rs contents).
 
-No provider may see secrets beyond its own API key; transcripts log sizes/usage only.
+Providers:
+- gemini   — Google AI Studio, native REST (`gemma-4-31b-it`), key: GEMINI_API_KEY
+- do       — DigitalOcean Inference, OpenAI-compatible, model `gemma-4-31B-it`, key: DIGITALOCEAN_TOKEN
+- local    — llama.cpp / any OpenAI-compatible server (default http://127.0.0.1:8080/v1)
+- openai   — generic OpenAI-compatible (set SMELT_OPENAI_BASE / SMELT_OPENAI_KEY)
+- file     — hand-provided candidates (gate checks, fixtures)
+- fake     — like file, for CI usage without any model
+
+All HTTP goes through one retrying poster (3 retries, exponential backoff + jitter,
+honors Retry-After on 429/5xx). Transcripts log model + sizes + usage only — never keys.
+Secrets resolve from: environment -> project .env -> ~/.hermes/.env (never printed).
 """
 
 import glob
 import json
 import os
+import random
+import time
+import urllib.error
 import urllib.request
 
 from smelt_rs.core.failures import ProviderError
@@ -18,6 +28,54 @@ from smelt_rs.core.failures import ProviderError
 RUST_ARG_TYPES = {"str": "&str", "int": "i64", "float": "f64", "bool": "bool"}
 RUST_RET_TYPES = {"str": "String", "int": "i64", "float": "f64", "bool": "bool"}
 
+RETRY_STATUS = (429, 500, 502, 503, 504)
+
+
+# ------------------------------------------------------------------ secrets
+
+def _parse_env_file(path: str) -> dict:
+    vals: dict[str, str] = {}
+    try:
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                vals[k.strip()] = v.strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return vals
+
+
+_ENV_FILES_CACHE: dict | None = None
+
+
+def _env_files_values() -> dict:
+    global _ENV_FILES_CACHE
+    if _ENV_FILES_CACHE is None:
+        merged: dict[str, str] = {}
+        merged.update(_parse_env_file(os.path.expanduser("~/.hermes/.env")))
+        merged.update(_parse_env_file(os.path.join(os.getcwd(), ".env")))
+        _ENV_FILES_CACHE = merged
+    return _ENV_FILES_CACHE
+
+
+def resolve_secret(*names: str) -> str | None:
+    """First match wins: real env, then project .env, then ~/.hermes/.env. Never logged."""
+    for n in names:
+        v = os.environ.get(n)
+        if v:
+            return v
+    vals = _env_files_values()
+    for n in names:
+        v = vals.get(n)
+        if v:
+            return v
+    return None
+
+
+# ------------------------------------------------------------------ prompt + extraction
 
 def map_signature(params: list[dict], ret: str | None):
     """Map Python annotations to Rust types. Returns (args_rs, ret_rs, error)."""
@@ -74,6 +132,60 @@ def extract_lib_rs(text: str) -> str:
     return t[i:] if i > 0 else t
 
 
+# ------------------------------------------------------------------ HTTP plumbing
+
+def _log_transcript(path: str | None, model: str | None, prompt_chars: int, d: dict) -> None:
+    if not path:
+        return
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "a") as f:
+        f.write(json.dumps({
+            "model": model, "prompt_chars": prompt_chars,
+            "usage": d.get("usage") or d.get("usageMetadata") or {},
+        }) + "\n")
+
+
+def _post_with_retries(url: str, body: dict, headers: dict, timeout: int, *,
+                       transcript_path: str | None = None, model: str | None = None,
+                       prompt_chars: int = 0, retries: int = 3) -> dict:
+    """POST JSON with backoff on 429/5xx (honors Retry-After). Raises ProviderError."""
+    last_err = "unknown provider failure"
+    for attempt in range(retries + 1):
+        req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                d = json.loads(r.read())
+            _log_transcript(transcript_path, model, prompt_chars, d)
+            return d
+        except urllib.error.HTTPError as e:
+            detail = ""
+            try:
+                detail = e.read()[:300].decode(errors="replace")
+            except Exception:
+                pass
+            last_err = f"HTTP {e.code}: {detail[:200]}"
+            if e.code in RETRY_STATUS and attempt < retries:
+                wait = min(30.0, (1.5 ** attempt) + random.random())
+                ra = e.headers.get("Retry-After") if e.headers else None
+                if ra:
+                    try:
+                        wait = max(wait, min(30.0, float(ra)))
+                    except ValueError:
+                        pass
+                time.sleep(wait)
+                continue
+            raise ProviderError(last_err)
+        except Exception as e:
+            last_err = repr(e)[:200]
+            if attempt < retries:
+                time.sleep(min(30.0, (1.5 ** attempt) + random.random()))
+                continue
+            raise ProviderError(last_err)
+    raise ProviderError(last_err)
+
+
+# ------------------------------------------------------------------ providers
+
 class FileProvider:
     """Candidates read from file(s). Used for hand-injected rewrites and fixtures."""
 
@@ -86,19 +198,26 @@ class FileProvider:
         return [open(p).read() for p in self.paths[:n]]
 
 
-class LocalOpenAIProvider:
-    """Any OpenAI-compatible chat-completions server."""
+class FakeProvider(FileProvider):
+    """Same as file, but named for CI/docs (no model involved at all)."""
 
-    name = "local"
+    name = "fake"
 
-    def __init__(self, base_url: str = "http://127.0.0.1:8080/v1",
-                 model: str = "gemma-4-e2b-qat", api_key: str | None = None,
-                 timeout: int = 300, transcript_path: str | None = None):
+
+class OpenAICompatProvider:
+    """Any OpenAI-compatible chat-completions server (llama.cpp, DigitalOcean Inference, ...)."""
+
+    def __init__(self, *, base_url: str, model: str, name: str = "openai-compat",
+                 key_env: str | None = None, timeout: int = 300,
+                 transcript_path: str | None = None):
         self.base_url = base_url.rstrip("/")
         self.model = model
-        self.api_key = api_key or os.environ.get("SMELT_PROVIDER_KEY")
+        self.name = name
         self.timeout = timeout
         self.transcript_path = transcript_path
+        self.api_key = resolve_secret(key_env) if key_env else None
+        if self.api_key is None:
+            self.api_key = resolve_secret("SMELT_PROVIDER_KEY")
 
     def generate(self, prompt: str, n: int = 1) -> list[str]:
         return [self._one(prompt) for _ in range(n)]
@@ -113,36 +232,75 @@ class LocalOpenAIProvider:
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        req = urllib.request.Request(self.base_url + "/chat/completions",
-                                     data=json.dumps(body).encode(), headers=headers)
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as r:
-                d = json.loads(r.read())
-        except Exception as e:  # surface, don't swallow
-            raise ProviderError(f"provider call failed: {e!r}")
+        d = _post_with_retries(self.base_url + "/chat/completions", body, headers,
+                               self.timeout, transcript_path=self.transcript_path,
+                               model=self.model, prompt_chars=len(prompt))
         text = ((d.get("choices") or [{}])[0].get("message") or {}).get("content", "")
-        if self.transcript_path:
-            os.makedirs(os.path.dirname(self.transcript_path), exist_ok=True)
-            with open(self.transcript_path, "a") as f:
-                f.write(json.dumps({"model": self.model, "prompt_chars": len(prompt),
-                                    "response_chars": len(text),
-                                    "usage": d.get("usage", {})}) + "\n")
         if not text.strip():
             raise ProviderError("empty completion from provider")
         return extract_lib_rs(text)
 
 
+class GeminiProvider:
+    """Google AI Studio (Gemini API), native REST. Default model: gemma-4-31b-it."""
+
+    name = "gemini"
+
+    def __init__(self, model: str = "gemma-4-31b-it", timeout: int = 300,
+                 transcript_path: str | None = None):
+        self.model = model
+        self.timeout = timeout
+        self.transcript_path = transcript_path
+        self.api_key = resolve_secret("GEMINI_API_KEY", "GOOGLE_API_KEY")
+        if not self.api_key:
+            raise ProviderError("no Gemini key found — set GEMINI_API_KEY in env or ~/.hermes/.env")
+
+    def generate(self, prompt: str, n: int = 1) -> list[str]:
+        return [self._one(prompt) for _ in range(n)]
+
+    def _one(self, prompt: str) -> str:
+        url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
+               f"{self.model}:generateContent")
+        body = {"contents": [{"parts": [{"text": prompt}]}]}
+        headers = {"Content-Type": "application/json", "x-goog-api-key": self.api_key}
+        d = _post_with_retries(url, body, headers, self.timeout,
+                               transcript_path=self.transcript_path, model=self.model,
+                               prompt_chars=len(prompt))
+        try:
+            cand = (d.get("candidates") or [{}])[0]
+            parts = (cand.get("content") or {}).get("parts") or [{}]
+            text = parts[0].get("text", "")
+        except Exception as e:
+            raise ProviderError(f"unexpected Gemini response shape: {e!r}")
+        if not text.strip():
+            raise ProviderError("empty completion from Gemini")
+        return extract_lib_rs(text)
+
+
 def make_provider(name: str, model: str | None, candidate: str | None, run_dir: str | None):
-    if name == "file":
+    tp = os.path.join(run_dir, "transcripts", "provider.jsonl") if run_dir else None
+    if name in ("file", "fake"):
         if not candidate:
-            raise ProviderError("the 'file' provider needs --candidate PATH")
+            raise ProviderError(f"provider {name!r} needs --candidate PATH")
         paths = sorted(glob.glob(candidate)) if any(c in candidate for c in "*?[") else [candidate]
         if not paths:
             raise ProviderError(f"no candidate files match {candidate!r}")
-        return FileProvider(paths)
-    if name in ("local", "openai"):
+        return FakeProvider(paths) if name == "fake" else FileProvider(paths)
+    if name == "local":
         base = os.environ.get("SMELT_LOCAL_BASE", "http://127.0.0.1:8080/v1")
-        tp = os.path.join(run_dir, "transcripts", "provider.jsonl") if run_dir else None
-        return LocalOpenAIProvider(base_url=base, model=model or "gemma-4-e2b-qat",
-                                   transcript_path=tp)
-    raise ProviderError(f"unknown provider {name!r} (use 'local' or 'file')")
+        return OpenAICompatProvider(base_url=base, model=model or "gemma-4-e2b-qat",
+                                    name="local", transcript_path=tp)
+    if name in ("do", "digitalocean"):
+        return OpenAICompatProvider(base_url="https://inference.do-ai.run/v1",
+                                    model=model or "gemma-4-31B-it", name="do",
+                                    key_env="DIGITALOCEAN_TOKEN", transcript_path=tp)
+    if name in ("openai", "openai-compat", "openrouter"):
+        default = "https://openrouter.ai/api/v1" if name == "openrouter" else ""
+        base = os.environ.get("SMELT_OPENAI_BASE", default)
+        if not base:
+            raise ProviderError("set SMELT_OPENAI_BASE for the openai-compat provider")
+        return OpenAICompatProvider(base_url=base, model=model or "gemma-4-31b-it",
+                                    name=name, key_env="SMELT_OPENAI_KEY", transcript_path=tp)
+    if name == "gemini":
+        return GeminiProvider(model=model or "gemma-4-31b-it", transcript_path=tp)
+    raise ProviderError(f"unknown provider {name!r} (local|gemini|do|openai|file|fake)")

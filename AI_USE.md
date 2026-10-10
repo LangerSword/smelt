@@ -33,6 +33,10 @@ This file records how AI was used to build smelt, and who reviewed what.
   `bench/`, `providers/`, `report.py`, `cli.py`, the demo target and the two fixture
   candidates inside the event window; the developer approved the plan and reviews the
   high-risk modules listed below line-by-line.
+- **v0.2-cli (L1)**: Hermes build agent rewrote the provider layer (gemini / do /
+  openai-compat / fake, with the retrying poster) and the CLI (capture, doctor,
+  `--json`), and refactored the orchestrator for quiet/JSON runs + capture-only mode.
+  Developer reviews the retry/backoff and secret-resolution code.
 
 ## Scope note
 
