@@ -58,10 +58,12 @@ CONSERVATIVE lower bound ≥ 1.5x. Flags: `suspicious_scaling` (ratios >100x re-
 protects the claim.
 
 ## providers/providers.py — where candidates come from
-`file` provider injects hand-written candidates (gate checks, fixtures, meta-eval). `local` provider talks to any
-OpenAI-compatible server (llama.cpp now; DigitalOcean Inference `gemma-4-31B-it` later — same code path). The prompt
-embeds the Python source, the required Rust signature, and the golden example. Transcripts log sizes/usage only —
-never keys. Failure mode: HTTP errors raise ProviderError.
+Six providers behind one interface: `gemini` (native REST, `gemma-4-31b-it`), `do` (DigitalOcean Inference,
+OpenAI-compatible), `local` (llama.cpp), `openai` (any OpenAI-compatible endpoint), `file` (fixtures),
+`fake` (CI, no model involved). Secrets resolve env → project `.env` → `~/.hermes/.env`, and are never logged.
+All HTTP goes through one retrying poster (3 retries, exponential backoff + jitter, honors Retry-After on
+429/5xx). The prompt embeds the Python source, the required Rust signature, and the golden example; transcripts
+log model + usage only. Failure mode: HTTP errors → ProviderError after retries.
 
 ## worker_client.py — parent side of the sandbox
 Spawns the worker with the run's Python, feeds the JSON request, parses the JSON response. Non-zero exit or
@@ -72,5 +74,8 @@ Markdown table of EVERY attempt (including failures), benchmark medians + CI + f
 accepted / rejected / refused. Nothing is rounded up. This is what goes into submissions.
 
 ## cli.py — the interface
-`smelt run | resume | report`; exit codes distinguish accepted / refused / rejected / error so CI and scripts can
-react without parsing text.
+`smelt run | capture | resume | report | doctor`; `--json` switches every command to a machine-readable
+summary for CI (human progress lines are suppressed). Exit codes distinguish accepted / refused / rejected /
+error so scripts react without parsing text. `doctor` checks toolchain, sandbox worker, cargo target dir, local
+server, and provider keys — green means no FAIL rows; `doctor --probe` also sends tiny live calls where a key
+exists (a depleted Gemini key reports HTTP 402 honestly).
