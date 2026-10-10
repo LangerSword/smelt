@@ -2,3 +2,7 @@
 /furnace
 /furnace-*
 *.test
+
+# the root .gitignore ignores runs/ (run artifacts) — these TUI fixtures are
+# committed on purpose so a fresh clone can run the test suite.
+!testdata/runs/

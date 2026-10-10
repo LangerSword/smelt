@@ -1,0 +1,6 @@
+{"ts": 1791663806.0651374, "event": "run_start", "node": "", "target": "/home/lakshaya/projects/smelt/examples/demo/run_length.py:rle_encode", "provider": "gemini", "model": "gemma-4-26b-a4b-it"}
+{"ts": 1791663806.0654783, "event": "purity_ok", "node": ""}
+{"ts": 1791663806.139425, "event": "capture_done", "node": "", "n_cases": 225, "sha256": "60ec55285b236e6c"}
+{"ts": 1791663806.1403642, "event": "attempt_start", "node": "", "attempt": 1}
+{"ts": 1791663819.718518, "event": "accept", "node": "", "ratio": 4.138508394682013, "ratio_ci_lo": 4.0021607942402095, "flags": []}
+{"ts": 1791663819.718613, "event": "run_end", "node": "", "status": "accepted", "reason": "verified 225/225 cases; speedup 4.14x (conservative lower bound 4.00x)"}
