@@ -323,6 +323,8 @@ func Verdict(status string) (string, string) {
 		return "ASH", "refused — impure target (a correct outcome)"
 	case "error":
 		return "ASH", "stopped with an error — see the log"
+	case "config_error":
+		return "ASH", "configuration error — the target could not be used (see reason)"
 	case "in_progress":
 		return "COLD", "run did not finish — stream has no run_end"
 	default:

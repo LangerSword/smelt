@@ -24,6 +24,12 @@ class RefusedImpure(SmeltFailure):
     kind = "refused_impure"
 
 
+class RefusedTarget(SmeltFailure):
+    """A typed refusal for understood-but-unsupported targets (never a crash)."""
+
+    kind = "refused_unsupported_target"
+
+
 class CaptureFailed(SmeltFailure):
     kind = "capture_failed"
 

@@ -18,7 +18,8 @@ from smelt_rs.bench.protocol import WARMUP, decide, median_and_ci, suspicious_sc
 from smelt_rs.build.cargo import build_crate
 from smelt_rs.core import purity
 from smelt_rs.core.failures import (BenchInsufficient, BudgetExhausted, BuildError, ConfigError,
-                                    OracleTampered, ProviderError, RefusedImpure, SafetyViolation,
+                                    OracleTampered, ProviderError, RefusedImpure, RefusedTarget,
+                                    SafetyViolation,
                                     SmeltFailure, TargetChanged, VerifyCrash)
 from smelt_rs.core.state import EventLog, SMELT_VERSION, RunState, new_run_id, sha256_file
 from smelt_rs.oracle.capture import capture_oracle, load_oracle
@@ -79,8 +80,20 @@ def _finish(run_dir: str, st: RunState, events: EventLog, bench) -> None:
     st.save(run_dir)
 
 
+REFUSED_KINDS = {"refused_impure", "refused_unsupported_target"}
+
+
+def _exit_for_kind(kind: str) -> int:
+    if kind in REFUSED_KINDS:
+        return 3
+    if kind == "config_error":
+        return 2
+    return 5
+
+
 def _halt(st, run_dir, events, e: SmeltFailure, quiet: bool = False) -> int:
-    status = "refused" if e.kind == "refused_impure" else "error"
+    status = "refused" if e.kind in REFUSED_KINDS else (
+        "config_error" if e.kind == "config_error" else "error")
     if st is not None:
         st.status = status
         st.stop_reason = f"{e.kind}: {e.message}"
@@ -89,7 +102,21 @@ def _halt(st, run_dir, events, e: SmeltFailure, quiet: bool = False) -> int:
             _finish(run_dir, st, events, None)
     if not quiet:
         print(f"[smelt] {status}: {e.kind}: {e.message}")
-    return EXIT_CODES.get(status, 5)
+    return _exit_for_kind(e.kind)
+
+
+def _purity_failure(reasons: list[str]) -> None:
+    """Raise the right typed failure for purity-probe reasons: a not-found target
+    is a config problem (with a hint); everything else is an impurity refusal."""
+    not_found = [r for r in reasons if "not found" in r]
+    impure = [r for r in reasons if "not found" not in r]
+    if not_found and not impure:
+        raise ConfigError(
+            not_found[0] + " — dotted qualnames (Class.method) are not supported yet; "
+            "refactor hint: point smelt at a module-level function (split the method "
+            "out if needed)")
+    raise RefusedImpure("impure target: " + "; ".join((impure or not_found)[:4]),
+                        details="; ".join(reasons))
 
 
 def _run_info(run_dir, st) -> dict:
@@ -202,7 +229,7 @@ def _drive(st, run_dir, events, path, func, provider_name, model, candidate,
            max_attempts, target_cases, seed, bench_min_s, python_exe, quiet: bool = False) -> int:
     reasons = purity.probe(path, func)
     if reasons:
-        raise RefusedImpure("impure target: " + "; ".join(reasons[:4]), details="; ".join(reasons))
+        _purity_failure(reasons)
     events.emit("purity_ok")
 
     seeded = seed if seed is not None else int(time.time_ns() % (10 ** 9))
@@ -418,7 +445,7 @@ def capture_only(*, target: str, runs_dir: str = "runs", target_cases: int = 200
         st.save(run_dir)
         reasons = purity.probe(path, func)
         if reasons:
-            raise RefusedImpure("impure target: " + "; ".join(reasons[:4]))
+            _purity_failure(reasons)
         seeded = seed if seed is not None else int(time.time_ns() % (10 ** 9))
         module_name = os.path.splitext(os.path.basename(path))[0]
         meta, oh = capture_oracle(run_dir=run_dir, target_path=path, module_name=module_name,
@@ -440,7 +467,7 @@ def capture_only(*, target: str, runs_dir: str = "runs", target_cases: int = 200
     except SmeltFailure as e:
         if not quiet:
             print(f"[smelt] {e.kind}: {e.message}")
-        return (3 if e.kind == "refused_impure" else 5), {"status": e.kind, "reason": e.message}
+        return _exit_for_kind(e.kind), {"status": e.kind, "reason": e.message}
     except Exception as e:
         if not quiet:
             print(f"[smelt] internal error: {e!r}")
