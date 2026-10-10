@@ -42,6 +42,10 @@ This file records how AI was used to build smelt, and who reviewed what.
   rejected), verifier unit tests, and the fake-provider CI workflows. The results in
   `evals/results.md` were produced by `gemma-4-26b-a4b-it` through the Gemini API
   (36 HTTP calls total); `gemma-4-31b-it` was used for the v0.2 gate spot-check.
+- **v0.4-skill (L3)**: Hermes build agent wrote `skills/smelt/` (SKILL.md + four
+  references + a thin wrapper script; validated with `agentskills validate` → exit 0)
+  and composed the README from the generated eval results. Developer reviews the
+  SKILL.md and the results table for accuracy.
 
 ## Scope note
 

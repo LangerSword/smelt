@@ -86,6 +86,12 @@ must come back REJECTED (exit 4) through the full pipeline; any acceptance means
 false-accept bug and the script exits non-zero. This is the miniature answer to "how do you know the
 oracle works?".
 
+## skills/smelt — the agent skill
+SKILL.md (Agent Skills open standard; `agentskills validate ./skills/smelt` → exit 0) plus four
+references — oracle format, benchmark protocol, failure taxonomy, provider config — and a thin CLI
+wrapper script. The skill teaches any skills-compatible agent how to run smelt and what the refusal
+and rejection outcomes mean; the logic stays in the package.
+
 ## cli.py — the interface
 `smelt run | capture | resume | report | doctor`; `--json` switches every command to a machine-readable
 summary for CI (human progress lines are suppressed). Exit codes distinguish accepted / refused / rejected /
