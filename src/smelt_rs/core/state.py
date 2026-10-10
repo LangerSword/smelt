@@ -13,6 +13,9 @@ from dataclasses import asdict, dataclass, field
 
 SMELT_VERSION = "0.1.0"
 
+EVENT_SCHEMA_VERSION = "1"
+
+
 
 def sha256_bytes(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
@@ -65,7 +68,8 @@ class EventLog:
         self.path = path
 
     def emit(self, event: str, node: str = "", **data) -> None:
-        rec = {"ts": time.time(), "event": event, "node": node}
+        rec = {"ts": time.time(), "schema_version": EVENT_SCHEMA_VERSION,
+               "event": event, "node": node}
         rec.update(data)
         with open(self.path, "a") as f:
             f.write(json.dumps(rec, default=str) + "\n")

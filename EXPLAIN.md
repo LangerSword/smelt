@@ -86,6 +86,14 @@ must come back REJECTED (exit 4) through the full pipeline; any acceptance means
 false-accept bug and the script exits non-zero. This is the miniature answer to "how do you know the
 oracle works?".
 
+## docs/events.md — the events contract (TUI input)
+`events.jsonl` is the run's append-only stream; every record now carries `schema_version`
+(currently `1`). The contract — event table, per-event field sets, terminal verdicts — is
+documented in `docs/events.md`, pinned by `tests/test_events_schema.py` (fingerprint +
+golden real-run fixture), and regenerable via `scripts/schema_fingerprint.py`. The stream
+is what the Go TUI (Furnace) consumes; the `node` field is reserved and the flow position
+is derived from the event type.
+
 ## skills/smelt — the agent skill
 SKILL.md (Agent Skills open standard; `agentskills validate ./skills/smelt` → exit 0) plus four
 references — oracle format, benchmark protocol, failure taxonomy, provider config — and a thin CLI

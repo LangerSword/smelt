@@ -46,6 +46,10 @@ This file records how AI was used to build smelt, and who reviewed what.
   references + a thin wrapper script; validated with `agentskills validate` → exit 0)
   and composed the README from the generated eval results. Developer reviews the
   SKILL.md and the results table for accuracy.
+- **Furnace T0 (branch `feature/furnace`)**: Hermes build agent wrote `docs/events.md`,
+  the `EVENT_SCHEMA_VERSION` field, the fingerprint tool + schema tests, and folded in
+  the local-model arm results; fixed the `evals --out-tag` markdown path bug found
+  during the fold-in. Developer reviews anything touching the emitter or the eval writer.
 
 ## Scope note
 

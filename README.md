@@ -63,7 +63,7 @@ provider calls: 36 attempts (cap 120)**
 | `top_word` | string | accepted | 2 | 225 | 4.96x | 4.74x | verified 225/225 cases; speedup 4.96x (conservative lower bound 4.74x) |
 
 Meta-eval (false-accept gate): **10/10 hand-written wrong rewrites rejected** — [`scripts/meta_eval.py`](scripts/meta_eval.py).
-_Local-model arm (gemma-4-e2b-qat via llama.cpp) was still running when this README was generated; its table folds in at the next commit._
+_Local-model arm (`gemma-4-e2b-qat` via llama.cpp, fully offline): **18 accepted / 6 rejected / 0 errors of 24 tasks** — 44 provider calls; full table in `evals/results-local.md`._
 
 Every number is labeled with the model that produced it; nothing is rounded up (the CI
 lower bound sits next to every speedup, and the acceptance rule reads it, not the median).
