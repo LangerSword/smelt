@@ -82,13 +82,17 @@ def report(run_dir: str):
 
 
 def _probe_gemini(key: str):
-    body = json.dumps({"contents": [{"parts": [{"text": "Reply with exactly one word: OK"}]}]}).encode()
+    body = json.dumps({
+        "contents": [{"parts": [{"text": "Reply with exactly one word: OK"}]}],
+        "generationConfig": {"maxOutputTokens": 24,
+                             "thinkingConfig": {"thinkingLevel": "minimal"}},
+    }).encode()
     req = urllib.request.Request(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent",
         data=body, headers={"Content-Type": "application/json", "x-goog-api-key": key})
     try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            return True, "gemma-4-31b-it answered"
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return True, "gemma-4-26b-a4b-it answered"
     except urllib.error.HTTPError as e:
         detail = ""
         try:
@@ -215,12 +219,14 @@ def evals(corpus: str = typer.Option("evals/corpus", help="corpus dir: <category
           pause_s: float = typer.Option(3.0, help="pause between tasks (rate-limit courtesy)"),
           max_attempts: int = typer.Option(3, help="generation attempts per task"),
           cases: int = typer.Option(200, help="oracle size target"),
+          out_tag: str = typer.Option("", help="suffix for output files (e.g. '-local')"),
           json_out: bool = typer.Option(False, "--json", help="machine-readable summary")):
     """Run the frozen corpus sequentially; writes evals/results.json + results.md."""
     from smelt_rs import evals as evals_mod
     code, info = evals_mod.run_corpus(corpus_dir=corpus, runs_dir=runs_dir, provider=provider,
                                       model=model, max_calls=max_calls, pause_s=pause_s,
-                                      max_attempts=max_attempts, cases=cases, quiet=json_out)
+                                      max_attempts=max_attempts, cases=cases, quiet=json_out,
+                                      out_tag=out_tag)
     if json_out:
         print(json.dumps(info["summary"], default=str))
     raise typer.Exit(code)
