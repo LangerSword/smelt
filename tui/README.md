@@ -1,43 +1,67 @@
 # furnace
 
-Read-only terminal UI for [smelt](../README.md) runs — a **front end**. The
-Python core is the source of truth: furnace reads `runs/<id>/events.jsonl`
-(+ `state.json`, contract in [`docs/events.md`](../docs/events.md)) and renders
-the loop. It never runs generated code and never reads or prints secrets.
+Terminal UI for [smelt](../README.md) runs — a **front end**. The Python core is
+the source of truth: furnace reads `runs/<id>/events.jsonl` (+ `state.json`,
+contract in [`docs/events.md`](../docs/events.md)) and renders the loop. It never
+runs generated code and never reads or prints secrets.
 
 ## Build & run
 
 ```bash
 cd tui
 go build -o furnace .        # requires Go 1.27+
+
+# replay a finished run
 ./furnace replay ../runs/261011-024849-b4f411
+
+# run smelt live and watch it
+./furnace run ../examples/demo/run_length.py:rle_encode \
+      --provider gemini --model gemma-4-26b-a4b-it
 ```
 
-Keys: `q` quit · `tab` switch pane · `↑`/`↓` (also `pgup`/`pgdn`) scroll the
-log when focused. The footer states the schema version.
+Keys: `q` quit (during a live run it stops the run first) · `tab` switch pane ·
+`↑`/`↓` (also `pgup`/`pgdn`) scroll the log when focused. The footer states the
+schema version.
 
 What it shows:
 
 - the loop as a horizontal flow — `select → oracle → generate → build → verify
-  → bench → verdict` (`✔` reached, `·` not, `★` terminal verdict);
+  → bench → verdict` (`✔` poured, `◐` heating, `·` cold, `★` terminal verdict);
 - a results panel — oracle cases, speedup with the conservative lower bound,
   attempts, target, provider and the exact model label;
-- a log pane — build errors, verify mismatches, safety violations, halts;
+- a log pane — build errors, verify mismatches, safety violations, halts
+  (unparsed stream lines are skipped, counted and logged);
 - the final verdict — **INGOT** (accepted), **SLAG** (rejected), **ASH**
   (refused/error), **COLD** (run killed mid-flight). Never colour-only: every
   state has a word.
 
+## Live runs (`furnace run`)
+
+`furnace run <file.py:fn>` starts `smelt run … --json` as a subprocess,
+discovers the new run directory, and tails its `events.jsonl` — the flow heats
+as events land, attempts and feedback loops show up as they happen, and a
+"waiting for the model…" status appears when generation takes longer than a few
+seconds (which also covers provider retry waits). `q` / `Ctrl-C` stops the run
+**including its whole process group** (no orphan cargo/worker processes) and
+prints the exact `smelt resume runs/<id>` command.
+
+Flags: `--provider`, `--model`, `--smelt <path>` (default: `smelt` on PATH),
+`--runs-dir` (default `runs`, relative to the current directory — run furnace
+from your project root).
+
 ## Tests
 
 ```bash
-go test ./...                       # unit + teatest goldens + 80-col case
+go test ./...                       # 21 tests: unit + teatest + fake-smelt live suite
 go test ./internal/replay -update   # regenerate goldens after a deliberate change
 ```
 
 Fixtures under `testdata/runs/` are real run slices: three REAL Gemini runs
 (`gemma-4-26b-a4b-it`: accepted / rejected / refused) plus one file-provider
 unit fixture with no model involved — provenance in
-[`testdata/runs/README.md`](testdata/runs/README.md).
+[`testdata/runs/README.md`](testdata/runs/README.md). `testdata/fake-smelt.sh`
+is the deterministic fake used by the live tests (no API calls). Note: the
+suite runs locally today; the Go test job in CI lands with T4.
 
 ## Licenses (verified from module-cache LICENSE files)
 

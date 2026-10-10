@@ -55,6 +55,12 @@ This file records how AI was used to build smelt, and who reviewed what.
   tests over real-run fixtures (three REAL Gemini runs + one file-provider unit
   fixture), and the 80-column test. Developer reviews the parser (events → summary)
   and the fixture provenance table (`tui/testdata/runs/README.md`).
+- **Furnace T2 (branch `feature/furnace`)**: Hermes build agent wrote the live-run
+  mode (`tui/`: subprocess runner + event tailer, "waiting for the model…" status,
+  process-group kill with the resume message, deterministic fake-smelt test suite)
+  and ran the real gates: live gemini run (3.24x, lb 3.07x), live local run (2.08x,
+  lb 1.95x), kill-midway with no orphan processes. Developer reviews the tailer and
+  the kill path.
 
 ## Scope note
 

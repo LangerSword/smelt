@@ -135,6 +135,8 @@ func (s *RunSummary) consume(ev Event) {
 	case "capture_done":
 		s.NCases = int(asFloat(ev.Raw["n_cases"]))
 		s.OracleSHA = asStr(ev.Raw["sha256"])
+	case "attempt_start":
+		s.Attempts++
 	case "accept":
 		s.Speedup = asFloat(ev.Raw["ratio"])
 		s.SpeedupLB = asFloat(ev.Raw["ratio_ci_lo"])

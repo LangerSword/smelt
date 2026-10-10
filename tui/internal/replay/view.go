@@ -3,6 +3,7 @@ package replay
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -47,6 +48,9 @@ func (m *Model) View() string {
 	var b strings.Builder
 	b.WriteString(m.header() + "\n")
 	b.WriteString(" " + m.flowLine() + "\n")
+	if m.Mode == ModeLive {
+		b.WriteString(" " + m.liveStatus() + "\n")
+	}
 	b.WriteString(m.resultsBox() + "\n")
 	b.WriteString(m.verdictBox() + "\n")
 	b.WriteString(m.logPane() + "\n")
@@ -55,8 +59,16 @@ func (m *Model) View() string {
 }
 
 func (m *Model) header() string {
-	right := fit(m.Sum.Provider+" · "+DisplayModel(m.Sum.Provider, m.Sum.Model), m.Width/2)
-	left := fit("FURNACE · replay · "+m.Sum.RunID, m.Width-lipgloss.Width(right)-3)
+	left := "FURNACE · replay · " + m.Sum.RunID
+	if m.Mode == ModeLive {
+		left = "FURNACE · run · " + m.liveRunID()
+	}
+	model := DisplayModel(m.Sum.Provider, m.Sum.Model)
+	if m.Mode == ModeLive && m.Sum.Model == "" {
+		model = "(provider default)"
+	}
+	right := fit(m.Sum.Provider+" · "+model, m.Width/2)
+	left = fit(left, m.Width-lipgloss.Width(right)-3)
 	if left == "" {
 		return " " + right
 	}
@@ -67,13 +79,50 @@ func (m *Model) header() string {
 	return " " + left + strings.Repeat(" ", pad) + right
 }
 
+func (m *Model) liveRunID() string {
+	if m.Live == nil || m.Live.RunDir == "" {
+		return "…"
+	}
+	if i := strings.LastIndex(m.Live.RunDir, "/"); i >= 0 {
+		return m.Live.RunDir[i+1:]
+	}
+	return m.Live.RunDir
+}
+
+func (m *Model) liveStatus() string {
+	elapsed := time.Since(m.Started).Round(time.Second)
+	if elapsed < 0 {
+		elapsed = 0
+	}
+	state := "heating · " + m.activePhase()
+	if m.WaitingModel {
+		state = "waiting for the model…"
+	}
+	if m.Done {
+		if m.KilledByUser {
+			state = "stopped by user"
+		} else {
+			state = "finished · " + m.Sum.Status
+		}
+	}
+	line := fmt.Sprintf("run %s · %s · %s", m.liveRunID(), elapsed, state)
+	return fit(line, m.Width-3)
+}
+
 func (m *Model) flowLine() string {
 	reached := m.Sum.FlowReached()
+	active := ""
+	if m.Mode == ModeLive && !m.Done {
+		active = m.activePhase()
+	}
 	parts := make([]string, 0, len(FlowNodes))
 	for _, n := range FlowNodes {
 		tag := "·"
 		if reached[n] {
 			tag = "✔"
+		}
+		if n == active && !reached[n] {
+			tag = "◐" // heating
 		}
 		if n == "verdict" {
 			switch m.Sum.Status {
@@ -136,20 +185,35 @@ func (m *Model) resultsBox() string {
 }
 
 func (m *Model) verdictBox() string {
+	if m.Mode == ModeLive && !m.Done {
+		sub := "heating — " + m.activePhase()
+		if m.WaitingModel {
+			sub = "waiting for the model…"
+		}
+		return " " + colEmber.Render("VERDICT: RUNNING") + "\n" +
+			" " + colDim.Render(fit(sub, m.Width-2))
+	}
 	word, sub := Verdict(m.Sum.Status)
+	if m.Mode == ModeLive && m.KilledByUser {
+		word, sub = "COLD", "stopped by user — run left in progress (resumable)"
+	}
 	st := colGold
 	switch word {
 	case "INGOT":
 		st = colEmber
 	case "SLAG":
 		st = colSlag
-	case "ASH":
+	case "ASH", "COLD":
 		st = colDim
 	}
-	reason := fit(strings.ReplaceAll(m.Sum.Reason, "\n", " "), m.Width-4)
-	return " " + st.Render("VERDICT: "+word) + "\n" +
-		" " + colDim.Render(fit(sub, m.Width-2)) + "\n" +
-		" " + colDim.Render(reason)
+	out := " " + st.Render("VERDICT: "+word) + "\n" +
+		" " + colDim.Render(fit(sub, m.Width-2))
+	if m.CrashNote != "" {
+		out += "\n " + colDim.Render(fit(m.CrashNote+" — see log", m.Width-2))
+	} else {
+		out += "\n " + colDim.Render(fit(strings.ReplaceAll(m.Sum.Reason, "\n", " "), m.Width-4))
+	}
+	return out
 }
 
 func (m *Model) logPane() string {
@@ -158,11 +222,12 @@ func (m *Model) logPane() string {
 		style = borderFocused
 	}
 	content := m.LogVP.View()
-	if len(m.Sum.Log) == 0 {
-		content = " (no events)"
-	} else {
-		content = m.LogVP.View()
+	if len(m.LogLines) == 0 {
+		content = " (no events yet)"
 	}
-	title := fit(fmt.Sprintf(" log · %d lines", len(m.Sum.Log)), m.Width-4)
-	return style.Render(title + "\n" + content)
+	title := fmt.Sprintf(" log · %d lines", len(m.LogLines))
+	if m.SkippedLines > 0 {
+		title += fmt.Sprintf(" · %d skipped", m.SkippedLines)
+	}
+	return style.Render(fit(title, m.Width-4) + "\n" + content)
 }

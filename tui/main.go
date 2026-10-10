@@ -1,28 +1,56 @@
-// furnace — read-only TUI for smelt runs.
+// furnace — terminal UI for smelt runs.
 //
-//	furnace replay <run-dir>
+//	furnace replay <run-dir>            replay a finished run
+//	furnace run <file.py:fn> [flags]    run smelt live and watch it
 //
-// Reads runs/<id>/events.jsonl (+ state.json) and renders the loop, the
-// results panel, the log pane and the final verdict (INGOT / SLAG / ASH).
+// Furnace is a front end. It reads runs/<id>/events.jsonl (+ state.json) and
+// starts runs with `smelt run ... --json` as a subprocess. It never runs
+// generated code and never reads or prints secrets.
 package main
 
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/LangerSword/smelt/tui/internal/replay"
 )
 
+const usage = `usage:
+  furnace replay <run-dir>                 replay a finished run (q quit · tab panes · ↑/↓ scroll)
+  furnace run <file.py:fn> [flags]         run smelt live and watch it
+
+flags for run:
+  --provider <name>   provider passed to smelt (default "gemini")
+  --model <name>      model passed to smelt (default: provider default, e.g. gemma-4-26b-a4b-it)
+  --smelt <path>      smelt binary (default: found on PATH)
+  --runs-dir <dir>    where smelt writes runs (default "runs")`
+
 func main() {
 	args := os.Args[1:]
-	if len(args) != 2 || args[0] != "replay" {
-		fmt.Fprintln(os.Stderr, "usage: furnace replay <run-dir>")
-		fmt.Fprintln(os.Stderr, "  <run-dir> is a smelt run directory containing events.jsonl + state.json")
+	if len(args) == 0 {
+		fmt.Fprintln(os.Stderr, usage)
 		os.Exit(2)
 	}
-	sum, err := replay.LoadRun(args[1])
+	switch args[0] {
+	case "replay":
+		if len(args) != 2 {
+			fmt.Fprintln(os.Stderr, usage)
+			os.Exit(2)
+		}
+		replayCmd(args[1])
+	case "run":
+		runCmd(args[1:])
+	default:
+		fmt.Fprintln(os.Stderr, usage)
+		os.Exit(2)
+	}
+}
+
+func replayCmd(dir string) {
+	sum, err := replay.LoadRun(dir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "furnace: %v\n", err)
 		os.Exit(1)
@@ -32,4 +60,76 @@ func main() {
 		fmt.Fprintf(os.Stderr, "furnace: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func runCmd(args []string) {
+	target, provider, model, smeltBin, runsDir := "", "gemini", "", "", "runs"
+	for i := 0; i < len(args); i++ {
+		need := func(flag string) string {
+			i++
+			if i >= len(args) {
+				fail(flag + " needs a value")
+			}
+			return args[i]
+		}
+		switch args[i] {
+		case "--provider":
+			provider = need("--provider")
+		case "--model":
+			model = need("--model")
+		case "--smelt":
+			smeltBin = need("--smelt")
+		case "--runs-dir":
+			runsDir = need("--runs-dir")
+		default:
+			if strings.HasPrefix(args[i], "-") {
+				fail("unknown flag " + args[i])
+			}
+			if target != "" {
+				fail("unexpected extra argument " + args[i])
+			}
+			target = args[i]
+		}
+	}
+	if target == "" {
+		fail("furnace run needs a target: file.py:function")
+	}
+	bin, err := replay.ResolveSmelt(smeltBin)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "furnace: smelt binary not found.")
+		fmt.Fprintln(os.Stderr, "  install smelt, or pass --smelt /path/to/smelt")
+		fmt.Fprintln(os.Stderr, "  (in the smelt repo: --smelt .venv/bin/smelt)")
+		os.Exit(2)
+	}
+	live, err := replay.StartLive(bin, target, provider, model, runsDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "furnace: could not start smelt: %v\n", err)
+		os.Exit(1)
+	}
+	sum := &replay.RunSummary{Dir: runsDir, Status: "in_progress"}
+	p := tea.NewProgram(replay.NewLive(sum, live), tea.WithAltScreen())
+	final, runErr := p.Run()
+	if runErr != nil {
+		fmt.Fprintf(os.Stderr, "furnace: %v\n", runErr)
+		os.Exit(1)
+	}
+	m, ok := final.(*replay.Model)
+	if !ok {
+		return
+	}
+	switch {
+	case m.KilledByUser:
+		fmt.Println("furnace: stopped by user — run left in progress; resume with:")
+		fmt.Printf("  smelt resume %s\n", m.RunDirForReport(runsDir))
+	case m.Done && m.ExitCode != 0:
+		fmt.Printf("furnace: smelt exited with code %d — see the log pane and the run directory\n", m.ExitCode)
+	case m.Done:
+		fmt.Printf("furnace: smelt finished (%s)\n", m.Sum.Status)
+	}
+}
+
+func fail(msg string) {
+	fmt.Fprintln(os.Stderr, "furnace: "+msg)
+	fmt.Fprintln(os.Stderr, usage)
+	os.Exit(2)
 }

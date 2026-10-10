@@ -144,25 +144,30 @@ Validated: `agentskills validate ./skills/smelt` → exit 0.
 
 ## TUI — Furnace (branch `feature/furnace`)
 
-[`tui/`](tui/README.md) holds **Furnace**, a read-only Go TUI that replays a
-finished run from `events.jsonl`: the loop as a horizontal flow
-(`select → … → verdict`, ✔/·/★), a results panel (oracle cases, speedup with
-lower bound, attempts, exact model label), a log pane (build errors, mismatches,
-halts) and the verdict — **INGOT** (accepted), **SLAG** (rejected), **ASH**
-(refused/error). Furnace is a front end: the Python core stays the source of
-truth, and it never runs generated code.
+[`tui/`](tui/README.md) holds **Furnace**, a Go TUI that replays finished runs
+and runs new ones live. It reads `runs/<id>/events.jsonl`: the loop as a
+horizontal flow (`select → … → verdict`, ✔/·/◐/★), a results panel (oracle
+cases, speedup with lower bound, attempts, exact model label), a log pane
+(build errors, mismatches, halts) and the verdict — **INGOT** (accepted),
+**SLAG** (rejected), **ASH** (refused/error). Furnace is a front end: the
+Python core stays the source of truth, and it never runs generated code.
 
 ```bash
 cd tui && go build -o furnace .          # Go 1.27+
 ./furnace replay ../runs/<run-id>        # q quit · tab panes · ↑/↓ scroll
+./furnace run ../examples/demo/run_length.py:rle_encode \
+      --provider gemini --model gemma-4-26b-a4b-it    # live: flow heats as events land
 ```
 
-Tests: unit + teatest goldens over real-run fixtures — three REAL Gemini runs
-(`gemma-4-26b-a4b-it`: accepted / rejected / refused) plus one file-provider
-unit fixture with no model involved — including the required 80-column case.
-The suite runs locally today; the branch's CI is the Python suite only — the
-Go test job lands with T4, so describe it as "tests pass locally", not
-"CI-tested", until then.
+Live mode starts `smelt run … --json` as a subprocess, tails the new run's
+events stream, shows attempts and a "waiting for the model…" status during long
+generations, and `q`/Ctrl-C stops the run (whole process group) printing the
+`smelt resume` command — no orphan cargo/worker processes (verified).
+
+Tests: **21** (9 unit + 12 teatest-driven, including a deterministic
+fake-smelt live suite + the required 80-column cases) — the suite runs locally
+today; the branch's CI is the Python suite only — the Go test job lands with T4,
+so describe it as "tests pass locally", not "CI-tested", until then.
 Licenses for the Go stack: [`tui/README.md`](tui/README.md#licenses-verified-from-module-cache-license-files).
 
 ## AI use
