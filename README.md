@@ -65,6 +65,11 @@ provider calls: 36 attempts (cap 120)**
 Meta-eval (false-accept gate): **10/10 hand-written wrong rewrites rejected** — [`scripts/meta_eval.py`](scripts/meta_eval.py).
 _Local-model arm (`gemma-4-e2b-qat` via llama.cpp, fully offline): **18 accepted / 6 rejected / 0 errors of 24 tasks** — 44 provider calls; full table in `evals/results-local.md`._
 
+**Model story (one story, kept consistent):** `gemma-4-26b-a4b-it` is the default — fast and
+free-tier friendly; every result in this repo (evals, TUI fixtures, gate runs) was produced
+with it, and the demo uses it. `gemma-4-31b-it` remains available for the strongest output
+when the wait is worth it (slower per call; it powered the one v0.2 gate spot-check).
+
 Every number is labeled with the model that produced it; nothing is rounded up (the CI
 lower bound sits next to every speedup, and the acceptance rule reads it, not the median).
 
@@ -108,7 +113,7 @@ Exit codes: 0 accepted · 3 refused (impure) · 4 rejected · 5 harness error ·
 
 | Provider | Model | Status |
 |---|---|---|
-| `gemini` — Google AI Studio (native REST) | `gemma-4-31b-it` (default), `gemma-4-26b-a4b-it` | **working** — used for all results above |
+| `gemini` — Google AI Studio (native REST) | `gemma-4-26b-a4b-it` (default — free-tier friendly), `gemma-4-31b-it` (strongest, slower) | **working** — used for all results above |
 | `local` — llama.cpp / OpenAI-compatible | any local model | working (offline fallback) |
 | `do` — DigitalOcean Inference | `gemma-4-31B-it` | wired; activates with `DIGITALOCEAN_TOKEN` |
 | `openai` — any OpenAI-compatible endpoint | set per provider | wired |
@@ -155,6 +160,9 @@ cd tui && go build -o furnace .          # Go 1.27+
 Tests: unit + teatest goldens over real-run fixtures — three REAL Gemini runs
 (`gemma-4-26b-a4b-it`: accepted / rejected / refused) plus one file-provider
 unit fixture with no model involved — including the required 80-column case.
+The suite runs locally today; the branch's CI is the Python suite only — the
+Go test job lands with T4, so describe it as "tests pass locally", not
+"CI-tested", until then.
 Licenses for the Go stack: [`tui/README.md`](tui/README.md#licenses-verified-from-module-cache-license-files).
 
 ## AI use

@@ -58,7 +58,7 @@ CONSERVATIVE lower bound ≥ 1.5x. Flags: `suspicious_scaling` (ratios >100x re-
 protects the claim.
 
 ## providers/providers.py — where candidates come from
-Six providers behind one interface: `gemini` (native REST, `gemma-4-31b-it`), `do` (DigitalOcean Inference,
+Six providers behind one interface: `gemini` (native REST, default `gemma-4-26b-a4b-it`), `do` (DigitalOcean Inference,
 OpenAI-compatible), `local` (llama.cpp), `openai` (any OpenAI-compatible endpoint), `file` (fixtures),
 `fake` (CI, no model involved). Secrets resolve env → project `.env` → `~/.hermes/.env`, and are never logged.
 All HTTP goes through one retrying poster (3 retries, exponential backoff + jitter, honors Retry-After on

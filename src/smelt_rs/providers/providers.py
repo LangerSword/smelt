@@ -3,7 +3,7 @@
 One interface: `generate(prompt) -> list[str]` (complete lib.rs contents).
 
 Providers:
-- gemini   — Google AI Studio, native REST (`gemma-4-31b-it`), key: GEMINI_API_KEY
+- gemini   — Google AI Studio, native REST (`gemma-4-26b-a4b-it` default), key: GEMINI_API_KEY
 - do       — DigitalOcean Inference, OpenAI-compatible, model `gemma-4-31B-it`, key: DIGITALOCEAN_TOKEN
 - local    — llama.cpp / any OpenAI-compatible server (default http://127.0.0.1:8080/v1)
 - openai   — generic OpenAI-compatible (set SMELT_OPENAI_BASE / SMELT_OPENAI_KEY)
@@ -262,11 +262,12 @@ class OpenAICompatProvider:
 
 
 class GeminiProvider:
-    """Google AI Studio (Gemini API), native REST. Default model: gemma-4-31b-it."""
+    """Google AI Studio (Gemini API), native REST. Default model: gemma-4-26b-a4b-it
+    (fast, free-tier friendly); pass gemma-4-31b-it for the strongest (slower) option."""
 
     name = "gemini"
 
-    def __init__(self, model: str = "gemma-4-31b-it", timeout: int = 300,
+    def __init__(self, model: str = "gemma-4-26b-a4b-it", timeout: int = 300,
                  transcript_path: str | None = None):
         self.model = model
         self.timeout = timeout
@@ -326,5 +327,5 @@ def make_provider(name: str, model: str | None, candidate: str | None, run_dir: 
         return OpenAICompatProvider(base_url=base, model=model or "gemma-4-31b-it",
                                     name=name, key_env="SMELT_OPENAI_KEY", transcript_path=tp)
     if name == "gemini":
-        return GeminiProvider(model=model or "gemma-4-31b-it", transcript_path=tp)
+        return GeminiProvider(model=model or "gemma-4-26b-a4b-it", transcript_path=tp)
     raise ProviderError(f"unknown provider {name!r} (local|gemini|do|openai|file|fake)")
