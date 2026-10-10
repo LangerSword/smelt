@@ -1,0 +1,30 @@
+ FURNACE · replay · 261011-033114-6d5f72                                gemini · gemma-4-26b-a4b-it
+ select✔ ─▶ oracle· ─▶ generate· ─▶ build· ─▶ verify· ─▶ bench· ─▶ verdict★
+╭──────────────────────────────────────────╮
+│target   impure_target.py:jittery_max     │
+│provider gemini · model gemma-4-26b-a4b-it│
+│oracle   0 cases · sha —                  │
+│attempts 0                                │
+│speedup  — (no accepted candidate)        │
+╰──────────────────────────────────────────╯
+ VERDICT: ASH
+ refused — impure target (a correct outcome)
+ refused_impure: impure target: module imports 'random' (side effects / nondeterminism)
+╭──────────────────────────────────────────────────────────────────────────────────────────────╮
+│ log · 4 lines                                                                                │
+│run start · provider=gemini model=gemma-4-26b-a4b-it                                          │
+│halt · impure target: module imports 'random' (side effects / nondeterminism)                 │
+│end · refused                                                                                 │
+│reason · refused_impure: impure target: module imports 'random' (side effects / nondeterminism│
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+ q quit · tab panes · ↑/↓ scroll · schema v1

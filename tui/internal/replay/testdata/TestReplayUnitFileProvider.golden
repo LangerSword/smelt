@@ -1,0 +1,30 @@
+ FURNACE · replay · 261011-024849-b4f411                          file · — (no model: file fixture)
+ select✔ ─▶ oracle✔ ─▶ generate✔ ─▶ build✔ ─▶ verify✔ ─▶ bench✔ ─▶ verdict★
+╭────────────────────────────────────────────────╮
+│target   run_length.py:rle_encode               │
+│provider file · model — (no model: file fixture)│
+│oracle   85 cases · sha 033b13d6…               │
+│attempts 1                                      │
+│speedup  3.28x · lower bound 3.25x              │
+╰────────────────────────────────────────────────╯
+ VERDICT: INGOT
+ accepted — verified rewrite, speedup above the threshold
+ verified 85/85 cases; speedup 3.28x (conservative lower bound 3.25x)
+╭──────────────────────────────────────────────────────────────────────────────────────────────╮
+│ log · 6 lines                                                                                │
+│run start · provider=file model=— (no model: file fixture)                                    │
+│oracle frozen · 85 cases · sha 033b13d605ac44a7                                               │
+│attempt 1 · generate                                                                          │
+│accept · 3.28x (lower bound 3.25x)                                                            │
+│end · accepted                                                                                │
+│reason · verified 85/85 cases; speedup 3.28x (conservative lower bound 3.25x)                 │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+ q quit · tab panes · ↑/↓ scroll · schema v1

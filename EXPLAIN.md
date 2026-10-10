@@ -94,6 +94,16 @@ golden real-run fixture), and regenerable via `scripts/schema_fingerprint.py`. T
 is what the Go TUI (Furnace) consumes; the `node` field is reserved and the flow position
 is derived from the event type.
 
+## tui/ — Furnace (Go TUI, read-only replay)
+A single Go binary (`tui/`, own go.mod) that renders a finished run from `events.jsonl`
+(+ `state.json`): horizontal flow (derived from event types — the `node` field is
+reserved), results panel, log pane, and the INGOT/SLAG/ASH verdict (COLD for a killed
+run). The Python core remains the source of truth; Furnace never runs generated code.
+Tests: unit + teatest goldens (full-frame, via the same golden mechanism teatest uses)
+over real-run fixtures — three REAL Gemini runs (accepted/rejected/refused) plus a
+file-provider unit fixture — including the required 80-column case. Live `furnace run`
+is T2; the interactive home screen is T3.
+
 ## skills/smelt — the agent skill
 SKILL.md (Agent Skills open standard; `agentskills validate ./skills/smelt` → exit 0) plus four
 references — oracle format, benchmark protocol, failure taxonomy, provider config — and a thin CLI

@@ -50,6 +50,11 @@ This file records how AI was used to build smelt, and who reviewed what.
   the `EVENT_SCHEMA_VERSION` field, the fingerprint tool + schema tests, and folded in
   the local-model arm results; fixed the `evals --out-tag` markdown path bug found
   during the fold-in. Developer reviews anything touching the emitter or the eval writer.
+- **Furnace T1 (branch `feature/furnace`)**: Hermes build agent wrote the Go replay
+  viewer (`tui/`: events parser, Bubble Tea model, view, main), the teatest golden
+  tests over real-run fixtures (three REAL Gemini runs + one file-provider unit
+  fixture), and the 80-column test. Developer reviews the parser (events → summary)
+  and the fixture provenance table (`tui/testdata/runs/README.md`).
 
 ## Scope note
 

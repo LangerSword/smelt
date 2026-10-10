@@ -137,6 +137,26 @@ llama.cpp (MIT, local model server) · Rust std (MIT OR Apache-2.0).
 [`skills/smelt/SKILL.md`](skills/smelt/SKILL.md) follows the Agent Skills open standard.
 Validated: `agentskills validate ./skills/smelt` → exit 0.
 
+## TUI — Furnace (branch `feature/furnace`)
+
+[`tui/`](tui/README.md) holds **Furnace**, a read-only Go TUI that replays a
+finished run from `events.jsonl`: the loop as a horizontal flow
+(`select → … → verdict`, ✔/·/★), a results panel (oracle cases, speedup with
+lower bound, attempts, exact model label), a log pane (build errors, mismatches,
+halts) and the verdict — **INGOT** (accepted), **SLAG** (rejected), **ASH**
+(refused/error). Furnace is a front end: the Python core stays the source of
+truth, and it never runs generated code.
+
+```bash
+cd tui && go build -o furnace .          # Go 1.27+
+./furnace replay ../runs/<run-id>        # q quit · tab panes · ↑/↓ scroll
+```
+
+Tests: unit + teatest goldens over real-run fixtures — three REAL Gemini runs
+(`gemma-4-26b-a4b-it`: accepted / rejected / refused) plus one file-provider
+unit fixture with no model involved — including the required 80-column case.
+Licenses for the Go stack: [`tui/README.md`](tui/README.md#licenses-verified-from-module-cache-license-files).
+
 ## AI use
 
 See [`AI_USE.md`](AI_USE.md): what was written by the build agent vs the human developer,

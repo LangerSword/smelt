@@ -1,0 +1,4 @@
+# build artifacts
+/furnace
+/furnace-*
+*.test
