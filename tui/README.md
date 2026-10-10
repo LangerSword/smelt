@@ -11,6 +11,9 @@ runs generated code and never reads or prints secrets.
 cd tui
 go build -o furnace .        # requires Go 1.27+
 
+# home screen: prompt box · scan · pick · run · history
+./furnace
+
 # replay a finished run
 ./furnace replay ../runs/261011-024849-b4f411
 
@@ -35,6 +38,23 @@ What it shows:
   (refused/error), **COLD** (run killed mid-flight). Never colour-only: every
   state has a word.
 
+## Home screen (`furnace`)
+
+The interactive layer, in the style of Hermes' prompt box:
+
+- **prompt box** — type a slash command or a bare `file.py:fn` target;
+- **`/scan <path>`** — lists candidates from `smelt scan --json` with skip
+  reasons (e.g. "relative imports — package loading not supported yet");
+  `enter` on a candidate starts the run (the scan root is joined into the path);
+- **`/run <target> [--provider p] [--model m]`**, **`/resume <run-dir>`**,
+  **`/report <run-dir>`**, **`/provider <name> [model]`** (bare: availability
+  from `smelt doctor --json`), **`/doctor`**, **`/help`**, **`/quit`**;
+- **recent runs** — history from the runs directory; `enter` opens the run;
+- **`d`** in a run view — the view-only diff from `smelt apply` (it never
+  writes into the target repo).
+
+Home keys: `tab` panes · `↑/↓` select · `enter` run/open · `ctrl+c` quit.
+
 ## Live runs (`furnace run`)
 
 `furnace run <file.py:fn>` starts `smelt run … --json` as a subprocess,
@@ -52,7 +72,7 @@ from your project root).
 ## Tests
 
 ```bash
-go test ./...                       # 21 tests: unit + teatest + fake-smelt live suite
+go test ./...                       # 26 tests: unit + teatest + fake-smelt suite
 go test ./internal/replay -update   # regenerate goldens after a deliberate change
 ```
 
@@ -60,8 +80,9 @@ Fixtures under `testdata/runs/` are real run slices: three REAL Gemini runs
 (`gemma-4-26b-a4b-it`: accepted / rejected / refused) plus one file-provider
 unit fixture with no model involved — provenance in
 [`testdata/runs/README.md`](testdata/runs/README.md). `testdata/fake-smelt.sh`
-is the deterministic fake used by the live tests (no API calls). Note: the
-suite runs locally today; the Go test job in CI lands with T4.
+is the deterministic fake (dispatch: run / scan / doctor / apply) used by the
+tests — no API calls. Note: the suite runs locally today; the Go test job in
+CI lands with T4.
 
 ## Licenses (verified from module-cache LICENSE files)
 

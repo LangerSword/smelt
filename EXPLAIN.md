@@ -94,16 +94,19 @@ golden real-run fixture), and regenerable via `scripts/schema_fingerprint.py`. T
 is what the Go TUI (Furnace) consumes; the `node` field is reserved and the flow position
 is derived from the event type.
 
-## tui/ — Furnace (Go TUI, replay + live run)
+## tui/ — Furnace (Go TUI, replay + live run + home)
 A single Go binary (`tui/`, own go.mod). Replay mode renders a finished run from
 `events.jsonl` (+ `state.json`): horizontal flow (derived from event types — the `node`
 field is reserved), results panel, log pane, and the INGOT/SLAG/ASH verdict (COLD for a
 killed run). Live mode (`furnace run`) spawns `smelt run --json` as a subprocess,
 discovers the new run dir, tails its events.jsonl, shows attempts and a
 "waiting for the model…" status, and kills the whole process group on quit (printing
-the `smelt resume` command). The Python core remains the source of truth; Furnace never
-runs generated code. Tests: 21 (unit + teatest, incl. a deterministic fake-smelt live
-suite and the required 80-column cases); runs locally today — the Go CI job lands with T4.
+the `smelt resume` command). The home screen (`furnace`, `app.go`) adds a prompt box
+with slash commands, a scan picker fed by `smelt scan --json` (minimal T3 prerequisite
+in the Python CLI), run history, and a view-only diff via `smelt apply`. The Python
+core remains the source of truth; Furnace never runs generated code. Tests: 26 (unit +
+teatest, incl. a deterministic fake-smelt suite and the required 80-column cases); runs
+locally today — the Go CI job lands with T4.
 
 ## skills/smelt — the agent skill
 SKILL.md (Agent Skills open standard; `agentskills validate ./skills/smelt` → exit 0) plus four

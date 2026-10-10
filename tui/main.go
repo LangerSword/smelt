@@ -19,6 +19,7 @@ import (
 )
 
 const usage = `usage:
+  furnace                                  home screen: scan · pick · run · history
   furnace replay <run-dir>                 replay a finished run (q quit · tab panes · ↑/↓ scroll)
   furnace run <file.py:fn> [flags]         run smelt live and watch it
 
@@ -31,8 +32,8 @@ flags for run:
 func main() {
 	args := os.Args[1:]
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, usage)
-		os.Exit(2)
+		homeCmd()
+		return
 	}
 	switch args[0] {
 	case "replay":
@@ -125,6 +126,20 @@ func runCmd(args []string) {
 		fmt.Printf("furnace: smelt exited with code %d — see the log pane and the run directory\n", m.ExitCode)
 	case m.Done:
 		fmt.Printf("furnace: smelt finished (%s)\n", m.Sum.Status)
+	}
+}
+
+func homeCmd() {
+	bin, err := replay.ResolveSmelt("")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "furnace: smelt binary not found on PATH.")
+		fmt.Fprintln(os.Stderr, "  install smelt, or run: furnace run <target> --smelt /path/to/smelt")
+		os.Exit(2)
+	}
+	p := tea.NewProgram(replay.NewApp(bin, "runs"), tea.WithAltScreen())
+	if _, err := p.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "furnace: %v\n", err)
+		os.Exit(1)
 	}
 }
 

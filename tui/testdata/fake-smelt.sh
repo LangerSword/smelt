@@ -1,12 +1,39 @@
 #!/usr/bin/env sh
-# Deterministic fake `smelt` for furnace live-mode tests.
-# Ignores its CLI arguments; emits a realistic events stream with sleeps,
-# then prints a JSON summary and exits with $FAKE_EXIT (default 0).
+# Deterministic fake `smelt` for furnace tests (live run + scan + doctor + apply).
+# Dispatches on the first argument; the default path emits a realistic events
+# stream with sleeps, then prints a JSON summary and exits with $FAKE_EXIT.
 #
 # Env knobs: FAKE_RUNS_DIR (default "runs"), FAKE_SLEEP (seconds, default 1),
 #            FAKE_EXIT (default 0), FAKE_BADJSON (1 = emit a corrupt line),
 #            FAKE_NOEVENTS (1 = exit immediately without a run dir).
 set -eu
+
+CMD="${1:-run}"
+
+case "$CMD" in
+  scan)
+    cat <<'EOF'
+{"summary": {"root": "fake", "files": 1, "functions": 2, "candidates": 1, "skipped": 1},
+ "candidates": [
+  {"file": "demo/fake.py", "function": "fake_fn", "line": 1, "status": "candidate", "tier": "simple", "param": "str", "reason": "one str parameter"},
+  {"file": "demo/fake.py", "function": "impure_fn", "line": 9, "status": "skip", "reason": "impure: module imports 'random'"}
+ ]}
+EOF
+    exit 0 ;;
+  doctor)
+    cat <<'EOF'
+{"checks": [{"name": "python", "ok": true, "detail": "3.11"}, {"name": "cargo", "ok": true, "detail": "1.96"}, {"name": "gemini key", "ok": true, "detail": "present"}, {"name": "digitalocean token", "ok": false, "detail": "not set"}], "fails": 0, "warns": 1}
+EOF
+    exit 0 ;;
+  apply)
+    cat <<'EOF'
+# smelt apply — fake · VIEW ONLY (nothing is written)
++++ rust/fake_fn/src/lib.rs
++fn fake_fn(s: &str) -> String { s.to_string() }
+except Exception:  # extension missing — keep the Python original
+EOF
+    exit 0 ;;
+esac
 
 if [ "${FAKE_NOEVENTS:-0}" = "1" ]; then
   echo "fake-smelt: crashing before any events" >&2
@@ -16,10 +43,11 @@ fi
 RUNS="${FAKE_RUNS_DIR:-runs}"
 RID="261011-999999-fake01"
 D="$RUNS/$RID"
+TARGET="${2:-fake.py:fn}"
 mkdir -p "$D"
 TS=$(date +%s)
 
-echo "{\"ts\": $TS, \"schema_version\": \"1\", \"event\": \"run_start\", \"node\": \"\", \"target\": \"fake.py:fn\", \"provider\": \"fake\", \"model\": \"fake-model\"}" > "$D/events.jsonl"
+echo "{\"ts\": $TS, \"schema_version\": \"1\", \"event\": \"run_start\", \"node\": \"\", \"target\": \"$TARGET\", \"provider\": \"fake\", \"model\": \"fake-model\"}" > "$D/events.jsonl"
 sleep "${FAKE_SLEEP:-1}"
 echo "{\"ts\": $TS, \"schema_version\": \"1\", \"event\": \"purity_ok\", \"node\": \"\"}" >> "$D/events.jsonl"
 sleep "${FAKE_SLEEP:-1}"

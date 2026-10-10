@@ -154,20 +154,26 @@ Python core stays the source of truth, and it never runs generated code.
 
 ```bash
 cd tui && go build -o furnace .          # Go 1.27+
+./furnace                                # home: scan · pick · run · history
 ./furnace replay ../runs/<run-id>        # q quit · tab panes · ↑/↓ scroll
 ./furnace run ../examples/demo/run_length.py:rle_encode \
       --provider gemini --model gemma-4-26b-a4b-it    # live: flow heats as events land
 ```
+
+The home screen is the interactive layer: prompt box with slash commands
+(`/scan` with skip reasons, `/run`, `/resume`, `/report`, `/provider`,
+`/doctor`, `/help`, `/quit`), a candidate picker, recent-run history, and a
+view-only diff (`d` → `smelt apply`; never writes into the target).
 
 Live mode starts `smelt run … --json` as a subprocess, tails the new run's
 events stream, shows attempts and a "waiting for the model…" status during long
 generations, and `q`/Ctrl-C stops the run (whole process group) printing the
 `smelt resume` command — no orphan cargo/worker processes (verified).
 
-Tests: **21** (9 unit + 12 teatest-driven, including a deterministic
-fake-smelt live suite + the required 80-column cases) — the suite runs locally
-today; the branch's CI is the Python suite only — the Go test job lands with T4,
-so describe it as "tests pass locally", not "CI-tested", until then.
+Tests: **26** (unit + teatest, including a deterministic fake-smelt suite for
+run/scan/doctor/apply and the required 80-column cases) — the suite runs
+locally today; the branch's CI is the Python suite only — the Go test job lands
+with T4, so describe it as "tests pass locally", not "CI-tested", until then.
 Licenses for the Go stack: [`tui/README.md`](tui/README.md#licenses-verified-from-module-cache-license-files).
 
 ## AI use

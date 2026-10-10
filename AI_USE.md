@@ -61,6 +61,13 @@ This file records how AI was used to build smelt, and who reviewed what.
   and ran the real gates: live gemini run (3.24x, lb 3.07x), live local run (2.08x,
   lb 1.95x), kill-midway with no orphan processes. Developer reviews the tailer and
   the kill path.
+- **Furnace T3 (branch `feature/furnace`)**: Hermes build agent wrote the home screen
+  (`tui/app.go`): prompt box + slash commands (/scan /run /resume /report /provider
+  /doctor /help /quit), scan picker with skip reasons, run history, and a view-only
+  diff via `smelt apply` — plus the minimal Python prerequisites `smelt scan` /
+  `smelt apply` (commit `194382c`; honest capability report, NOT the full G3).
+  Real gate: scan → pick → run → view result, all inside the TUI (INGOT 2.06x,
+  lb 2.04x). Developer reviews the command surface and the scan/apply additions.
 
 ## Scope note
 
