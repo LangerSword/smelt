@@ -81,6 +81,41 @@ def report(run_dir: str):
     rprint(open(path).read())
 
 
+@app.command()
+def scan(path: str = typer.Argument(..., help="directory to scan for candidate functions"),
+         json_out: bool = typer.Option(False, "--json", help="machine-readable output")):
+    """List candidate functions under <path> (source for the TUI picker).
+
+    Honest about current capability: single-file targets, one simple-typed
+    parameter; relative imports are skipped with a clear reason (package
+    loading is not supported yet). Minimal scan for Furnace T3 — the full G3
+    scan (type tiers, profile hints) is separate."""
+    from smelt_rs import scan as scan_mod
+    res = scan_mod.scan_path(path)
+    if json_out:
+        print(json.dumps(res, indent=2))
+    else:
+        s = res["summary"]
+        print(f"smelt scan · {s['root']}")
+        print(f"  {s['files']} files · {s['functions']} functions · "
+              f"{s['candidates']} candidate(s) · {s['skipped']} skipped")
+        for c in res["candidates"]:
+            mark = "✔" if c["status"] == "candidate" else "·"
+            loc = f"{c['file']}:{c['function']}"
+            print(f"  {mark} {loc:<48} {c.get('reason', '')}")
+    raise typer.Exit(0)
+
+
+@app.command()
+def apply(run_dir: str = typer.Argument(..., help="run directory of an accepted run")):
+    """Print the proposed change for an accepted run — VIEW ONLY, never writes.
+
+    Shows the generated Rust module as a new-file diff, the build command and a
+    safe try/except shim that falls back to the original Python."""
+    from smelt_rs import apply as apply_mod
+    raise typer.Exit(apply_mod.apply(run_dir))
+
+
 def _probe_gemini(key: str):
     body = json.dumps({
         "contents": [{"parts": [{"text": "Reply with exactly one word: OK"}]}],
