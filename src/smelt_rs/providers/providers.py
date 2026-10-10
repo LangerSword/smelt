@@ -279,19 +279,23 @@ class GeminiProvider:
     def _one(self, prompt: str) -> str:
         url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
                f"{self.model}:generateContent")
-        body = {"contents": [{"parts": [{"text": prompt}]}]}
+        gen: dict = {"maxOutputTokens": 3000}
+        level = os.environ.get("SMELT_GEMINI_THINKING", "minimal")
+        if level != "default":
+            gen["thinkingConfig"] = {"thinkingLevel": level}
+        body = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": gen}
         headers = {"Content-Type": "application/json", "x-goog-api-key": self.api_key}
         d = _post_with_retries(url, body, headers, self.timeout,
                                transcript_path=self.transcript_path, model=self.model,
                                prompt_chars=len(prompt))
         try:
             cand = (d.get("candidates") or [{}])[0]
-            parts = (cand.get("content") or {}).get("parts") or [{}]
-            text = parts[0].get("text", "")
+            parts = (cand.get("content") or {}).get("parts") or []
+            text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
         except Exception as e:
             raise ProviderError(f"unexpected Gemini response shape: {e!r}")
         if not text.strip():
-            raise ProviderError("empty completion from Gemini")
+            raise ProviderError("empty completion from Gemini (thinking-only or truncated)")
         return extract_lib_rs(text)
 
 
