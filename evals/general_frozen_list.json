@@ -1,0 +1,21 @@
+{
+  "frozen_at_ist": "2026-10-11 04:00 (BEFORE any run — do not swap functions)",
+  "rules": "3 easy (strings/numbers) · 3 medium (several args / nested data) · 2 object/class (expect refuse/reject) · 2 impure on purpose (expect clean refusal). Provider gemini, model gemma-4-26b-a4b-it, max-attempts 2, call cap 50. No oracle or code changes.",
+  "repos": {
+    "humanize": "python-humanize/humanize — LICENCE: MIT-style ('Permission is hereby granted...'), Copyright (c) 2010-2020 Jason Moiron and Contributors",
+    "validators": "python-validators/validators — The MIT License (MIT), Copyright (c) 2013-2026 Konsta Vesterinen",
+    "shortuuid": "skorokithakis/shortuuid — BSD (COPYING: 'Copyright (c) 2011, Stavros Korokithakis / All rights reserved.')"
+  },
+  "functions": [
+    {"n": 1, "repo": "humanize", "file": "src/humanize/number.py", "fn": "apnumber", "expect": "easy", "why": "number→word formatter; one value param (custom NumberOrString alias)"},
+    {"n": 2, "repo": "humanize", "file": "src/humanize/number.py", "fn": "ordinal", "expect": "easy", "why": "ordinal number formatter; one required param + optional gender kwarg"},
+    {"n": 3, "repo": "validators", "file": "src/validators/hashes.py", "fn": "md5", "expect": "easy", "why": "checksum validator; plain str, positional-only; decorated with @validator"},
+    {"n": 4, "repo": "humanize", "file": "src/humanize/lists.py", "fn": "natural_list", "expect": "medium", "why": "loops an iterable of items; nested list input"},
+    {"n": 5, "repo": "validators", "file": "src/validators/email.py", "fn": "email", "expect": "medium", "why": "regex-heavy string validation; one required str + keyword-only extras"},
+    {"n": 6, "repo": "validators", "file": "src/validators/ip_address.py", "fn": "ipv4", "expect": "medium", "why": "multi-branch string parsing; one required str + keyword-only extras"},
+    {"n": 7, "repo": "shortuuid", "file": "shortuuid/main.py", "fn": "encode", "expect": "object", "why": "bound method alias; takes a UUID object (unsupported type expected)"},
+    {"n": 8, "repo": "shortuuid", "file": "shortuuid/main.py", "fn": "ShortUUID.encode", "expect": "object", "why": "dotted class method; UUID object; probes qualname resolution"},
+    {"n": 9, "repo": "humanize", "file": "src/humanize/time.py", "fn": "naturaltime", "expect": "impure", "why": "time-dependent (defaults to now); datetime/timedelta/float value"},
+    {"n": 10, "repo": "shortuuid", "file": "shortuuid/main.py", "fn": "uuid", "expect": "impure", "why": "randomness (uuid/random imports); bound global method, zero required args"}
+  ]
+}
