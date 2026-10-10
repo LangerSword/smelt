@@ -37,6 +37,11 @@ This file records how AI was used to build smelt, and who reviewed what.
   openai-compat / fake, with the retrying poster) and the CLI (capture, doctor,
   `--json`), and refactored the orchestrator for quiet/JSON runs + capture-only mode.
   Developer reviews the retry/backoff and secret-resolution code.
+- **v0.3-evals (L2)**: Hermes build agent wrote the 24-function corpus, the sequential eval
+  runner (global provider-call cap), the meta-eval (10 hand-written wrong rewrites — all
+  rejected), verifier unit tests, and the fake-provider CI workflows. The results in
+  `evals/results.md` were produced by `gemma-4-26b-a4b-it` through the Gemini API
+  (36 HTTP calls total); `gemma-4-31b-it` was used for the v0.2 gate spot-check.
 
 ## Scope note
 

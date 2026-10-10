@@ -14,14 +14,14 @@ import json
 import os
 import time
 
-from smelt_rs import providers as prov
+from smelt_rs.providers import providers as prov
 from smelt_rs.core import orchestrator
 
 RESULTS_JSON = "evals/results.json"
 RESULTS_MD = "evals/results.md"
 
 
-def _write_md(results: list, summary: dict) -> None:
+def _write_md(results: list, summary: dict, path: str = RESULTS_MD) -> None:
     lines = [
         "# smelt eval results (generated — never hand-edited)",
         "",
@@ -47,7 +47,7 @@ def _write_md(results: list, summary: dict) -> None:
 def run_corpus(*, corpus_dir: str = "evals/corpus", runs_dir: str = "evals/runs",
                provider: str = "gemini", model: str | None = None, max_calls: int = 120,
                pause_s: float = 3.0, max_attempts: int = 3, cases: int = 200,
-               quiet: bool = False) -> tuple[int, dict]:
+               quiet: bool = False, out_tag: str = "") -> tuple[int, dict]:
     tasks = sorted(glob.glob(os.path.join(corpus_dir, "**", "*.py"), recursive=True))
     prov.CALLS.update({"attempts": 0, "ok": 0, "by_model": {}})
     results = []
@@ -88,9 +88,11 @@ def run_corpus(*, corpus_dir: str = "evals/corpus", runs_dir: str = "evals/runs"
         "max_calls": max_calls,
     }
     os.makedirs("evals", exist_ok=True)
-    with open(RESULTS_JSON, "w") as f:
+    rj = "evals/results%s.json" % out_tag
+    rm = "evals/results%s.md" % out_tag
+    with open(rj, "w") as f:
         json.dump({"summary": summary, "results": results}, f, indent=2)
-    _write_md(results, summary)
+    _write_md(results, summary, rm)
     if not quiet:
         print(json.dumps(summary, indent=2))
     return 0, {"summary": summary, "results": results}

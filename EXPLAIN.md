@@ -73,6 +73,19 @@ unparsable output → typed VerifyCrash.
 Markdown table of EVERY attempt (including failures), benchmark medians + CI + flags, and the outcome line:
 accepted / rejected / refused. Nothing is rounded up. This is what goes into submissions.
 
+## evals.py — the eval runner
+Runs the frozen corpus (`evals/corpus/<category>/<fn>.py`), strictly sequentially, full pipeline per
+function. Between tasks it pauses (rate-limit courtesy); a global provider-call cap stops the run early and
+records the rest as skipped — never silently dropped. Writes `evals/results.json` + `evals/results.md`
+(generated, never hand-edited) including failures, refusals, rejections, flags and exact provider-call
+counts. `--out-tag` produces extra runs (e.g. a second model) without overwriting the primary results.
+
+## scripts/meta_eval.py — the false-accept gate
+Ten hand-written WRONG rewrites of the demo function (each broken differently, each compiling). Every one
+must come back REJECTED (exit 4) through the full pipeline; any acceptance means the verifier has a
+false-accept bug and the script exits non-zero. This is the miniature answer to "how do you know the
+oracle works?".
+
 ## cli.py — the interface
 `smelt run | capture | resume | report | doctor`; `--json` switches every command to a machine-readable
 summary for CI (human progress lines are suppressed). Exit codes distinguish accepted / refused / rejected /
