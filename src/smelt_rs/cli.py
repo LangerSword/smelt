@@ -116,6 +116,21 @@ def apply(run_dir: str = typer.Argument(..., help="run directory of an accepted 
     raise typer.Exit(apply_mod.apply(run_dir))
 
 
+@app.command()
+def furnace():
+    """Launch the Furnace TUI (Go binary) if installed; print build steps otherwise."""
+    import subprocess
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    candidates = [shutil.which("furnace"), os.path.join(root, "tui", "furnace")]
+    for cand in candidates:
+        if cand and os.path.exists(cand) and os.access(cand, os.X_OK):
+            raise typer.Exit(subprocess.call([cand]))
+    print("furnace is not installed.")
+    print("  build it:  cd tui && go build -o furnace .    (requires Go 1.27+)")
+    print("  then run:  smelt furnace   (or ./tui/furnace)")
+    raise typer.Exit(1)
+
+
 def _probe_gemini(key: str):
     body = json.dumps({
         "contents": [{"parts": [{"text": "Reply with exactly one word: OK"}]}],
@@ -170,6 +185,13 @@ def doctor(probe: bool = typer.Option(False, "--probe", help="send tiny live tes
     add("rustc", bool(rustc), rustc or "missing", required=False)
     maturin = shutil.which("maturin")
     add("maturin", bool(maturin), maturin or "missing (packaging only)", required=False)
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    furnace_bin = shutil.which("furnace") or ""
+    if not furnace_bin:
+        repo_furnace = os.path.join(root, "tui", "furnace")
+        furnace_bin = repo_furnace if os.path.exists(repo_furnace) else ""
+    add("furnace TUI", bool(furnace_bin),
+        furnace_bin or "not installed (cd tui && go build -o furnace .)", required=False)
 
     worker_ok, worker_detail = False, ""
     try:

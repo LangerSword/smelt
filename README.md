@@ -170,11 +170,11 @@ events stream, shows attempts and a "waiting for the model…" status during lon
 generations, and `q`/Ctrl-C stops the run (whole process group) printing the
 `smelt resume` command — no orphan cargo/worker processes (verified).
 
-Tests: **26** (unit + teatest, including a deterministic fake-smelt suite for
-run/scan/doctor/apply and the required 80-column cases) — the suite runs
-locally today; the branch's CI is the Python suite only — the Go test job lands
-with T4, so describe it as "tests pass locally", not "CI-tested", until then.
-Licenses for the Go stack: [`tui/README.md`](tui/README.md#licenses-verified-from-module-cache-license-files).
+Tests: **26** — run locally **and in CI** (the new `go` job: build + vet +
+test). Demo: [`tui/testdata/demo.gif`](tui/testdata/demo.gif) (real captured
+frames) + a ready-to-record VHS tape (`tui/testdata/demo.tape`).
+`smelt furnace` launches the binary when installed, and `smelt doctor` reports
+whether it is. Licenses for the Go stack: [`tui/README.md`](tui/README.md#licenses-verified-from-module-cache-license-files).
 
 ## AI use
 

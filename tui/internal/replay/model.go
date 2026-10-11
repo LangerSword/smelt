@@ -38,6 +38,8 @@ type Model struct {
 	KilledByUser bool
 	SkippedLines int
 	CrashNote    string
+	Anim         bool // heat-pulse animation (disabled with --no-anim / NO_COLOR)
+	pulse        int
 
 	LogLines []string
 	ExtraLog []string
@@ -136,6 +138,9 @@ func (m *Model) handleTick() (tea.Model, tea.Cmd) {
 		m.refreshLog()
 	}
 	m.WaitingModel = m.lastEventIsGenerate() && time.Since(m.LastEventAt) > 6*time.Second
+	if m.Anim {
+		m.pulse++
+	}
 	return m, tickCmd()
 }
 

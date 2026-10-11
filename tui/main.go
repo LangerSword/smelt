@@ -19,7 +19,7 @@ import (
 )
 
 const usage = `usage:
-  furnace                                  home screen: scan · pick · run · history
+  furnace [--no-anim]                      home screen: scan · pick · run · history
   furnace replay <run-dir>                 replay a finished run (q quit · tab panes · ↑/↓ scroll)
   furnace run <file.py:fn> [flags]         run smelt live and watch it
 
@@ -32,7 +32,11 @@ flags for run:
 func main() {
 	args := os.Args[1:]
 	if len(args) == 0 {
-		homeCmd()
+		homeCmd(false)
+		return
+	}
+	if args[0] == "--no-anim" {
+		homeCmd(true)
 		return
 	}
 	switch args[0] {
@@ -65,6 +69,7 @@ func replayCmd(dir string) {
 
 func runCmd(args []string) {
 	target, provider, model, smeltBin, runsDir := "", "gemini", "", "", "runs"
+	noAnim := false
 	for i := 0; i < len(args); i++ {
 		need := func(flag string) string {
 			i++
@@ -74,6 +79,8 @@ func runCmd(args []string) {
 			return args[i]
 		}
 		switch args[i] {
+		case "--no-anim":
+			noAnim = true
 		case "--provider":
 			provider = need("--provider")
 		case "--model":
@@ -108,7 +115,9 @@ func runCmd(args []string) {
 		os.Exit(1)
 	}
 	sum := &replay.RunSummary{Dir: runsDir, Status: "in_progress"}
-	p := tea.NewProgram(replay.NewLive(sum, live), tea.WithAltScreen())
+	m := replay.NewLive(sum, live)
+	m.Anim = animEnabled(noAnim)
+	p := tea.NewProgram(m, tea.WithAltScreen())
 	final, runErr := p.Run()
 	if runErr != nil {
 		fmt.Fprintf(os.Stderr, "furnace: %v\n", runErr)
@@ -129,14 +138,25 @@ func runCmd(args []string) {
 	}
 }
 
-func homeCmd() {
+// animEnabled reports whether the heat-pulse animation should run: off with
+// --no-anim, with NO_COLOR set, or on a dumb terminal.
+func animEnabled(noAnim bool) bool {
+	if noAnim || os.Getenv("NO_COLOR") != "" || os.Getenv("TERM") == "dumb" {
+		return false
+	}
+	return true
+}
+
+func homeCmd(noAnim bool) {
 	bin, err := replay.ResolveSmelt("")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "furnace: smelt binary not found on PATH.")
 		fmt.Fprintln(os.Stderr, "  install smelt, or run: furnace run <target> --smelt /path/to/smelt")
 		os.Exit(2)
 	}
-	p := tea.NewProgram(replay.NewApp(bin, "runs"), tea.WithAltScreen())
+	app := replay.NewApp(bin, "runs")
+	app.Anim = animEnabled(noAnim)
+	p := tea.NewProgram(app, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "furnace: %v\n", err)
 		os.Exit(1)

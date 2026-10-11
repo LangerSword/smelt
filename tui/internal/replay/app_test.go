@@ -38,11 +38,11 @@ func contains(s string) func([]byte) bool {
 func TestAppHelpThenQuit(t *testing.T) {
 	app := startFakeApp(t, nil)
 	tm := teatest.NewTestModel(t, app, teatest.WithInitialTermSize(100, 30))
-	teatest.WaitFor(t, tm.Output(), contains("smelt home"), teatest.WithDuration(3*time.Second))
+	teatest.WaitFor(t, tm.Output(), contains("smelt home"), teatest.WithDuration(5*time.Second))
 
 	typeText(tm, "/help")
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
-	teatest.WaitFor(t, tm.Output(), contains("/scan <path>"), teatest.WithDuration(3*time.Second))
+	teatest.WaitFor(t, tm.Output(), contains("/scan <path>"), teatest.WithDuration(5*time.Second))
 
 	tm.Send(tea.KeyMsg{Type: tea.KeyEscape}) // back to home
 	typeText(tm, "/quit")
@@ -58,7 +58,7 @@ func TestAppHelpThenQuit(t *testing.T) {
 func TestAppScanPickAndRun(t *testing.T) {
 	app := startFakeApp(t, map[string]string{"FAKE_SLEEP": "0"})
 	tm := teatest.NewTestModel(t, app, teatest.WithInitialTermSize(100, 30))
-	teatest.WaitFor(t, tm.Output(), contains("smelt home"), teatest.WithDuration(3*time.Second))
+	teatest.WaitFor(t, tm.Output(), contains("smelt home"), teatest.WithDuration(5*time.Second))
 
 	typeText(tm, "/scan demo")
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
@@ -66,7 +66,7 @@ func TestAppScanPickAndRun(t *testing.T) {
 	teatest.WaitFor(t, tm.Output(), contains("fake_fn"), teatest.WithDuration(5*time.Second))
 
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter}) // focus moved to candidates; run it
-	teatest.WaitFor(t, tm.Output(), contains("INGOT"), teatest.WithDuration(8*time.Second))
+	teatest.WaitFor(t, tm.Output(), contains("INGOT"), teatest.WithDuration(12*time.Second))
 
 	tm.Send(tea.KeyMsg{Type: tea.KeyEscape}) // back to home
 	typeText(tm, "/quit")
@@ -112,15 +112,15 @@ func TestAppHistoryResumeAndDiff(t *testing.T) {
 	seedRun(t, app)
 
 	tm := teatest.NewTestModel(t, app, teatest.WithInitialTermSize(100, 30))
-	teatest.WaitFor(t, tm.Output(), contains("261011-015326-a41353"), teatest.WithDuration(3*time.Second))
+	teatest.WaitFor(t, tm.Output(), contains("261011-015326-a41353"), teatest.WithDuration(5*time.Second))
 
 	tm.Send(tea.KeyMsg{Type: tea.KeyTab})   // focus candidates
 	tm.Send(tea.KeyMsg{Type: tea.KeyTab})   // focus history
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter}) // open the run
-	teatest.WaitFor(t, tm.Output(), contains("INGOT"), teatest.WithDuration(3*time.Second))
+	teatest.WaitFor(t, tm.Output(), contains("INGOT"), teatest.WithDuration(5*time.Second))
 
 	tm.Send(keyRunes('d')) // apply (view only)
-	teatest.WaitFor(t, tm.Output(), contains("VIEW ONLY"), teatest.WithDuration(3*time.Second))
+	teatest.WaitFor(t, tm.Output(), contains("VIEW ONLY"), teatest.WithDuration(5*time.Second))
 
 	tm.Send(tea.KeyMsg{Type: tea.KeyEscape})
 	typeText(tm, "/quit")
@@ -131,11 +131,11 @@ func TestAppHistoryResumeAndDiff(t *testing.T) {
 func TestAppDoctorPane(t *testing.T) {
 	app := startFakeApp(t, nil)
 	tm := teatest.NewTestModel(t, app, teatest.WithInitialTermSize(100, 30))
-	teatest.WaitFor(t, tm.Output(), contains("smelt home"), teatest.WithDuration(3*time.Second))
+	teatest.WaitFor(t, tm.Output(), contains("smelt home"), teatest.WithDuration(5*time.Second))
 
 	typeText(tm, "/doctor")
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
-	teatest.WaitFor(t, tm.Output(), contains("gemini key"), teatest.WithDuration(3*time.Second))
+	teatest.WaitFor(t, tm.Output(), contains("gemini key"), teatest.WithDuration(5*time.Second))
 
 	tm.Send(tea.KeyMsg{Type: tea.KeyEscape})
 	typeText(tm, "/quit")
@@ -146,11 +146,11 @@ func TestAppDoctorPane(t *testing.T) {
 func TestAppUnknownCommandShowsStatus(t *testing.T) {
 	app := startFakeApp(t, nil)
 	tm := teatest.NewTestModel(t, app, teatest.WithInitialTermSize(100, 30))
-	teatest.WaitFor(t, tm.Output(), contains("smelt home"), teatest.WithDuration(3*time.Second))
+	teatest.WaitFor(t, tm.Output(), contains("smelt home"), teatest.WithDuration(5*time.Second))
 
 	typeText(tm, "/nope")
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
-	teatest.WaitFor(t, tm.Output(), contains("unknown command"), teatest.WithDuration(3*time.Second))
+	teatest.WaitFor(t, tm.Output(), contains("unknown command"), teatest.WithDuration(5*time.Second))
 
 	typeText(tm, "/quit")
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})

@@ -23,8 +23,9 @@ go build -o furnace .        # requires Go 1.27+
 ```
 
 Keys: `q` quit (during a live run it stops the run first) · `tab` switch pane ·
-`↑`/`↓` (also `pgup`/`pgdn`) scroll the log when focused. The footer states the
-schema version.
+`↑`/`↓` (also `pgup`/`pgdn`) scroll the log when focused · `?` help overlay.
+`--no-anim` freezes the heat-pulse (also automatic with `NO_COLOR` or `TERM=dumb`).
+The footer states the schema version.
 
 What it shows:
 
@@ -81,8 +82,20 @@ Fixtures under `testdata/runs/` are real run slices: three REAL Gemini runs
 unit fixture with no model involved — provenance in
 [`testdata/runs/README.md`](testdata/runs/README.md). `testdata/fake-smelt.sh`
 is the deterministic fake (dispatch: run / scan / doctor / apply) used by the
-tests — no API calls. Note: the suite runs locally today; the Go test job in
-CI lands with T4.
+tests — no API calls. The suite runs locally **and in CI** (the `go` job in
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml): build + vet + test).
+
+## Demo assets
+
+- [`testdata/demo.gif`](testdata/demo.gif) — a short loop rendered from **real
+  captured session frames** (home banner → heating → INGOT (local) → INGOT
+  (gemini) → history).
+- [`testdata/demo.tape`](testdata/demo.tape) — the VHS script for a full
+  recording (replay accepted → replay refused → live local run). Recording
+  needs `vhs`, `ttyd` and `ffmpeg` on PATH; vhs/ttyd were not installed on the
+  build machine, so the tape is committed ready-to-record:
+  `go install github.com/charmbracelet/vhs@latest`, install ttyd, then
+  `vhs tui/testdata/demo.tape` from the repo root.
 
 ## Licenses (verified from module-cache LICENSE files)
 

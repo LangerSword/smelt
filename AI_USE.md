@@ -68,6 +68,13 @@ This file records how AI was used to build smelt, and who reviewed what.
   `smelt apply` (commit `194382c`; honest capability report, NOT the full G3).
   Real gate: scan → pick → run → view result, all inside the TUI (INGOT 2.06x,
   lb 2.04x). Developer reviews the command surface and the scan/apply additions.
+- **Furnace T4 (branch `feature/furnace`)**: Hermes build agent added theme polish
+  (flame banner, heat-pulse with `--no-anim` / NO_COLOR auto-off, `?` help overlay),
+  the **Go CI job** (build + vet + test in `.github/workflows/ci.yml`), the
+  `smelt furnace` launcher + `smelt doctor` check, and demo assets — a VHS tape
+  (`tui/testdata/demo.tape`, ready to record; vhs/ttyd were not installed) and a
+  GIF rendered from real captured session frames (`tui/testdata/demo.gif`).
+  Developer reviews the tape before recording.
 
 ## Scope note
 

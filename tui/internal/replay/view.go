@@ -123,6 +123,9 @@ func (m *Model) flowLine() string {
 		}
 		if n == active && !reached[n] {
 			tag = "◐" // heating
+			if m.Anim {
+				tag = []string{"◐", "◓", "◑", "◒"}[m.pulse%4] // subtle heat-pulse
+			}
 		}
 		if n == "verdict" {
 			switch m.Sum.Status {

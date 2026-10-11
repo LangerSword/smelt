@@ -85,6 +85,7 @@ type App struct {
 	RunsDir       string
 	Provider      string
 	Model         string
+	Anim          bool
 
 	Input    textinput.Model
 	Focus    int // 0 input, 1 candidates, 2 history
@@ -173,6 +174,9 @@ func (a *App) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return a, nil
 		}
 		switch msg.String() {
+		case "?":
+			a.showText("help", helpText)
+			return a, nil
 		case "esc":
 			a.stopLiveIfRunning()
 			a.Screen = ScreenHome
@@ -214,6 +218,9 @@ func (a *App) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			} else {
 				a.Input.Blur()
 			}
+			return a, nil
+		case "?":
+			a.showText("help", helpText)
 			return a, nil
 		case "enter":
 			return a.homeEnter()
@@ -369,6 +376,7 @@ func (a *App) openRun(dir string) tea.Cmd {
 		return nil
 	}
 	a.Run = New(sum)
+	a.Run.Anim = a.Anim
 	a.Screen = ScreenRun
 	a.Run.Update(tea.WindowSizeMsg{Width: a.Width, Height: a.Height - 1})
 	return nil
@@ -453,6 +461,7 @@ func (a *App) handleSmeltResult(msg smeltResultMsg) tea.Cmd {
 		sum := &RunSummary{Dir: a.RunsDir, Status: "in_progress", Target: msg.arg,
 			Provider: a.Provider, Model: a.Model}
 		a.Run = NewLive(sum, msg._live)
+		a.Run.Anim = a.Anim
 		a.Screen = ScreenRun
 		a.Run.Update(tea.WindowSizeMsg{Width: a.Width, Height: a.Height - 1})
 		a.Status = "running: " + msg.arg
@@ -521,6 +530,17 @@ func (a *App) View() string {
 	return a.homeView()
 }
 
+// banner is the small home-screen crest (≤6 lines, colour never carries meaning).
+func banner() string {
+	return colDim.Render(strings.Join([]string{
+		"     (",
+		"    ) (    FURNACE — smelt a slow Python function",
+		"   (   )   into verified Rust. Only proven metal ships.",
+		"    ) (",
+		"     (",
+	}, "\n"))
+}
+
 func (a *App) homeView() string {
 	var b strings.Builder
 	right := fit(a.Provider+" · "+a.modelDisplay(), a.Width/3)
@@ -530,6 +550,7 @@ func (a *App) homeView() string {
 		pad = 1
 	}
 	b.WriteString(" " + left + strings.Repeat(" ", pad) + right + "\n")
+	b.WriteString(banner() + "\n")
 
 	// two side-by-side boxes: candidates | recent runs
 	boxW := a.Width/2 - 2
@@ -568,7 +589,7 @@ func (a *App) homeView() string {
 	if len(a.History) == 0 {
 		histLines = append(histLines, "  (none yet)")
 	}
-	maxLines := a.Height - 8
+	maxLines := a.Height - 13
 	if maxLines < 3 {
 		maxLines = 3
 	}
@@ -587,6 +608,6 @@ func (a *App) homeView() string {
 	} else {
 		b.WriteString("\n")
 	}
-	b.WriteString(colDim.Render(fit(" tab panes · enter run/open · /help · ctrl+c quit", a.Width-1)))
+	b.WriteString(colDim.Render(fit(" tab panes · enter run/open · ? help · ctrl+c quit", a.Width-1)))
 	return b.String()
 }
