@@ -1,14 +1,30 @@
 [project]
 name = "smelt-rs"
-version = "0.1.0"
+version = "0.6.0"
 description = "Smelt a slow pure Python function into a verified Rust extension. Oracle first, speedup measured — only proven metal ships. Not a networking tool."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
+authors = [{ name = "Lakshaya Sharma", email = "langersword@outlook.com" }]
+keywords = ["rust", "pyo3", "performance", "agent", "evals", "oracle", "code-generation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Rust",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "typer>=0.12",
     "rich>=13",
 ]
+
+[project.urls]
+Homepage = "https://github.com/LangerSword/smelt"
+Repository = "https://github.com/LangerSword/smelt"
+Issues = "https://github.com/LangerSword/smelt/issues"
 
 [project.scripts]
 smelt = "smelt_rs.cli:main"

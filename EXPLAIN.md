@@ -108,6 +108,16 @@ core remains the source of truth; Furnace never runs generated code. Tests: 26 (
 teatest, incl. a deterministic fake-smelt suite and the required 80-column cases); runs
 locally today — the Go CI job lands with T4.
 
+## Generalization (branch `feature/general`)
+Multi-parameter targets are supported: oracles use independent random columns per
+parameter plus a capped edge product; keyword-only/variadic parameters are typed
+refusals with hints. Rust panics become Python exceptions (worker catches
+BaseException and records them — the process never aborts). The meta-eval runs two
+batteries (13 wrong rewrites total, all rejected). Known domain gap: inputs whose
+Python result exceeds i64 (e.g. `i64::MIN // -1`) cannot be matched by an i64
+rewrite — such candidates are honestly rejected; the policy decision is the
+developer's. `scan` classifies with tiers (tier 1 supported / refused with reason).
+
 ## skills/smelt — the agent skill
 SKILL.md (Agent Skills open standard; `agentskills validate ./skills/smelt` → exit 0) plus four
 references — oracle format, benchmark protocol, failure taxonomy, provider config — and a thin CLI

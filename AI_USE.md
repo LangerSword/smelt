@@ -75,6 +75,13 @@ This file records how AI was used to build smelt, and who reviewed what.
   (`tui/testdata/demo.tape`, ready to record; vhs/ttyd were not installed) and a
   GIF rendered from real captured session frames (`tui/testdata/demo.gif`).
   Developer reviews the tape before recording.
+- **Steps 1/4/5/6/7 (branch `feature/general` + main)**: Hermes build agent fixed the
+  blind-test messages (typed refusals with hints; each with tests), widened the oracle
+  to multi-parameter targets (meta-eval extended FIRST to 13/13; panics recorded as
+  Python exceptions), updated scan to tier-based classification, re-ran the corpus and
+  the blind list (same frozen sha — no tuning; comparison in `evals/general.md`), and
+  packaged v0.6.0 (wheel + sdist; clean `uv tool install` verified; **not uploaded**).
+  Developer reviews the domain-gap finding (i64-overflow edges) before any oracle change.
 
 ## Scope note
 
