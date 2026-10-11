@@ -1,0 +1,6 @@
+<!-- smelt favicon — the ember mark (same mark as the nav brand). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#0D0F12"/>
+  <path d="M16 4 L21 13 L19.5 13 L19.5 21 L12.5 21 L12.5 13 L11 13 Z" fill="#FF6D3A"/>
+  <rect x="11.5" y="23" width="9" height="3.5" rx="1" fill="#D4A017"/>
+</svg>

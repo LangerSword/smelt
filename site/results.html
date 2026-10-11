@@ -5,28 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Results — smelt</title>
   <meta name="description" content="smelt eval corpus results: 24 tasks, 20 accepted, 4 rejected, 0 errors. Every number labeled with the model that produced it.">
-  <link rel="stylesheet" href="assets/css/site.css">
-  <link rel="stylesheet" href="assets/fonts/fonts.css">
+  <link rel="stylesheet" href="assets/css/site.min.css">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/instrument-serif-3.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/barlow-2.woff2" as="font" type="font/woff2" crossorigin>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-  <nav class="site-nav">
-    <div class="container nav-inner">
-      <a class="brand" href="index.html"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L13 7 L12 7 L12 13 L8 13 L8 7 L7 7 Z" fill="#FF6D3A"/><rect x="7" y="14" width="6" height="2" fill="#D4A017"/></svg>smelt</a>
+  <!-- ============ GLASS PILL NAV ============ -->
+  <div class="nav-shell">
+    <nav class="site-nav" aria-label="Main">
+      <a class="brand" href="index.html">
+        <svg width="21" height="21" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L13 7 L12 7 L12 13 L8 13 L8 7 L7 7 Z" fill="#FF6D3A"/><rect x="7" y="14" width="6" height="2" fill="#D4A017"/></svg>
+        smelt
+      </a>
       <div class="nav-links">
-        <a href="docs.html">Docs</a><a href="results.html">Results</a><a href="install.html">Install</a><a href="changelog.html">Changelog</a><a href="roadmap.html">Roadmap</a>
-        <a class="nav-star" href="https://github.com/LangerSword/smelt">Star</a>
+        <a href="docs.html">Docs</a>
+        <a href="results.html">Results</a>
+        <a href="install.html">Install</a>
+        <a href="changelog.html">Changelog</a>
+        <a class="nav-cta" href="https://github.com/LangerSword/smelt">Star on GitHub</a>
       </div>
-    </div>
-  </nav>
+    </nav>
+  </div>
+
   <main id="main">
     <div class="container">
       <div class="page-header">
         <h1>Results</h1>
         <p>Generated from <code>evals/results.json</code> at build time — never hand-edited. Failures and refusals stay in the table. Every number names the model that produced it.</p>
       </div>
-      <section class="section" style="padding-top:24px">
-        <p class="text-dim mono-label">Source: evals/results.json · provider <code>gemini</code> · model <code>gemma-4-26b-a4b-it</code> · ran on: laptop</p>
+
+      <section class="section" style="padding-top:34px">
+        <!-- GENERATED_RESULTS:START -->
+<p class="text-dim mono-label">Source: evals/results.json · provider <code>gemini</code> · model <code>gemma-4-26b-a4b-it</code> · ran on: laptop</p>
 <div class="results-strip">
 <div class="results-stat"><span class="num" data-count="24">24</span><span class="lbl">tasks</span></div>
 <div class="results-stat"><span class="num ingot" data-count="20">20</span><span class="lbl">accepted</span></div>
@@ -63,37 +75,46 @@
 </tbody></table></div>
 <h3>Speedups — measured, not modeled</h3>
 <p class="text-dim">The gold mark is the conservative lower bound — the acceptance rule reads it, not the median.</p>
-<div class="speedup-row"><code>triangular</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="100.0"></div><div class="speedup-lb" style="left:99.6%"></div></div><span class="mono">47.14x</span></div>
-<div class="speedup-row"><code>collatz_steps</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="48.1"></div><div class="speedup-lb" style="left:46.2%"></div></div><span class="mono">22.68x</span></div>
-<div class="speedup-row"><code>caesar_shift</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="24.4"></div><div class="speedup-lb" style="left:24.3%"></div></div><span class="mono">11.51x</span></div>
-<div class="speedup-row"><code>count_words</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="15.6"></div><div class="speedup-lb" style="left:14.3%"></div></div><span class="mono">7.36x</span></div>
-<div class="speedup-row"><code>longest_alpha_run</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="14.4"></div><div class="speedup-lb" style="left:13.4%"></div></div><span class="mono">6.77x</span></div>
-<div class="speedup-row"><code>count_vowel_runs</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="12.6"></div><div class="speedup-lb" style="left:11.2%"></div></div><span class="mono">5.96x</span></div>
-<div class="speedup-row"><code>popcount</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="10.6"></div><div class="speedup-lb" style="left:10.0%"></div></div><span class="mono">4.99x</span></div>
-<div class="speedup-row"><code>top_word</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="10.5"></div><div class="speedup-lb" style="left:10.0%"></div></div><span class="mono">4.96x</span></div>
-<div class="speedup-row"><code>digital_root</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="7.0"></div><div class="speedup-lb" style="left:6.9%"></div></div><span class="mono">3.32x</span></div>
-<div class="speedup-row"><code>sum_digits_sq</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="6.4"></div><div class="speedup-lb" style="left:6.0%"></div></div><span class="mono">3.01x</span></div>
-<div class="speedup-row"><code>snake_to_camel</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="5.6"></div><div class="speedup-lb" style="left:5.3%"></div></div><span class="mono">2.66x</span></div>
-<div class="speedup-row"><code>is_palindrome_norm</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="5.1"></div><div class="speedup-lb" style="left:5.1%"></div></div><span class="mono">2.40x</span></div>
-<div class="speedup-row"><code>bucket_hash</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="4.7"></div><div class="speedup-lb" style="left:4.6%"></div></div><span class="mono">2.23x</span></div>
-<div class="speedup-row"><code>reverse_digits</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="4.6"></div><div class="speedup-lb" style="left:4.6%"></div></div><span class="mono">2.19x</span></div>
-<div class="speedup-row"><code>count_peaks</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="4.5"></div><div class="speedup-lb" style="left:4.3%"></div></div><span class="mono">2.13x</span></div>
-<div class="speedup-row"><code>sum_squares</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.7"></div><div class="speedup-lb" style="left:3.5%"></div></div><span class="mono">1.74x</span></div>
-<div class="speedup-row"><code>max_subarray</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.6"></div><div class="speedup-lb" style="left:3.3%"></div></div><span class="mono">1.72x</span></div>
-<div class="speedup-row"><code>sigmoid_approx</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.5"></div><div class="speedup-lb" style="left:3.4%"></div></div><span class="mono">1.65x</span></div>
-<div class="speedup-row"><code>longest_run</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.5"></div><div class="speedup-lb" style="left:3.3%"></div></div><span class="mono">1.64x</span></div>
-<div class="speedup-row"><code>reverse_words</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.4"></div><div class="speedup-lb" style="left:3.3%"></div></div><span class="mono">1.61x</span></div>
+<div class="speedup-row"><code>triangular</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="100.0"></div><div class="speedup-lb" data-lb-w="99.6" style="left:99.6%"></div></div><span class="mono">47.14x</span></div>
+<div class="speedup-row"><code>collatz_steps</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="48.1"></div><div class="speedup-lb" data-lb-w="46.2" style="left:46.2%"></div></div><span class="mono">22.68x</span></div>
+<div class="speedup-row"><code>caesar_shift</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="24.4"></div><div class="speedup-lb" data-lb-w="24.3" style="left:24.3%"></div></div><span class="mono">11.51x</span></div>
+<div class="speedup-row"><code>count_words</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="15.6"></div><div class="speedup-lb" data-lb-w="14.3" style="left:14.3%"></div></div><span class="mono">7.36x</span></div>
+<div class="speedup-row"><code>longest_alpha_run</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="14.4"></div><div class="speedup-lb" data-lb-w="13.4" style="left:13.4%"></div></div><span class="mono">6.77x</span></div>
+<div class="speedup-row"><code>count_vowel_runs</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="12.6"></div><div class="speedup-lb" data-lb-w="11.2" style="left:11.2%"></div></div><span class="mono">5.96x</span></div>
+<div class="speedup-row"><code>popcount</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="10.6"></div><div class="speedup-lb" data-lb-w="10.0" style="left:10.0%"></div></div><span class="mono">4.99x</span></div>
+<div class="speedup-row"><code>top_word</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="10.5"></div><div class="speedup-lb" data-lb-w="10.0" style="left:10.0%"></div></div><span class="mono">4.96x</span></div>
+<div class="speedup-row"><code>digital_root</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="7.0"></div><div class="speedup-lb" data-lb-w="6.9" style="left:6.9%"></div></div><span class="mono">3.32x</span></div>
+<div class="speedup-row"><code>sum_digits_sq</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="6.4"></div><div class="speedup-lb" data-lb-w="6.0" style="left:6.0%"></div></div><span class="mono">3.01x</span></div>
+<div class="speedup-row"><code>snake_to_camel</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="5.6"></div><div class="speedup-lb" data-lb-w="5.3" style="left:5.3%"></div></div><span class="mono">2.66x</span></div>
+<div class="speedup-row"><code>is_palindrome_norm</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="5.1"></div><div class="speedup-lb" data-lb-w="5.1" style="left:5.1%"></div></div><span class="mono">2.40x</span></div>
+<div class="speedup-row"><code>bucket_hash</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="4.7"></div><div class="speedup-lb" data-lb-w="4.6" style="left:4.6%"></div></div><span class="mono">2.23x</span></div>
+<div class="speedup-row"><code>reverse_digits</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="4.6"></div><div class="speedup-lb" data-lb-w="4.6" style="left:4.6%"></div></div><span class="mono">2.19x</span></div>
+<div class="speedup-row"><code>count_peaks</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="4.5"></div><div class="speedup-lb" data-lb-w="4.3" style="left:4.3%"></div></div><span class="mono">2.13x</span></div>
+<div class="speedup-row"><code>sum_squares</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.7"></div><div class="speedup-lb" data-lb-w="3.5" style="left:3.5%"></div></div><span class="mono">1.74x</span></div>
+<div class="speedup-row"><code>max_subarray</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.6"></div><div class="speedup-lb" data-lb-w="3.3" style="left:3.3%"></div></div><span class="mono">1.72x</span></div>
+<div class="speedup-row"><code>sigmoid_approx</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.5"></div><div class="speedup-lb" data-lb-w="3.4" style="left:3.4%"></div></div><span class="mono">1.65x</span></div>
+<div class="speedup-row"><code>longest_run</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.5"></div><div class="speedup-lb" data-lb-w="3.3" style="left:3.3%"></div></div><span class="mono">1.64x</span></div>
+<div class="speedup-row"><code>reverse_words</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.4"></div><div class="speedup-lb" data-lb-w="3.3" style="left:3.3%"></div></div><span class="mono">1.61x</span></div>
+<!-- GENERATED_RESULTS:END -->
       </section>
 
-      <section class="section" id="speedups">
-        <p class="mono-label">speedups — measured, not modeled</p>
-        <h2>Accepted speedups with confidence</h2>
-        <p class="text-dim">The gold mark is the conservative lower bound — the acceptance rule reads it, not the median. Model: <code>gemma-4-26b-a4b-it</code>.</p>
-        <div id="speedup-bars"></div>
+      <section class="section" id="meta">
+        <p class="eyebrow">False-accept gate</p>
+        <h2>Wrong rewrites are rejected</h2>
+        <p>
+          <strong>13/13</strong> deliberately wrong rewrites rejected by the meta-eval (plus a
+          <strong>16/16</strong> tuple battery). The oracle catches wrong values, wrong exceptions,
+          and panics — so a plausible-looking candidate cannot slip through.
+        </p>
+        <p class="text-dim">
+          Source: <a href="https://github.com/LangerSword/smelt/blob/main/scripts/meta_eval.py">scripts/meta_eval.py</a> ·
+          full corpus: <a href="https://github.com/LangerSword/smelt/blob/main/evals/results.json">evals/results.json</a>
+        </p>
       </section>
 
       <section class="section" id="cli">
-        <h2 id="cli-reference">CLI reference</h2>
+        <!-- GENERATED_CLI:START -->
+<h2 id="cli-reference">CLI reference</h2>
 <p class="text-dim">Generated from <code>smelt --help</code> and <code>docs/cli.md</code>. Every command, flag and exit code.</p>
 <h3>Commands</h3>
 <pre class="terminal-body"><code>
@@ -142,21 +163,64 @@ smelt furnace                                         # launch the Go TUI if ins
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
 </code></pre>
-      </section>
-
-      <section class="section" id="meta">
-        <p class="mono-label">meta-eval — false-accept gate</p>
-        <h2>Wrong rewrites are rejected</h2>
-        <p><strong>10/10</strong> hand-written wrong rewrites rejected by <a href="https://github.com/LangerSword/smelt/blob/main/scripts/meta_eval.py">scripts/meta_eval.py</a>. The oracle catches wrong values, wrong exceptions, and panics.</p>
+<!-- GENERATED_CLI:END -->
       </section>
     </div>
   </main>
-  <footer class="site-footer"><div class="container footer-inner">
-    <div><p class="mono-label">smelt · MIT</p></div>
-    <div class="footer-links"><a href="https://github.com/LangerSword/smelt">GitHub</a><a href="https://github.com/LangerSword/smelt/blob/main/evals/results.json">results.json</a><a href="index.html">Home</a></div>
-  </div></footer>
-  <script src="assets/js/vendor/gsap.min.js"></script>
-  <script src="assets/js/vendor/ScrollTrigger.min.js"></script>
-  <script src="assets/js/site.js"></script>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <a class="brand" href="index.html">
+            <svg width="21" height="21" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L13 7 L12 7 L12 13 L8 13 L8 7 L7 7 Z" fill="#FF6D3A"/><rect x="7" y="14" width="6" height="2" fill="#D4A017"/></svg>
+            smelt
+          </a>
+          <p>Smelt slow Python into a verified Rust extension. Only proven metal ships.</p>
+        </div>
+        <div class="footer-cols">
+          <div class="footer-col">
+            <h3 class="footer-heading">Project</h3>
+            <a href="https://github.com/LangerSword/smelt">GitHub</a>
+            <a href="https://github.com/LangerSword/smelt/issues">Issues</a>
+            <a href="https://github.com/LangerSword/smelt/releases">Releases</a>
+            <a href="changelog.html">Changelog</a>
+          </div>
+          <div class="footer-col">
+            <h3 class="footer-heading">Learn</h3>
+            <a href="docs.html#quickstart">Quickstart</a>
+            <a href="docs.html#how-it-works">How it works</a>
+            <a href="results.html">Results</a>
+            <a href="roadmap.html">Roadmap &amp; FAQ</a>
+          </div>
+          <div class="footer-col">
+            <h3 class="footer-heading">Trust</h3>
+            <a href="docs.html#limits">Honest limits</a>
+            <a href="docs.html#security">Security model</a>
+            <a href="docs.html#license">License &amp; AI use</a>
+            <a href="install.sh">Install script</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-base">
+        <span>MIT · built at sudo Hacktober (MLH, SRM AP Amaravati), Oct 10–11 2026, solo</span>
+        <span>smelt-rs · no trackers, no analytics</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- SITE_SCRIPTS:START -->
+<!-- Vendored GSAP 3.13 (GreenSock No Charge license) + built site bundle.
+     Every page loads the identical set: site.js references DrawSVGPlugin and
+     SplitText on any page that carries those elements, and one shared partial
+     keeps that from drifting. Replace this block via scripts/build.py. -->
+<script src="assets/js/vendor/gsap.min.js"></script>
+<script src="assets/js/vendor/ScrollTrigger.min.js"></script>
+<script src="assets/js/vendor/SplitText.min.js"></script>
+<script src="assets/js/vendor/DrawSVGPlugin.min.js"></script>
+<script src="assets/js/vendor/MotionPathPlugin.min.js"></script>
+<script src="assets/js/site.js"></script>
+
+<!-- SITE_SCRIPTS:END -->
 </body>
 </html>

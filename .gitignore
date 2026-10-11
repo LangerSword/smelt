@@ -9,3 +9,12 @@ dist/
 .cache/
 target/
 .maturin/
+
+# site build artifacts
+site/node_modules/
+site/build/
+site/.lighthouse/
+site/.lighthouseci/
+
+# stray Go build output
+/furnace

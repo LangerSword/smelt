@@ -69,7 +69,7 @@ def render(results_json: Path, out_path: Path | None) -> str:
             f'<code>{html.escape(r["function"])}</code>'
             f'<div class="speedup-track">'
             f'<div class="speedup-bar-fill" data-w="{w:.1f}"></div>'
-            f'<div class="speedup-lb" style="left:{lb_w:.1f}%"></div>'
+            f'<div class="speedup-lb" data-lb-w="{lb_w:.1f}" style="left:{lb_w:.1f}%"></div>'
             f'</div>'
             f'<span class="mono">{fmt_x(r["speedup"])}</span>'
             f'</div>'

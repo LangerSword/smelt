@@ -4,54 +4,114 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Changelog — smelt</title>
-  <meta name="description" content="smelt release history.">
-  <link rel="stylesheet" href="assets/css/site.css">
-  <link rel="stylesheet" href="assets/fonts/fonts.css">
+  <meta name="description" content="smelt stack-item history.">
+  <link rel="stylesheet" href="assets/css/site.min.css">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/instrument-serif-3.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/barlow-2.woff2" as="font" type="font/woff2" crossorigin>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-  <nav class="site-nav">
-    <div class="container nav-inner">
-      <a class="brand" href="index.html"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L13 7 L12 7 L12 13 L8 13 L8 7 L7 7 Z" fill="#FF6D3A"/><rect x="7" y="14" width="6" height="2" fill="#D4A017"/></svg>smelt</a>
+  <!-- ============ GLASS PILL NAV ============ -->
+  <div class="nav-shell">
+    <nav class="site-nav" aria-label="Main">
+      <a class="brand" href="index.html">
+        <svg width="21" height="21" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L13 7 L12 7 L12 13 L8 13 L8 7 L7 7 Z" fill="#FF6D3A"/><rect x="7" y="14" width="6" height="2" fill="#D4A017"/></svg>
+        smelt
+      </a>
       <div class="nav-links">
-        <a href="docs.html">Docs</a><a href="results.html">Results</a><a href="install.html">Install</a><a href="changelog.html">Changelog</a><a href="roadmap.html">Roadmap</a>
-        <a class="nav-star" href="https://github.com/LangerSword/smelt">Star</a>
+        <a href="docs.html">Docs</a>
+        <a href="results.html">Results</a>
+        <a href="install.html">Install</a>
+        <a href="changelog.html">Changelog</a>
+        <a class="nav-cta" href="https://github.com/LangerSword/smelt">Star on GitHub</a>
       </div>
-    </div>
-  </nav>
+    </nav>
+  </div>
   <main id="main">
     <div class="container">
       <div class="page-header"><h1>Changelog</h1><p>Release history. <a href="https://github.com/LangerSword/smelt/releases">Full releases on GitHub →</a></p></div>
       <section class="section">
-        <article class="release">
+        <article class="stack-item">
           <h2>v0.6.0 — furnace <span class="mono-label">current</span></h2>
           <p class="text-dim">Core loop + CLI + evals + validated agent skill + Furnace TUI + multi-parameter oracle. Wheel and sdist build green and install-verified; PyPI upload pending.</p>
         </article>
-        <article class="release">
+        <article class="stack-item">
           <h2>v0.4.0 — skill</h2>
           <p class="text-dim">Validated agent skill following the Agent Skills open standard (<code>agentskills validate</code> → exit 0).</p>
         </article>
-        <article class="release">
+        <article class="stack-item">
           <h2>v0.3.0 — evals</h2>
           <p class="text-dim">Frozen eval corpus, sequential runner with call cap, generated results tables, and the meta-eval false-accept gate.</p>
         </article>
-        <article class="release">
+        <article class="stack-item">
           <h2>v0.2.0 — cli</h2>
           <p class="text-dim">Full CLI: run, capture, resume, report, doctor, evals. Typed refusals with hints.</p>
         </article>
-        <article class="release">
+        <article class="stack-item">
           <h2>v0.1.0 — core</h2>
           <p class="text-dim">The deterministic orchestrator: purity check, oracle capture, generate, build, verify, bench, verdict.</p>
         </article>
       </section>
     </div>
   </main>
-  <footer class="site-footer"><div class="container footer-inner">
-    <div><p class="mono-label">smelt · MIT</p></div>
-    <div class="footer-links"><a href="https://github.com/LangerSword/smelt/releases">Releases</a><a href="index.html">Home</a></div>
-  </div></footer>
-  <script src="assets/js/vendor/gsap.min.js"></script>
-  <script src="assets/js/vendor/ScrollTrigger.min.js"></script>
-  <script src="assets/js/site.js"></script>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <a class="brand" href="index.html">
+            <svg width="21" height="21" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L13 7 L12 7 L12 13 L8 13 L8 7 L7 7 Z" fill="#FF6D3A"/><rect x="7" y="14" width="6" height="2" fill="#D4A017"/></svg>
+            smelt
+          </a>
+          <p>Smelt slow Python into a verified Rust extension. Only proven metal ships.</p>
+        </div>
+        <div class="footer-cols">
+          <div class="footer-col">
+            <h3 class="footer-heading">Project</h3>
+            <a href="https://github.com/LangerSword/smelt">GitHub</a>
+            <a href="https://github.com/LangerSword/smelt/issues">Issues</a>
+            <a href="https://github.com/LangerSword/smelt/releases">Releases</a>
+            <a href="changelog.html">Changelog</a>
+          </div>
+          <div class="footer-col">
+            <h3 class="footer-heading">Learn</h3>
+            <a href="docs.html#quickstart">Quickstart</a>
+            <a href="docs.html#how-it-works">How it works</a>
+            <a href="results.html">Results</a>
+            <a href="roadmap.html">Roadmap &amp; FAQ</a>
+          </div>
+          <div class="footer-col">
+            <h3 class="footer-heading">Trust</h3>
+            <a href="docs.html#limits">Honest limits</a>
+            <a href="docs.html#security">Security model</a>
+            <a href="docs.html#license">License &amp; AI use</a>
+            <a href="install.sh">Install script</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-base">
+        <span>MIT · built at sudo Hacktober (MLH, SRM AP Amaravati), Oct 10–11 2026, solo</span>
+        <span>smelt-rs · no trackers, no analytics</span>
+      </div>
+    </div>
+  </footer>
+  <!-- Vendored GSAP 3.13 (GreenSock No Charge license) + built site bundle.
+     Every page loads the identical set: site.js references DrawSVGPlugin and
+     SplitText on any page that carries those elements, and one shared partial
+     keeps that from drifting. Replace this block via scripts/build.py. -->
+<!-- SITE_SCRIPTS:START -->
+<!-- Vendored GSAP 3.13 (GreenSock No Charge license) + built site bundle.
+     Every page loads the identical set: site.js references DrawSVGPlugin and
+     SplitText on any page that carries those elements, and one shared partial
+     keeps that from drifting. Replace this block via scripts/build.py. -->
+<script src="assets/js/vendor/gsap.min.js"></script>
+<script src="assets/js/vendor/ScrollTrigger.min.js"></script>
+<script src="assets/js/vendor/SplitText.min.js"></script>
+<script src="assets/js/vendor/DrawSVGPlugin.min.js"></script>
+<script src="assets/js/vendor/MotionPathPlugin.min.js"></script>
+<script src="assets/js/site.js"></script>
+
+<!-- SITE_SCRIPTS:END -->
+
 </body>
 </html>

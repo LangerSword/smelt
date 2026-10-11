@@ -4,21 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>smelt — Smelt slow Python into Rust. Only proven metal ships.</title>
-  <meta name="description" content="smelt freezes a pure Python function into a differential oracle, has a model write a verified Rust extension, and only ships code that passes every recorded case with a measured speedup.">
+  <meta name="description" content="smelt freezes a pure Python function into a differential oracle — 200+ recorded cases — has a model write a Rust extension, and ships only code that passes every case with a measured speedup. Install with: uv tool install smelt-rs.">
   <meta property="og:title" content="smelt — Only proven metal ships">
   <meta property="og:description" content="Smelt slow Python into a verified Rust extension. Only proven metal ships.">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="assets/css/site.css">
-  <link rel="stylesheet" href="assets/fonts/fonts.css">
+  <link rel="stylesheet" href="assets/css/site.min.css">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/instrument-serif-3.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/barlow-2.woff2" as="font" type="font/woff2" crossorigin>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <nav class="site-nav">
-    <div class="container nav-inner">
+  <!-- ============ 1. GLASS PILL NAV ============ -->
+  <div class="nav-shell">
+    <nav class="site-nav" aria-label="Main">
       <a class="brand" href="index.html">
-        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L13 7 L12 7 L12 13 L8 13 L8 7 L7 7 Z" fill="#FF6D3A"/><rect x="7" y="14" width="6" height="2" fill="#D4A017"/></svg>
+        <svg width="21" height="21" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L13 7 L12 7 L12 13 L8 13 L8 7 L7 7 Z" fill="#FF6D3A"/><rect x="7" y="14" width="6" height="2" fill="#D4A017"/></svg>
         smelt
       </a>
       <div class="nav-links">
@@ -26,265 +29,343 @@
         <a href="results.html">Results</a>
         <a href="install.html">Install</a>
         <a href="changelog.html">Changelog</a>
-        <a href="roadmap.html">Roadmap</a>
-        <a class="nav-star" href="https://github.com/LangerSword/smelt" aria-label="GitHub repository">
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-          Star
-        </a>
+        <a class="nav-cta" href="https://github.com/LangerSword/smelt">Star on GitHub</a>
       </div>
-    </div>
-  </nav>
+    </nav>
+  </div>
 
   <main id="main">
-    <!-- HERO -->
+
+    <!-- ============ 2. HERO ============ -->
     <section class="hero">
-      <canvas id="embers" aria-hidden="true"></canvas>
+      <canvas class="hero-canvas" id="hero-canvas" aria-hidden="true"></canvas>
       <div class="container">
-        <p class="mono-label hero-tag">ore → ingot · python → rust</p>
+        <p class="hero-pill"><span class="dot"></span> v0.6.0 — core loop · CLI · evals · Furnace TUI</p>
         <h1>
-          <span class="word">Smelt</span> <span class="word">slow</span>
-          <span class="word">Python</span> <span class="word">into</span>
-          <span class="word">Rust.</span><br>
-          <span class="word ember-text">Only</span> <span class="word ember-text">proven</span>
-          <span class="word ember-text">metal</span> <span class="word ember-text">ships.</span>
+          <span class="word">Smelt</span> <span class="word">slow</span> <span class="word">Python</span>
+          <span class="word">into</span> <span class="word"><em>Rust.</em></span><br>
+          <span class="word">Only</span> <span class="word">proven</span> <span class="word">metal</span>
+          <span class="word">ships.</span>
         </h1>
-        <p class="hero-sub text-dim">
-          smelt freezes what your function actually does into a differential oracle — 200+
-          recorded cases, hashed and read-only. A model writes a Rust extension.
-          <strong>Code, not the model, checks the answers.</strong> Anything that fails or
-          shows no real gain is rejected. The Python stays on as fallback.
+        <p class="hero-lead">
+          smelt freezes what your function actually does into a differential oracle — 200+ recorded
+          cases, hashed and read-only. A model writes the Rust. <strong>Code, not the model, checks
+          every answer.</strong> Anything that fails, or shows no real gain, is rejected. The Python
+          stays on as the fallback.
         </p>
         <div class="hero-actions">
           <div class="copy-box">
             <code>uv tool install smelt-rs</code>
             <button class="copy-btn" data-copy="uv tool install smelt-rs" aria-label="Copy install command">copy</button>
           </div>
-          <a class="btn btn-primary" href="docs.html">Read the docs</a>
-          <a class="btn" href="https://github.com/LangerSword/smelt">GitHub</a>
+          <a class="btn btn-primary btn-lg" href="docs.html">Read the docs</a>
         </div>
-        <p class="mono-label hero-note">PyPI release pending — <a href="install.html">install from source</a> today</p>
+        <p class="hero-note">PyPI release pending — <a href="install.html">install from source</a> today</p>
+
+        <!-- Trust row: the real stack, not invented logos -->
+        <div class="trust">
+          <p class="trust-label">Built and verified on</p>
+          <div class="trust-row">
+            <span class="trust-item">Python 3.11+<small>the source language</small></span>
+            <span class="trust-item">Rust · PyO3 0.29.3<small>the target</small></span>
+            <span class="trust-item">maturin<small>packaging</small></span>
+            <span class="trust-item">Gemma 4<small>candidate writer</small></span>
+            <span class="trust-item">llama.cpp<small>offline arm</small></span>
+            <span class="trust-item">MIT<small>license</small></span>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- FURNACE WINDOW — terminal replay -->
+    <!-- ============ 3. STATEMENT ============ -->
+    <section class="statement">
+      <canvas class="statement-canvas" id="statement-canvas" aria-hidden="true"></canvas>
+      <div class="container">
+        <h2>The model writes. <em>Code decides.</em></h2>
+        <p>
+          Acceptance, refusal, retries, verification and benchmarking are all deterministic code.
+          The model fills in one function body inside a pinned scaffold — nothing else. That is the
+          whole design: no wrong rewrite is accepted on the tested inputs.
+        </p>
+        <a class="btn" href="docs.html#how-it-works">How it works</a>
+      </div>
+    </section>
+
+    <!-- ============ 4. ALTERNATING FEATURE ROWS ============ -->
     <section class="section">
       <div class="container">
-        <div class="terminal" id="demo-terminal"
-             data-lines='[
-               ["prompt","$ smelt run examples/demo/run_length.py:rle_encode --provider gemini",600],
-               ["dim","  provider: gemini · model: gemma-4-26b-a4b-it",300],
-               ["","  ▶ select    purity_ok",400],
-               ["","  ▶ oracle    capture 225 cases · hash 60ec55285b23",500],
-               ["","  ▶ generate  writing lib.rs via gemma-4-26b-a4b-it",900],
-               ["","  ▶ build     ok (pyo3 =0.29.3)",600],
-               ["","  ▶ verify    pass 225/225",600],
-               ["","  ▶ bench     rust 11.17ms · python 46.21ms",700],
-               ["bold","  ✔ ACCEPTED — speedup 4.14x (conservative lower bound 4.00x)",0],
-               ["ok","  INGOT",0]
-             ]'>
-          <div class="terminal-bar">
-            <span class="terminal-dot r"></span>
-            <span class="terminal-dot y"></span>
-            <span class="terminal-dot g"></span>
-            <span class="mono-label" style="margin-left:8px">smelt — recorded run · gemma-4-26b-a4b-it</span>
+
+        <!-- Row 1: the recorded run -->
+        <div class="feature-row">
+          <div class="feature-media">
+            <div class="terminal" id="demo-terminal"
+                 data-lines='[
+                   ["prompt","$ smelt run examples/demo/run_length.py:rle_encode --provider gemini",600],
+                   ["dim","  provider: gemini · model: gemma-4-26b-a4b-it",300],
+                   ["","  ▶ select    purity_ok",400],
+                   ["","  ▶ oracle    capture 225 cases · hash 60ec55285b23",500],
+                   ["","  ▶ generate  writing lib.rs via gemma-4-26b-a4b-it",900],
+                   ["","  ▶ build     ok (pyo3 =0.29.3)",600],
+                   ["","  ▶ verify    pass 225/225",600],
+                   ["","  ▶ bench     rust 11.17ms · python 46.21ms",700],
+                   ["bold","  ✔ ACCEPTED — speedup 4.14x (conservative lower bound 4.00x)",0],
+                   ["ok","  INGOT",0]
+                 ]'>
+              <div class="terminal-bar">
+                <span class="terminal-dot r"></span>
+                <span class="terminal-dot y"></span>
+                <span class="terminal-dot g"></span>
+                <span class="terminal-title">smelt — recorded run · gemma-4-26b-a4b-it</span>
+              </div>
+              <div class="terminal-body" aria-live="polite"></div>
+            </div>
           </div>
-          <div class="terminal-body" aria-live="polite"></div>
+          <div class="feature-body">
+            <p class="eyebrow">One function, one loop</p>
+            <h3>A real run, replayed</h3>
+            <p>
+              This is a recorded run against the frozen oracle — not a mock-up. The model wrote the
+              Rust once, the build passed, 225/225 cases matched, and the benchmark measured a
+              <strong>4.14x</strong> speedup with a conservative lower bound of 4.00x.
+            </p>
+            <ul class="feature-list">
+              <li>Deterministic orchestrator — resume any run from its checkpoint</li>
+              <li>Every number labeled with the model that produced it</li>
+              <li>Nothing rounded up; failures stay in the tables</li>
+            </ul>
+            <a class="link-arrow" href="results.html">See every result →</a>
+          </div>
+        </div>
+
+        <!-- Row 2: the oracle (flipped) -->
+        <div class="feature-row flip">
+          <div class="feature-media">
+            <img src="assets/img/oracle-matrix.svg" alt="A grid of oracle cases: 206 recorded input-and-output pairs all matching, with a content hash and a read-only lock" width="640" height="360" loading="lazy">
+          </div>
+          <div class="feature-body">
+            <p class="eyebrow">The oracle</p>
+            <h3>Freeze the behaviour first</h3>
+            <p>
+              Before any model runs, smelt calls your function on 200+ generated inputs and records
+              every answer — values, exceptions, the lot. The corpus is hashed and read-only, so it
+              cannot be tuned to fit a candidate.
+            </p>
+            <ul class="feature-list">
+              <li>str / int / float / bool / list[int] / list[str], single or multi-parameter</li>
+              <li>Panics are recorded as Python exceptions, so error paths are tested too</li>
+              <li>The claim is exactly "equivalent on the tested inputs" — no more</li>
+            </ul>
+            <a class="link-arrow" href="docs.html#oracle">Read the oracle docs →</a>
+          </div>
+        </div>
+
+        <!-- Row 3: the safety wall -->
+        <div class="feature-row">
+          <div class="feature-media">
+            <img src="assets/img/safety-scan.svg" alt="A candidate Rust file passing a static scan gate, with rejected tokens unsafe, build.rs and network access crossed out" width="640" height="360" loading="lazy">
+          </div>
+          <div class="feature-body">
+            <p class="eyebrow">Generated code is untrusted</p>
+            <h3>A pinned scaffold, a hard scan</h3>
+            <p>
+              The model never writes <code>Cargo.toml</code>, never touches the build, and never
+              chooses a crate. It fills one function body. Before anything compiles, a static scan
+              rejects the dangerous surface outright.
+            </p>
+            <ul class="feature-list">
+              <li>Rejected on sight: <code>unsafe</code>, extra crates, <code>build.rs</code>, std net/process/fs, <code>include_*!</code>, <code>env!</code></li>
+              <li>Builds happen in run-scratch dirs; smelt never writes into your project</li>
+              <li>The extension runs in a separate worker process under resource limits</li>
+            </ul>
+            <a class="link-arrow" href="docs.html#safety">Read the safety model →</a>
+          </div>
+        </div>
+
+        <!-- Row 4: Furnace TUI (flipped) -->
+        <div class="feature-row flip">
+          <div class="feature-media">
+            <img src="assets/img/furnace-demo.gif" alt="Furnace: the smelt TUI replaying a finished run — the loop across the top, results and log panes below, verdict INGOT" width="720" height="420" loading="lazy">
+          </div>
+          <div class="feature-body">
+            <p class="eyebrow">Furnace · Go TUI</p>
+            <h3>Watch the metal, not a spinner</h3>
+            <p>
+              Furnace replays finished runs and drives new ones live. It reads the run's event
+              stream and heats the loop as each step lands — the Python core stays the source of
+              truth, and Furnace never executes generated code.
+            </p>
+            <ul class="feature-list">
+              <li>Replay, live run, scan picker, history, view-only diff</li>
+              <li>26 Go tests, run locally and in CI</li>
+              <li>Launch with <code>smelt furnace</code> when the binary is installed</li>
+            </ul>
+            <a class="link-arrow" href="docs.html#tui">Read the Furnace docs →</a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============ 5. FOUR-CARD BENEFITS GRID ============ -->
+    <section class="section" style="padding-top:0">
+      <div class="container">
+        <p class="eyebrow">Why it holds up</p>
+        <h2>Honest by construction.</h2>
+        <div class="grid-4">
+          <div class="card">
+            <h3>Deterministic core</h3>
+            <p>Every transition is checkpointed to <code>state.json</code> and <code>events.jsonl</code>. Interrupt a run, and <code>smelt resume</code> re-validates the hashes and continues.</p>
+          </div>
+          <div class="card">
+            <h3>Rejections are results</h3>
+            <p>Four of twenty-four corpus tasks were rejected at 1.22–1.46x rather than reported as wins. Small functions legitimately fail to beat PyO3 call overhead.</p>
+          </div>
+          <div class="card">
+            <h3>Wrong rewrites get caught</h3>
+            <p>A false-accept gate: 13/13 deliberately wrong rewrites rejected (plus a 16/16 tuple battery) — wrong values, wrong exceptions, and panics all fail the oracle.</p>
+          </div>
+          <div class="card">
+            <h3>Runs offline too</h3>
+            <p>Capture, verify and bench never need the network. A fully local arm runs on <code>gemma-4-e2b-qat</code> via llama.cpp — 18 accepted, 6 rejected, 0 errors.</p>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- THE LOOP -->
-    <section class="section" id="loop">
+    <!-- ============ 6. STATS BAND ============ -->
+    <section class="stats-band">
       <div class="container">
-        <p class="mono-label">the loop</p>
-        <h2>Five steps. Only proven metal ships.</h2>
-        <div class="loop-diagram">
-          <div class="loop-step" data-step="1">
-            <span class="loop-num">1</span>
-            <h3>select</h3>
-            <p class="text-dim">A pure function of simple types. Impure targets are refused with a hint.</p>
+        <div class="stats-grid">
+          <div class="stat">
+            <span class="num"><em data-count="24">24</em></span>
+            <span class="lbl">Corpus tasks</span>
+            <span class="sub">frozen, run sequentially</span>
           </div>
-          <div class="loop-arrow" aria-hidden="true">→</div>
-          <div class="loop-step" data-step="2">
-            <span class="loop-num">2</span>
-            <h3>oracle</h3>
-            <p class="text-dim">Freeze 200+ input/output cases. Hashed, read-only. This is the truth.</p>
+          <div class="stat">
+            <span class="num gold" data-count="20">20</span>
+            <span class="lbl">Accepted</span>
+            <span class="sub">verified on every case</span>
           </div>
-          <div class="loop-arrow" aria-hidden="true">→</div>
-          <div class="loop-step" data-step="3">
-            <span class="loop-num">3</span>
-            <h3>generate</h3>
-            <p class="text-dim">The model writes one Rust function body. It decides nothing else.</p>
+          <div class="stat">
+            <span class="num" data-count="47.14">47.14</span>
+            <span class="lbl">Best speedup</span>
+            <span class="sub">triangular · lower bound 46.97x</span>
           </div>
-          <div class="loop-arrow" aria-hidden="true">→</div>
-          <div class="loop-step" data-step="4">
-            <span class="loop-num">4</span>
-            <h3>build &amp; verify</h3>
-            <p class="text-dim">Pinned scaffold, static scan, then run against every oracle case. Mismatches feed back, max 3 attempts.</p>
-          </div>
-          <div class="loop-arrow" aria-hidden="true">→</div>
-          <div class="loop-step" data-step="5">
-            <span class="loop-num">5</span>
-            <h3>bench &amp; verdict</h3>
-            <p class="text-dim">Measure the speedup with a confidence interval. Must clear 1.5x lower bound.</p>
+          <div class="stat">
+            <span class="num" data-count="0">0</span>
+            <span class="lbl">Harness errors</span>
+            <span class="sub">across the full corpus</span>
           </div>
         </div>
-        <p class="text-dim loop-foot">The orchestrator is deterministic. Transitions are checkpointed, so runs resume. <a href="docs.html">How it works →</a></p>
+        <p class="text-dim stats-source">
+          gemma-4-26b-a4b-it · 36 provider calls (cap 120) · ran on a laptop · generated from evals/results.json
+        </p>
       </div>
     </section>
 
-    <!-- VERDICTS -->
-    <section class="section" id="verdicts">
+    <!-- ============ 7. THREE CARDS — the verdicts ============ -->
+    <section class="section">
       <div class="container">
-        <p class="mono-label">the verdicts</p>
-        <h2>Three outcomes. All honest.</h2>
+        <p class="eyebrow">Three outcomes</p>
+        <h2>All of them honest.</h2>
         <div class="verdicts-grid">
           <div class="verdict verdict-ingot">
             <span class="verdict-badge">INGOT</span>
             <h3>Accepted</h3>
-            <p class="text-dim">Verified on every recorded case, and the measured speedup clears the conservative 1.5x lower bound. This is real metal.</p>
+            <p>Verified on every recorded case, and the measured speedup clears the conservative 1.5x lower bound. Real metal — and the number comes with its confidence interval attached.</p>
           </div>
           <div class="verdict verdict-slag">
             <span class="verdict-badge">SLAG</span>
             <h3>Rejected</h3>
-            <p class="text-dim">No correct rewrite within the attempt budget, or no meaningful gain. Small functions legitimately fail to beat pyo3 call overhead. A correct result, not an error.</p>
+            <p>No correct rewrite within the attempt budget, or no meaningful gain. A correct, honest outcome — not an error. The fallen-away material stays in the table.</p>
           </div>
           <div class="verdict verdict-ash">
             <span class="verdict-badge">ASH</span>
             <h3>Refused</h3>
-            <p class="text-dim">The target is impure (I/O, randomness, time, globals) or an unsupported shape. The message names the reason and a refactor hint.</p>
+            <p>The target is impure — I/O, randomness, time, globals — or an unsupported shape. The message names the reason and a refactor hint. Nothing burns silently.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- RESULTS (generated) -->
-    <section class="section" id="results">
-      <div class="container">
-        <p class="mono-label">results — eval corpus, generated never hand-edited</p>
-        <h2>What actually shipped.</h2>
-        <p class="text-dim mono-label">Source: evals/results.json · provider <code>gemini</code> · model <code>gemma-4-26b-a4b-it</code> · ran on: laptop</p>
-<div class="results-strip">
-<div class="results-stat"><span class="num" data-count="24">24</span><span class="lbl">tasks</span></div>
-<div class="results-stat"><span class="num ingot" data-count="20">20</span><span class="lbl">accepted</span></div>
-<div class="results-stat"><span class="num slag" data-count="4">4</span><span class="lbl">rejected</span></div>
-<div class="results-stat"><span class="num ash" data-count="0">0</span><span class="lbl">errors</span></div>
-</div>
-<div class="table-wrap"><table class="results-table">
-<thead><tr><th>function</th><th>category</th><th>status</th><th>attempts</th><th>oracle cases</th><th>speedup</th><th>lower bound</th></tr></thead>
-<tbody>
-<tr><td><code>linear_score</code></td><td>float</td><td><span class="verdict-badge verdict-slag">rejected</span></td><td>3</td><td>206</td><td class="mono">1.41x</td><td class="mono text-dim">1.37x</td></tr>
-<tr><td><code>sigmoid_approx</code></td><td>float</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>2</td><td>206</td><td class="mono">1.65x</td><td class="mono text-dim">1.60x</td></tr>
-<tr><td><code>collatz_steps</code></td><td>int</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>209</td><td class="mono">22.68x</td><td class="mono text-dim">21.79x</td></tr>
-<tr><td><code>digital_root</code></td><td>int</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>209</td><td class="mono">3.32x</td><td class="mono text-dim">3.24x</td></tr>
-<tr><td><code>popcount</code></td><td>int</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>209</td><td class="mono">4.99x</td><td class="mono text-dim">4.72x</td></tr>
-<tr><td><code>reverse_digits</code></td><td>int</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>209</td><td class="mono">2.19x</td><td class="mono text-dim">2.16x</td></tr>
-<tr><td><code>sum_digits_sq</code></td><td>int</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>209</td><td class="mono">3.01x</td><td class="mono text-dim">2.83x</td></tr>
-<tr><td><code>triangular</code></td><td>int</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>209</td><td class="mono">47.14x</td><td class="mono text-dim">46.97x</td></tr>
-<tr><td><code>bucket_hash</code></td><td>list</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>2</td><td>204</td><td class="mono">2.23x</td><td class="mono text-dim">2.17x</td></tr>
-<tr><td><code>count_peaks</code></td><td>list</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>204</td><td class="mono">2.13x</td><td class="mono text-dim">2.02x</td></tr>
-<tr><td><code>longest_run</code></td><td>list</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>2</td><td>204</td><td class="mono">1.64x</td><td class="mono text-dim">1.54x</td></tr>
-<tr><td><code>max_subarray</code></td><td>list</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>204</td><td class="mono">1.72x</td><td class="mono text-dim">1.56x</td></tr>
-<tr><td><code>median_doubled</code></td><td>list</td><td><span class="verdict-badge verdict-slag">rejected</span></td><td>3</td><td>204</td><td class="mono">1.38x</td><td class="mono text-dim">1.35x</td></tr>
-<tr><td><code>prefix_max_sum</code></td><td>list</td><td><span class="verdict-badge verdict-slag">rejected</span></td><td>3</td><td>204</td><td class="mono">1.46x</td><td class="mono text-dim">1.41x</td></tr>
-<tr><td><code>sum_squares</code></td><td>list</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>204</td><td class="mono">1.74x</td><td class="mono text-dim">1.66x</td></tr>
-<tr><td><code>caesar_shift</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">11.51x</td><td class="mono text-dim">11.48x</td></tr>
-<tr><td><code>count_vowel_runs</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">5.96x</td><td class="mono text-dim">5.28x</td></tr>
-<tr><td><code>count_words</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">7.36x</td><td class="mono text-dim">6.74x</td></tr>
-<tr><td><code>is_palindrome_norm</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">2.40x</td><td class="mono text-dim">2.39x</td></tr>
-<tr><td><code>longest_alpha_run</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">6.77x</td><td class="mono text-dim">6.30x</td></tr>
-<tr><td><code>normalize_spaces</code></td><td>string</td><td><span class="verdict-badge verdict-slag">rejected</span></td><td>3</td><td>225</td><td class="mono">1.22x</td><td class="mono text-dim">1.20x</td></tr>
-<tr><td><code>reverse_words</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">1.61x</td><td class="mono text-dim">1.58x</td></tr>
-<tr><td><code>snake_to_camel</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">2.66x</td><td class="mono text-dim">2.49x</td></tr>
-<tr><td><code>top_word</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>2</td><td>225</td><td class="mono">4.96x</td><td class="mono text-dim">4.74x</td></tr>
-</tbody></table></div>
-<h3>Speedups — measured, not modeled</h3>
-<p class="text-dim">The gold mark is the conservative lower bound — the acceptance rule reads it, not the median.</p>
-<div class="speedup-row"><code>triangular</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="100.0"></div><div class="speedup-lb" style="left:99.6%"></div></div><span class="mono">47.14x</span></div>
-<div class="speedup-row"><code>collatz_steps</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="48.1"></div><div class="speedup-lb" style="left:46.2%"></div></div><span class="mono">22.68x</span></div>
-<div class="speedup-row"><code>caesar_shift</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="24.4"></div><div class="speedup-lb" style="left:24.3%"></div></div><span class="mono">11.51x</span></div>
-<div class="speedup-row"><code>count_words</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="15.6"></div><div class="speedup-lb" style="left:14.3%"></div></div><span class="mono">7.36x</span></div>
-<div class="speedup-row"><code>longest_alpha_run</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="14.4"></div><div class="speedup-lb" style="left:13.4%"></div></div><span class="mono">6.77x</span></div>
-<div class="speedup-row"><code>count_vowel_runs</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="12.6"></div><div class="speedup-lb" style="left:11.2%"></div></div><span class="mono">5.96x</span></div>
-<div class="speedup-row"><code>popcount</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="10.6"></div><div class="speedup-lb" style="left:10.0%"></div></div><span class="mono">4.99x</span></div>
-<div class="speedup-row"><code>top_word</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="10.5"></div><div class="speedup-lb" style="left:10.0%"></div></div><span class="mono">4.96x</span></div>
-<div class="speedup-row"><code>digital_root</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="7.0"></div><div class="speedup-lb" style="left:6.9%"></div></div><span class="mono">3.32x</span></div>
-<div class="speedup-row"><code>sum_digits_sq</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="6.4"></div><div class="speedup-lb" style="left:6.0%"></div></div><span class="mono">3.01x</span></div>
-<div class="speedup-row"><code>snake_to_camel</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="5.6"></div><div class="speedup-lb" style="left:5.3%"></div></div><span class="mono">2.66x</span></div>
-<div class="speedup-row"><code>is_palindrome_norm</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="5.1"></div><div class="speedup-lb" style="left:5.1%"></div></div><span class="mono">2.40x</span></div>
-<div class="speedup-row"><code>bucket_hash</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="4.7"></div><div class="speedup-lb" style="left:4.6%"></div></div><span class="mono">2.23x</span></div>
-<div class="speedup-row"><code>reverse_digits</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="4.6"></div><div class="speedup-lb" style="left:4.6%"></div></div><span class="mono">2.19x</span></div>
-<div class="speedup-row"><code>count_peaks</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="4.5"></div><div class="speedup-lb" style="left:4.3%"></div></div><span class="mono">2.13x</span></div>
-<div class="speedup-row"><code>sum_squares</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.7"></div><div class="speedup-lb" style="left:3.5%"></div></div><span class="mono">1.74x</span></div>
-<div class="speedup-row"><code>max_subarray</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.6"></div><div class="speedup-lb" style="left:3.3%"></div></div><span class="mono">1.72x</span></div>
-<div class="speedup-row"><code>sigmoid_approx</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.5"></div><div class="speedup-lb" style="left:3.4%"></div></div><span class="mono">1.65x</span></div>
-<div class="speedup-row"><code>longest_run</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.5"></div><div class="speedup-lb" style="left:3.3%"></div></div><span class="mono">1.64x</span></div>
-<div class="speedup-row"><code>reverse_words</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.4"></div><div class="speedup-lb" style="left:3.3%"></div></div><span class="mono">1.61x</span></div>
-        <p class="text-dim results-foot">Meta-eval (false-accept gate): <strong>10/10</strong> hand-written wrong rewrites rejected. Full table on <a href="results.html">Results →</a></p>
-      </div>
-    </section>
-
-    <!-- PIPELINE SVG -->
-    <section class="section">
-      <div class="container">
-        <div class="panel pipeline-panel">
-          <img src="assets/img/pipeline.svg" alt="A pipeline transforming a cool grey ore block into a hot orange and gold Rust ingot" width="600" height="80">
-        </div>
-      </div>
-    </section>
-
-    <!-- INSTALL -->
-    <section class="section" id="install">
-      <div class="container">
-        <p class="mono-label">install</p>
-        <h2>One command.</h2>
-        <div class="install-box">
+    <!-- ============ 8. CTA + FOOTER ============ -->
+    <section class="cta-footer">
+      <div class="container cta-inner">
+        <h2>Try it on one slow function.</h2>
+        <p>
+          Freeze an oracle, let a model write the Rust, and let the code decide. If it cannot prove
+          a gain, it will tell you — and your Python keeps running.
+        </p>
+        <div class="hero-actions">
           <div class="copy-box copy-box-lg">
             <code>uv tool install smelt-rs</code>
             <button class="copy-btn" data-copy="uv tool install smelt-rs" aria-label="Copy install command">copy</button>
           </div>
-          <p class="text-dim">
-            <strong>PyPI release pending.</strong> Until it lands, install from source:
-            <code>uv tool install git+https://github.com/LangerSword/smelt.git@v0.6-furnace</code>
-            — or read the <a href="install.sh">install script</a> first.
-          </p>
-          <p class="text-dim"><a href="install.html">Manual install &amp; all options →</a></p>
+          <a class="btn btn-primary btn-lg" href="docs.html#quickstart">Quickstart</a>
         </div>
-      </div>
-    </section>
-
-    <!-- TRACK BADGES -->
-    <section class="section badges-section">
-      <div class="container">
         <div class="badges">
           <span class="badge">Built at sudo Hacktober</span>
           <span class="badge">Best Use of Gemma 4</span>
           <span class="badge">Best Open-Source AI Project</span>
         </div>
       </div>
+
+      <footer class="site-footer">
+        <div class="container">
+          <div class="footer-inner">
+            <div class="footer-brand">
+              <a class="brand" href="index.html">
+                <svg width="21" height="21" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L13 7 L12 7 L12 13 L8 13 L8 7 L7 7 Z" fill="#FF6D3A"/><rect x="7" y="14" width="6" height="2" fill="#D4A017"/></svg>
+                smelt
+              </a>
+              <p>Smelt slow Python into a verified Rust extension. Only proven metal ships.</p>
+            </div>
+            <div class="footer-cols">
+              <div class="footer-col">
+                <h3 class="footer-heading">Project</h3>
+                <a href="https://github.com/LangerSword/smelt">GitHub</a>
+                <a href="https://github.com/LangerSword/smelt/issues">Issues</a>
+                <a href="https://github.com/LangerSword/smelt/releases">Releases</a>
+                <a href="changelog.html">Changelog</a>
+              </div>
+              <div class="footer-col">
+                <h3 class="footer-heading">Learn</h3>
+                <a href="docs.html#quickstart">Quickstart</a>
+                <a href="docs.html#how-it-works">How it works</a>
+                <a href="results.html">Results</a>
+                <a href="roadmap.html">Roadmap &amp; FAQ</a>
+              </div>
+              <div class="footer-col">
+                <h3 class="footer-heading">Trust</h3>
+                <a href="docs.html#limits">Honest limits</a>
+                <a href="docs.html#security">Security model</a>
+                <a href="docs.html#license">License &amp; AI use</a>
+                <a href="install.sh">Install script</a>
+              </div>
+            </div>
+          </div>
+          <div class="footer-base">
+            <span>MIT · built at sudo Hacktober (MLH, SRM AP Amaravati), Oct 10–11 2026, solo</span>
+            <span>smelt-rs · no trackers, no analytics</span>
+          </div>
+        </div>
+      </footer>
     </section>
+
   </main>
 
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <div>
-        <p class="mono-label">smelt · MIT</p>
-        <p class="text-dim">Smelt slow Python into a verified Rust extension. Only proven metal ships.</p>
-      </div>
-      <div class="footer-links">
-        <a href="https://github.com/LangerSword/smelt">GitHub</a>
-        <a href="https://github.com/LangerSword/smelt/issues">Issues</a>
-        <a href="https://github.com/LangerSword/smelt/releases">Releases</a>
-        <a href="docs.html">Docs</a>
-      </div>
-    </div>
-  </footer>
+  <!-- SITE_SCRIPTS:START -->
+<!-- Vendored GSAP 3.13 (GreenSock No Charge license) + built site bundle.
+     Every page loads the identical set: site.js references DrawSVGPlugin and
+     SplitText on any page that carries those elements, and one shared partial
+     keeps that from drifting. Replace this block via scripts/build.py. -->
+<script src="assets/js/vendor/gsap.min.js"></script>
+<script src="assets/js/vendor/ScrollTrigger.min.js"></script>
+<script src="assets/js/vendor/SplitText.min.js"></script>
+<script src="assets/js/vendor/DrawSVGPlugin.min.js"></script>
+<script src="assets/js/vendor/MotionPathPlugin.min.js"></script>
+<script src="assets/js/site.js"></script>
 
-  <script src="assets/js/vendor/gsap.min.js"></script>
-  <script src="assets/js/vendor/ScrollTrigger.min.js"></script>
-  <script src="assets/js/vendor/SplitText.min.js"></script>
-  <script src="assets/js/vendor/DrawSVGPlugin.min.js"></script>
-  <script src="assets/js/vendor/MotionPathPlugin.min.js"></script>
-  <script src="assets/js/site.js"></script>
+<!-- SITE_SCRIPTS:END -->
 </body>
 </html>

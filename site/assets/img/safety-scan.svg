@@ -1,0 +1,82 @@
+<!-- Safety scan — original SVG. A candidate Rust file entering a static scan
+     gate; the banned surface (unsafe, build.rs, net/process/fs, include_*!,
+     env!) is struck out, and only the pinned scaffold continues to the build.
+     The banned list mirrors docs/safety.md. -->
+<svg viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A candidate Rust file passing through a static scan gate, with rejected tokens unsafe, build.rs and network access struck out">
+  <defs>
+    <linearGradient id="ss-panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#12151A"/>
+      <stop offset="1" stop-color="#0B0D10"/>
+    </linearGradient>
+    <linearGradient id="ss-ember" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FF6D3A"/>
+      <stop offset="1" stop-color="#D4A017"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="360" rx="16" fill="url(#ss-panel)"/>
+
+  <text x="28" y="40" font-family="monospace" font-size="12" fill="#8B93A1" letter-spacing="1.6">STATIC SCAN · BEFORE BUILD</text>
+
+  <!-- Candidate file (left) -->
+  <g transform="translate(28,64)">
+    <rect width="164" height="196" rx="10" fill="#0D0F12" stroke="#262A32"/>
+    <text x="14" y="24" font-family="monospace" font-size="10" fill="#8B93A1" letter-spacing="1.2">CANDIDATE lib.rs</text>
+    <!-- code lines -->
+    <g stroke="#3A4150" stroke-width="3" stroke-linecap="round">
+      <line x1="14" y1="48" x2="96" y2="48"/>
+      <line x1="14" y1="66" x2="132" y2="66"/>
+      <line x1="14" y1="84" x2="78" y2="84"/>
+      <line x1="14" y1="102" x2="120" y2="102"/>
+      <line x1="14" y1="120" x2="88" y2="120"/>
+      <line x1="14" y1="138" x2="140" y2="138"/>
+      <line x1="14" y1="156" x2="70" y2="156"/>
+      <line x1="14" y1="174" x2="110" y2="174"/>
+    </g>
+    <!-- struck-out banned findings -->
+    <g stroke="#F87171" stroke-width="2" stroke-linecap="round">
+      <line x1="60" y1="46" x2="104" y2="50"/>
+      <line x1="60" y1="50" x2="104" y2="46"/>
+    </g>
+    <text x="108" y="52" font-family="monospace" font-size="9" fill="#F87171">unsafe</text>
+    <g stroke="#F87171" stroke-width="2" stroke-linecap="round">
+      <line x1="88" y1="100" x2="132" y2="104"/>
+      <line x1="88" y1="104" x2="132" y2="100"/>
+    </g>
+    <text x="88" y="120" font-family="monospace" font-size="9" fill="#F87171">net</text>
+  </g>
+
+  <!-- Gate -->
+  <g transform="translate(232,64)">
+    <path d="M0 98 L58 40 L58 156 L0 98 Z" fill="#16181D" stroke="#2E3440"/>
+    <path d="M74 40 L74 156" stroke="#FF6D3A" stroke-width="2" stroke-dasharray="5 5" opacity="0.6"/>
+    <text x="16" y="102" font-family="monospace" font-size="10" fill="#8B93A1" transform="rotate(-90 30 98)" letter-spacing="1.4">SCAN</text>
+    <!-- scan beam -->
+    <path d="M58 98 L86 66 L86 130 Z" fill="url(#ss-ember)" opacity="0.14"/>
+  </g>
+
+  <!-- Verdict card (right) -->
+  <g transform="translate(332,64)">
+    <rect width="280" height="196" rx="10" fill="#0D0F12" stroke="#262A32"/>
+    <text x="18" y="26" font-family="monospace" font-size="10" fill="#8B93A1" letter-spacing="1.2">REJECTED ON SIGHT</text>
+    <g font-family="monospace" font-size="11.5" fill="#F87171">
+      <text x="18" y="54">unsafe</text>
+      <text x="18" y="78">extra crates</text>
+      <text x="18" y="102">build.rs</text>
+      <text x="18" y="126">std net / process / fs</text>
+      <text x="18" y="150">include_*! · env!</text>
+    </g>
+    <g stroke="#F87171" stroke-width="1.6" stroke-linecap="round" opacity="0.7">
+      <line x1="14" y1="51" x2="86" y2="51"/>
+      <line x1="14" y1="75" x2="122" y2="75"/>
+      <line x1="14" y1="99" x2="88" y2="99"/>
+      <line x1="14" y1="123" x2="176" y2="123"/>
+      <line x1="14" y1="147" x2="150" y2="147"/>
+    </g>
+    <text x="18" y="180" font-family="monospace" font-size="10.5" fill="#4ADE80">→ pinned scaffold continues</text>
+  </g>
+
+  <!-- Under-gate note -->
+  <text x="28" y="300" font-family="monospace" font-size="11" fill="#A8ADB6">Builds run in scratch dirs · the extension executes in a worker under resource limits</text>
+  <text x="28" y="324" font-family="monospace" font-size="11" fill="#8B93A1">smelt never writes into your project · pyo3 =0.29.3 pinned</text>
+</svg>
