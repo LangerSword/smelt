@@ -22,21 +22,29 @@ def _run(target: str, candidate, tmp_path: Path, cases: int = 200):
                             target_cases=cases, quiet=True)
 
 
-def test_gcd_pair_tuple_accepted(tmp_path):
-    """Accept proof for the tuple path: a loop-heavy tuple target wins."""
+def test_gcd_pair_verifies_no_mismatch(tmp_path):
+    """The correct tuple candidate must NEVER mismatch. Accept-vs-reject depends on
+    the machine (speedup is measured, not asserted) — gcd_pair was ACCEPTED on the
+    dev machine (loop-heavy); on slower CI it is honestly rejected at ~1.25x."""
     code, info = _run(str(REPO / "examples/demo/gcd_pair.py:gcd_pair"),
                       FIXTURES / "gcd_pair_correct.rs", tmp_path)
-    assert code == 0, info.get("stop_reason")
-    assert "verified" in (info.get("stop_reason") or "")
+    reason = info.get("stop_reason") or ""
+    assert code in (0, 4), reason
+    assert "verify_mismatch" not in reason, reason
+    if code == 4:
+        assert "reject_no_meaningful_gain" in reason, reason
 
 
-def test_manhattan_verifies_but_honest_reject(tmp_path):
-    """manhattan verifies on every case (reaches bench) and is honestly rejected
-    for gain (1.43x < 1.5x rule) — tiny functions cannot beat pyo3 overhead."""
+def test_manhattan_verifies_no_mismatch(tmp_path):
+    """manhattan verifies on every case (reaches bench). Whether it is accepted or
+    honestly rejected for gain depends on the machine; a mismatch would be a bug."""
     code, info = _run(str(REPO / "examples/demo/manhattan.py:manhattan"),
                       FIXTURES / "manhattan_correct.rs", tmp_path)
-    assert code == 4, info.get("stop_reason")
-    assert "reject_no_meaningful_gain" in (info.get("stop_reason") or ""), info
+    reason = info.get("stop_reason") or ""
+    assert code in (0, 4), reason
+    assert "verify_mismatch" not in reason, reason
+    if code == 4:
+        assert "reject_no_meaningful_gain" in reason, reason
 
 
 def test_wrong_tuple_rewrite_rejected(tmp_path):
