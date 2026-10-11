@@ -42,13 +42,13 @@ def main():
 
     # Build sitemap
     pages = ["index.html", "docs.html", "results.html", "install.html", "changelog.html", "roadmap.html"]
-    urls = "\n".join(f"  <url><loc>https://LangerSword.github.io/smelt/{p}</loc></url>" for p in pages)
+    urls = "\n".join(f"  <url><loc>https://smelt.langersword.in/{p}</loc></url>" for p in pages)
     sitemap = f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{urls}\n</urlset>\n'
     (SITE / "sitemap.xml").write_text(sitemap)
     print("sitemap.xml written")
 
     (SITE / "robots.txt").write_text(
-        "User-agent: *\nAllow: /\nSitemap: https://LangerSword.github.io/smelt/sitemap.xml\n"
+        "User-agent: *\nAllow: /\nSitemap: https://smelt.langersword.in/sitemap.xml\n"
     )
     print("robots.txt written")
 

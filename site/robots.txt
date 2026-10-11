@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://LangerSword.github.io/smelt/sitemap.xml
+Sitemap: https://smelt.langersword.in/sitemap.xml
