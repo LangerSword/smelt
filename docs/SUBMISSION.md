@@ -16,10 +16,12 @@ Platform: **mlh.com OrganizerHQ → Challenges → Add Submission** (sudo Hackto
   extension must reproduce every recorded output (and exception) — mismatches feed
   back for up to N attempts, then the run is honestly rejected. Accepted rewrites are
   benchmarked with a bootstrap CI; the conservative 1.5x lower bound is the bar.
-  Everything is checkable: a 24-function corpus (23/24 accepted on
-  `gemma-4-26b-a4b-it`), a 13/13 wrong-rewrite meta-eval, and a blind test over 3
-  real open-source repos / 10 functions with zero crashes and typed outcomes.
-  Includes a Go TUI (Furnace, CI-tested) and a validated Agent Skill.
+  Everything is checkable: a 24-function corpus (two full runs: 20/24 and 23/24
+  accepted on `gemma-4-26b-a4b-it`), a 16/16 wrong-rewrite meta-eval (single,
+  multi-parameter and tuple batteries), and a blind test over 3 real open-source
+  repos / 10 functions — 0 accepted, 9 refused, 1 config error, 0 errors — with
+  typed outcomes, zero crashes and zero false accepts. Includes a Go TUI (Furnace,
+  CI-tested) and a validated Agent Skill.
 - **Technologies:** Python · Rust (pyo3, maturin) · Go (Bubble Tea) · Gemma 4
   (Gemini API) · llama.cpp · GitHub Actions
 - **Challenges entered:** Best Open-Source AI Project · Best Use of Gemma 4
