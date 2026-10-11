@@ -20,9 +20,49 @@ from rich.table import Table
 
 from smelt_rs.core import orchestrator
 
-app = typer.Typer(no_args_is_help=True, add_completion=False,
+app = typer.Typer(no_args_is_help=False, add_completion=False,
                   help="Smelt a slow pure Python function into a verified Rust extension. "
-                       "Only proven metal ships.")
+                       "Only proven metal ships. Bare `smelt` launches the Furnace TUI.")
+
+
+def _find_furnace(root: str | None = None) -> str | None:
+    """Resolve the Furnace TUI binary: SMELT_FURNACE_BIN → PATH → repo checkout."""
+    cand = os.environ.get("SMELT_FURNACE_BIN")
+    if cand and os.access(cand, os.X_OK):
+        return cand
+    found = shutil.which("furnace")
+    if found:
+        return found
+    if root is None:
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    repo = os.path.join(root, "tui", "furnace")
+    if os.path.exists(repo) and os.access(repo, os.X_OK):
+        return repo
+    return None
+
+
+@app.callback(invoke_without_command=True)
+def _default(ctx: typer.Context):
+    """Bare `smelt` (no subcommand) launches the Furnace TUI.
+
+    The TUI is a front end; the CLI stays available as subcommands
+    (`smelt run …`, `smelt scan …`). `smelt --help` still prints the CLI help.
+    """
+    if ctx.invoked_subcommand is not None:
+        return
+    bin_ = _find_furnace()
+    if bin_ is None:
+        print("furnace TUI is not installed. Install it with:")
+        print("  go install github.com/LangerSword/smelt/tui@main")
+        print("  or build it:  cd tui && go build -o furnace .")
+        print("  or point at a binary:  export SMELT_FURNACE_BIN=/path/to/furnace")
+        print("CLI help: smelt --help")
+        raise typer.Exit(2)
+    try:
+        os.execv(bin_, [bin_])  # replace the process — no lingering wrapper
+    except OSError:
+        import subprocess
+        raise typer.Exit(subprocess.call([bin_]))
 
 
 @app.command()
@@ -119,16 +159,14 @@ def apply(run_dir: str = typer.Argument(..., help="run directory of an accepted 
 @app.command()
 def furnace():
     """Launch the Furnace TUI (Go binary) if installed; print build steps otherwise."""
+    bin_ = _find_furnace()
+    if bin_ is None:
+        print("furnace is not installed.")
+        print("  build it:  cd tui && go build -o furnace .    (requires Go 1.27+)")
+        print("  or install:  go install github.com/LangerSword/smelt/tui@main")
+        raise typer.Exit(1)
     import subprocess
-    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    candidates = [shutil.which("furnace"), os.path.join(root, "tui", "furnace")]
-    for cand in candidates:
-        if cand and os.path.exists(cand) and os.access(cand, os.X_OK):
-            raise typer.Exit(subprocess.call([cand]))
-    print("furnace is not installed.")
-    print("  build it:  cd tui && go build -o furnace .    (requires Go 1.27+)")
-    print("  then run:  smelt furnace   (or ./tui/furnace)")
-    raise typer.Exit(1)
+    raise typer.Exit(subprocess.call([bin_]))
 
 
 def _probe_gemini(key: str):

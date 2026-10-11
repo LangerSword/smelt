@@ -104,5 +104,11 @@ This file records how AI was used to build smelt, and who reviewed what.
 
 ## Scope note
 
+- **Launcher (main)**: bare `smelt` (no subcommand) now execs the Furnace TUI —
+  resolved `SMELT_FURNACE_BIN` → PATH `furnace` → repo `tui/furnace`; friendly
+  install hint + exit 2 when missing; `smelt --help` and all subcommands
+  unchanged (`smelt furnace` stays as the explicit alias). Tests:
+  `tests/test_launcher.py` (5 passed). The TUI binary on PATH is currently the
+  `feature/furnace-ux` build; rebuild from main after the merge.
 - No AI was used to write code before the event start; nothing was copied from
   prior projects or scratch experiments.
