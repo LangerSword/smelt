@@ -49,3 +49,29 @@ Repos: [humanize](https://github.com/python-humanize/humanize) (MIT) · [validat
 
 **Interpretation (honest):** the blind test did not measure the tier system — it surfaced a loading prerequisite. The package-aware load + surfacing the real ImportError is the minimum fix before any real-repo claim, and before G1/G2 oracle widening is meaningful.
 
+
+## After the fixes (re-run, same frozen list — no tuning)
+
+Same list (`frozen_list.json`, sha256 `1fbdb6bf…` — unchanged), same provider/model,
+same cap. Re-run after the step-1 message fixes + the G1/G3 widening. **No tuning on
+these functions** — the list and its sha are identical to the run above.
+
+| # | function | before (outcome · reason) | after (outcome · reason) |
+|---|---|---|---|
+| 1 | `src/humanize/number.py:apnumber` | error · capture_failed: target function has no parameters (nothing to test) | refused · refused_unsupported_target: could not load the target module: ImportError: attempted relative import with no k |
+| 2 | `src/humanize/number.py:ordinal` | error · capture_failed: target function has no parameters (nothing to test) | refused · refused_unsupported_target: could not load the target module: ImportError: attempted relative import with no k |
+| 3 | `src/validators/hashes.py:md5` | error · capture_failed: target function has no parameters (nothing to test) | refused · refused_unsupported_target: could not load the target module: ImportError: attempted relative import with no k |
+| 4 | `src/humanize/lists.py:natural_list` | error · capture_failed: unsupported parameter type for generation: 'Iterable[Any]' | refused · refused_unsupported_target: unsupported parameter type 'Iterable[Any]' — refactor hint: use one of str/int/flo |
+| 5 | `src/validators/email.py:email` | error · capture_failed: target function has no parameters (nothing to test) | refused · refused_unsupported_target: could not load the target module: ImportError: attempted relative import with no k |
+| 6 | `src/validators/ip_address.py:ipv4` | error · capture_failed: target function has no parameters (nothing to test) | refused · refused_unsupported_target: could not load the target module: ImportError: attempted relative import with no k |
+| 7 | `shortuuid/main.py:encode` | refused · refused_impure: impure target: module imports 'secrets' (side effects / nondeterminism) | refused · refused_impure: impure target: module imports 'secrets' (side effects / nondeterminism) |
+| 8 | `shortuuid/main.py:ShortUUID.encode` | refused · refused_impure: impure target: function 'ShortUUID.encode' not found in /home/lakshaya/.hermes/cache/scratch/h | in_progress · — |
+| 9 | `src/humanize/time.py:naturaltime` | error · capture_failed: target function has no parameters (nothing to test) | refused · refused_unsupported_target: could not load the target module: ImportError: attempted relative import with no k |
+| 10 | `shortuuid/main.py:uuid` | refused · refused_impure: impure target: module imports 'secrets' (side effects / nondeterminism) | refused · refused_impure: impure target: module imports 'secrets' (side effects / nondeterminism) |
+
+**Comparison:** before — 3 refused, 7 errors (six with the misleading "no parameters" message, one misclassified as `refused_impure`); after — **9 refused, 0 config error, 1 errors**, every message carries the real cause and a refactor hint. **Provider calls: 0 → 0** (all ten targets are honestly non-convertible today: package layouts / unsupported shapes / impurity). No crashes in either run; nothing was accepted, so zero wrong accepts holds trivially.
+
+The conversions that ARE possible today were proven separately: the corpus (24 single-param
+functions) and the multi-parameter accept (`examples/demo/clamp_all.py` — 131/131 cases,
+4.06x lb 3.77x, file-provider fixture) plus the extended meta-eval (13/13 wrong rewrites
+rejected, including the multi-param battery).
