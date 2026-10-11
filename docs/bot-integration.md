@@ -1,37 +1,31 @@
-# smelt bot mode — CodeRabbit-style PR suggestions (DRAFT — NOT ACTIVE)
+# smelt bot mode — CodeRabbit-style PR suggestions (DESIGN — NOT YET BUILT)
 
-**Status: design draft. Nothing in this file runs. The workflow below is NOT in
-`.github/workflows/` and must not be activated until it is built and tested on a
-scratch repo (G5 rules: label- or dispatch-triggered only, at most 3 candidates
-per run, ONE PR comment, no secrets for fork PRs).** Planned as post-submission
-work.
+**Status: design, not yet built. Nothing in this file runs.** No workflow
+exists in `.github/workflows/`, and `tools/bot_run.py` does not exist yet.
+Build and test the script + workflow on a scratch repo before enabling either
+(G5 rules: label- or dispatch-triggered only, at most 3 candidates per run,
+ONE PR comment, no secrets for fork PRs).
 
-## What it would do
+## Use smelt as a workflow
 
-Like CodeRabbit reviews diffs, the smelt bot reviews a PR for **smelt-shaped
-opportunities**: slow, pure Python functions that can be smelted into verified
-Rust. It comments once with a table of candidates, honest outcomes (accepted /
-rejected / refused), measured speedups with lower bounds, and view-only diffs.
+Three ways to run the loop, smallest first.
 
-## Design (bounded by the G5 rules)
+1. **Manual** — `smelt scan <path>` lists candidates, `smelt run <file.py:fn>`
+   runs the loop, `smelt apply runs/<id>` prints the diff. You review it and
+   open the PR yourself. Apply never writes anything.
+2. **Agent** — install the skill (`skills/smelt`, Agent Skills format) and ask
+   your coding agent to "speed up this function the smelt way". The agent runs
+   scan → run → review and hands you the diff.
+3. **CI / bot (CodeRabbit-style)** — trigger on a PR label or manual dispatch.
+   Scan the changed files. Run at most 3 candidates. Post one PR comment with
+   a results table and the diff. Never push. No secrets for fork PRs. Call
+   caps keep the free tier safe.
 
-- **Trigger**: PR label `smelt-me` or manual `workflow_dispatch`. Never on every
-  push — a run costs model calls and a Rust build.
-- **Candidates**: `smelt scan <repo> --json`, filtered to tier-1 functions in
-  files the PR touched; cap at 3.
-- **Run**: `smelt run <file>:<fn> --provider gemini` (model `gemma-4-26b-a4b-it`),
-  max attempts 2, per-candidate timeout.
-- **Comment**: one PR comment — table (function · status · exit code · speedup lb ·
-  attempts · model) + `smelt apply` diff blocks (view only) + the exact commands
-  a human can run to reproduce.
-- **Safety**: the bot never writes to the PR branch — comments only. `apply` is
-  view-only by design. Fork PRs: no secrets are exposed; the job skips model runs
-  and says so (public repo + no key = capture/verify still work offline, but no
-  generation).
-- **Cost control**: `GEMINI_API_KEY` secret (same-repo PRs only), global call cap
-  per run, `concurrency` group to kill duplicate runs.
+**The GitHub Action is design, not yet built.** The reference workflow below
+must be built and tested on a scratch repo first; the detailed design is
+further down in this file.
 
-## Draft workflow (reference only — NOT installed)
+### Reference workflow (design — not yet built)
 
 ```yaml
 name: smelt-bot
@@ -68,6 +62,41 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
+What each step does:
+
+| step | what it does |
+|---|---|
+| trigger | fires only on the `smelt-me` label or a manual dispatch — never on every push (a run costs model calls and a Rust build) |
+| toolchains | installs Rust, uv and the smelt CLI (pin a tag before enabling) |
+| scan | lists candidates; the bot keeps tier-1 functions in files the PR touched, capped at 3 |
+| run | one `smelt run` per candidate; skipped on fork PRs, so no secret is ever exposed |
+| comment | exactly one PR comment: results table (status · exit code · speedup lb · attempts · model) + view-only diffs + reproduce commands |
+| safety | the job never writes to the branch (`contents: read`); a concurrency group cancels duplicate runs |
+
+## What it would do
+
+Like CodeRabbit reviews diffs, the smelt bot reviews a PR for **smelt-shaped
+opportunities**: slow, pure Python functions that can be smelted into verified
+Rust. It comments once with a table of candidates, honest outcomes (accepted /
+rejected / refused), measured speedups with lower bounds, and view-only diffs.
+
+## Design (bounded by the G5 rules)
+
+- **Trigger**: PR label `smelt-me` or manual `workflow_dispatch`. Never on every
+  push — a run costs model calls and a Rust build.
+- **Candidates**: `smelt scan <repo> --json`, filtered to tier-1 functions in
+  files the PR touched; cap at 3.
+- **Run**: `smelt run <file>:<fn> --provider gemini` (model `gemma-4-26b-a4b-it`),
+  max attempts 2, per-candidate timeout.
+- **Comment**: one PR comment — table (function · status · exit code · speedup lb ·
+  attempts · model) + `smelt apply` diff blocks (view only) + the exact commands
+  a human can run to reproduce.
+- **Safety**: the bot never writes to the PR branch — comments only. `apply` is
+  view-only by design. Fork PRs: no secrets are exposed; the job skips model runs
+  and says so (public repo + no key = capture/verify still work offline, but no
+  generation).
+- **Cost control**: `GEMINI_API_KEY` secret (same-repo PRs only), global call cap
+  per run, `concurrency` group to kill duplicate runs.
+
 `tools/bot_run.py` does not exist yet — it would read `scan.json`, run smelt per
-candidate with a call cap, and render the markdown table + diffs. Build + test
-that script and this workflow on a scratch repo before enabling either.
+candidate with a call cap, and render the markdown table + diffs.

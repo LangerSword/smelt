@@ -106,6 +106,74 @@ validated (`agentskills validate ./skills/smelt` → exit 0). Any coding agent t
 supports Agent Skills can load it and run the smelt loop (scan → capture →
 generate → verify → bench).
 
+## Use smelt as a workflow
+
+Three ways to run the loop, smallest first.
+
+1. **Manual** — `smelt scan <path>` lists candidates, `smelt run <file.py:fn>`
+   runs the loop, `smelt apply runs/<id>` prints the diff. You review it and
+   open the PR yourself. Apply never writes anything.
+2. **Agent** — install the skill (`skills/smelt`, Agent Skills format) and ask
+   your coding agent to "speed up this function the smelt way". The agent runs
+   scan → run → review and hands you the diff.
+3. **CI / bot (CodeRabbit-style)** — trigger on a PR label or manual dispatch.
+   Scan the changed files. Run at most 3 candidates. Post one PR comment with
+   a results table and the diff. Never push. No secrets for fork PRs. Call
+   caps keep the free tier safe.
+
+**The GitHub Action is design, not yet built.** No workflow is installed in
+`.github/workflows/`, and `tools/bot_run.py` does not exist yet; the reference
+below must be built and tested on a scratch repo first. Design notes:
+[`docs/bot-integration.md`](docs/bot-integration.md).
+
+### Reference workflow (design — not yet built)
+
+```yaml
+name: smelt-bot
+on:
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: smelt-bot-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+jobs:
+  suggest:
+    if: github.event.label.name == 'smelt-me' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: astral-sh/setup-uv@v5
+      - run: uv tool install git+https://github.com/LangerSword/smelt
+      - name: Scan (tier-1 candidates, capped at 3)
+        run: smelt scan . --json > scan.json
+      - name: Run (same-repo PRs only)
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch' }}
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python tools/bot_run.py scan.json --max 3 --out comment.md
+      - name: Comment once
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+What each step does:
+
+| step | what it does |
+|---|---|
+| trigger | fires only on the `smelt-me` label or a manual dispatch — never on every push (a run costs model calls and a Rust build) |
+| toolchains | installs Rust, uv and the smelt CLI (pin a tag before enabling) |
+| scan | lists candidates; the bot keeps tier-1 functions in files the PR touched, capped at 3 |
+| run | one `smelt run` per candidate; skipped on fork PRs, so no secret is ever exposed |
+| comment | exactly one PR comment: results table (status · exit code · speedup lb · attempts · model) + view-only diffs + reproduce commands |
+| safety | the job never writes to the branch (`contents: read`); a concurrency group cancels duplicate runs |
+
 ## Safety (generated Rust is untrusted)
 
 - Pinned scaffold (pyo3 `=0.29.3`); the model fills one function body only. A
@@ -135,7 +203,8 @@ generate → verify → bench).
 [`docs/how-it-works.md`](docs/how-it-works.md) · [`docs/cli.md`](docs/cli.md) ·
 [`docs/providers.md`](docs/providers.md) · [`docs/safety.md`](docs/safety.md) ·
 [`docs/evals.md`](docs/evals.md) · [`docs/faq.md`](docs/faq.md) ·
-[`docs/events.md`](docs/events.md) · [`AI_USE.md`](AI_USE.md) (build agent vs
+[`docs/events.md`](docs/events.md) · [`docs/bot-integration.md`](docs/bot-integration.md)
+(workflow + CI design, not yet built) · [`AI_USE.md`](AI_USE.md) (build agent vs
 human; runtime model disclosure) · [`EXPLAIN.md`](EXPLAIN.md) (deep dive).
 
 ## License
