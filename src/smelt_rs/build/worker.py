@@ -106,7 +106,7 @@ def main() -> None:
                 try:
                     val = fn(*args, **kwargs)
                     rec = {"id": case["case_id"], "ok": True, "out": _enc(val)}
-                except Exception as e:
+                except BaseException as e:  # PanicException is a BaseException — record, never abort
                     rec = {"id": case["case_id"], "ok": False,
                            "err": f"{type(e).__name__}: {str(e)[:200]}"}
                 if req.get("check_mutation") and (args != snap_a or kwargs != snap_k):

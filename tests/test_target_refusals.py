@@ -48,13 +48,24 @@ def test_dotted_qualname_is_config_error(tmp_path):
     assert "dotted" in reason
 
 
-def test_multi_param_is_typed_refusal(tmp_path):
-    f = tmp_path / "m.py"
-    _write(str(f), "def add(a: int, b: int) -> int:\n    return a + b\n")
-    code, info = _run(tmp_path, str(f), "add")
-    assert code == 3, info
-    assert "single-parameter" in info["stop_reason"]
-    assert "hint" in info["stop_reason"]
+def test_multi_param_now_captures(tmp_path):
+    """G1 widening: two-parameter targets are supported — the oracle freezes them.
+
+    (Previously a typed refusal; the meta-eval multi-param battery plus the
+    divide_correct.rs accept are the end-to-end gates.)"""
+    import glob
+    import json
+    from smelt_rs.core import orchestrator
+    src = tmp_path / "m.py"
+    _write(str(src), "def add(a: int, b: int) -> int:\n    return a + b\n")
+    code, info = orchestrator.capture_only(target=f"{src}:add",
+                                           runs_dir=str(tmp_path / "runs"),
+                                           target_cases=60, quiet=True)
+    assert code == 0, info
+    run_dir = sorted(glob.glob(str(tmp_path / "runs" / "*")))[-1]
+    meta = json.load(open(os.path.join(run_dir, "oracle", "meta.json")))
+    assert len(meta["params"]) == 2
+    assert meta["n_cases"] >= 40
 
 
 def test_unsupported_type_is_typed_refusal(tmp_path):

@@ -121,7 +121,12 @@ Exit codes: 0 accepted · 3 refused (impure) · 4 rejected · 5 harness error ·
 
 ## Honest limits
 
-- One parameter per function in this build (str / int / float / bool / list[int] / list[str]).
+- Up to N parameters of simple types (str / int / float / bool / list[int] / list[str]);
+  multi-parameter oracles use independent random columns + a capped edge product
+  (~40–140 cases). Known domain gap: inputs whose Python result exceeds the i64 range
+  (e.g. `i64::MIN // -1`, or a product of two extreme values) cannot be matched by an
+  i64 rewrite — such candidates are honestly rejected; the domain-policy decision is
+  with the developer.
 - Integers are tested inside the 64-bit range; big Python ints are outside the tested
   domain and are never silently truncated.
 - The oracle proves equivalence **on the tested inputs** — the claim is exactly that.
