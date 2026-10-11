@@ -78,7 +78,10 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
       # One deployment, always — keep only the newest, delete older Pages deployments.
+      # The default GITHUB_TOKEN cannot delete deployments (403), so this is best-effort;
+      # run `node tools/prune-deployments.mjs` locally with a PAT when history piles up.
       - name: Prune old deployments
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node tools/prune-deployments.mjs
