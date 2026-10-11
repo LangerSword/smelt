@@ -93,6 +93,14 @@ This file records how AI was used to build smelt, and who reviewed what.
   `evals/results.json`; the CI drift check fails if the page and JSON differ. The Python
   core and the oracle were not touched. Developer approves the design brief and reviews
   the deploy preview before merge.
+- **Tuple widening (branch `feature/general`)**: Hermes added the tuple battery to the
+  meta-eval FIRST (3 injected wrong rewrites: no-abs, ignores the second element, wrong
+  exception), then implemented `tuple[int, int]` support (worker-side coercion spec —
+  JSON has no tuples; scan tier 1; case generation). Evidence: 31 pytest passed
+  (0 regressions), meta-eval **16/16 rejected** (the 3 tuple wrongs caught on merits,
+  exit 4), accept proof `gcd_pair` (loop-heavy; tiny `manhattan` verifies 208/208 then
+  is honestly rejected at 1.43x < 1.5x). All gates green before the developer's 06:50
+  limit; merged to main.
 
 ## Scope note
 

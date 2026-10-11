@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 """Meta-eval: prove the oracle rejects KNOWN-WRONG rewrites (gate: all rejected).
 
-Two target sets:
+Three target sets:
   1) rle_encode (single str param) — 10 wrong rewrites, the original battery;
   2) divide (two int params, raises on b==0) — the G1 multi-parameter battery:
      wrong value / wrong exception (returns instead of raising) / panic where the
-     Python returns (panics must become Python exceptions, never abort the process).
+     Python returns (panics must become Python exceptions, never abort the process);
+  3) manhattan (one tuple[int, int] param) — the tuple battery: wrong value
+     (no abs), wrong value (ignores the pair's second element), wrong exception.
 
 Every candidate must come back REJECTED (verify_mismatch, exit code 4) when run
 through the full pipeline against the frozen oracle. If any is accepted, the
@@ -35,6 +37,15 @@ GLUE_DIVIDE = """
 #[pymodule]
 fn smelt_ext(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(divide, m)?)?;
+    Ok(())
+}
+"""
+
+GLUE_TUPLE = """
+
+#[pymodule]
+fn smelt_ext(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(manhattan, m)?)?;
     Ok(())
 }
 """
@@ -251,9 +262,40 @@ fn divide(a: i64, b: i64) -> PyResult<i64> {
 """ + GLUE_DIVIDE,
 }
 
+WRONG_TUPLE = {
+    # wrong value: no abs — wrong on any negative coordinate
+    "t01_wrong_value_no_abs": """use pyo3::prelude::*;
+
+#[pyfunction]
+fn manhattan(p: (i64, i64)) -> i64 {
+    p.0 + p.1
+}
+""" + GLUE_TUPLE,
+    # wrong value: ignores the second element of the pair
+    "t02_wrong_value_ignore_y": """use pyo3::prelude::*;
+
+#[pyfunction]
+fn manhattan(p: (i64, i64)) -> i64 {
+    p.0.abs()
+}
+""" + GLUE_TUPLE,
+    # wrong exception: raises ValueError where the Python returns
+    "t03_wrong_exception": """use pyo3::prelude::*;
+
+#[pyfunction]
+fn manhattan(p: (i64, i64)) -> PyResult<i64> {
+    if p.0 < 0 {
+        return Err(pyo3::exceptions::PyValueError::new_err("negative x"));
+    }
+    Ok(p.0.abs() + p.1.abs())
+}
+""" + GLUE_TUPLE,
+}
+
 TARGETS = [
     ("rle_encode", "examples/demo/run_length.py", "rle_encode", WRONG),
     ("divide", "examples/demo/divide.py", "divide", WRONG_MULTI),
+    ("manhattan", "examples/demo/manhattan.py", "manhattan", WRONG_TUPLE),
 ]
 
 

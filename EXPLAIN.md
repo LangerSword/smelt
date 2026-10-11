@@ -118,6 +118,18 @@ Python result exceeds i64 (e.g. `i64::MIN // -1`) cannot be matched by an i64
 rewrite — such candidates are honestly rejected; the policy decision is the
 developer's. `scan` classifies with tiers (tier 1 supported / refused with reason).
 
+## Tuple widening (branch `feature/general`)
+`tuple[int, int]` parameters are supported. JSON has no tuples, so cases carry
+2-element lists and a per-parameter coercion spec (`coerce_specs`) makes the worker
+convert them back before the call — on both the Python and Rust sides, so the
+recorded oracle and the verification see the same value the annotation promises
+(proven by an `isinstance(p, tuple)` target). The meta-eval gained a tuple battery
+FIRST (3 injected wrong rewrites — no-abs, ignores the second element, wrong
+exception); all 16 candidates are rejected on merits (exit 4). Known limit: tuples
+of other shapes (3+, mixed types) and tuple returns are not supported yet — typed
+refusals with hints. This work sits on `feature/general`, unmerged at the developer's
+06:50 hard limit.
+
 ## skills/smelt — the agent skill
 SKILL.md (Agent Skills open standard; `agentskills validate ./skills/smelt` → exit 0) plus four
 references — oracle format, benchmark protocol, failure taxonomy, provider config — and a thin CLI

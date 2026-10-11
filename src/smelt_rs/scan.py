@@ -11,7 +11,8 @@ import os
 
 from smelt_rs.core import purity
 
-SUPPORTED_PARAMS = {"str", "int", "float", "bool", "list[int]", "list[str]"}
+SUPPORTED_PARAMS = {"str", "int", "float", "bool", "list[int]", "list[str]",
+                    "tuple[int, int]"}
 SKIP_DIRS = {".git", ".venv", "venv", "__pycache__", "node_modules", ".mypy_cache",
              ".pytest_cache", "dist", "build", ".tox", "site-packages", ".hermes"}
 
@@ -27,6 +28,11 @@ def _ann_str(node) -> str | None:
         if base == "list":
             inner = _ann_str(node.slice)
             return f"list[{inner}]" if inner else "list"
+        if base == "tuple" and isinstance(node.slice, ast.Tuple):
+            parts = [p for p in (_ann_str(e) for e in node.slice.elts) if p]
+            if parts:
+                return f"tuple[{', '.join(parts)}]"
+            return "tuple"
         return base
     if isinstance(node, ast.Attribute):
         return node.attr
@@ -101,7 +107,7 @@ def scan_path(root: str) -> dict:
             if bad:
                 entry.update(status="skip", tier="refused",
                              reason=f"unsupported parameter type: {bad[0] or 'unannotated'} — "
-                                    "refactor hint: use str/int/float/bool/list[int]/list[str]")
+                                    "refactor hint: use str/int/float/bool/list[int]/list[str]/tuple[int, int]")
                 candidates.append(entry)
                 continue
             n = len(positional)

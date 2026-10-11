@@ -41,9 +41,22 @@ def gen_cases_for_param(annotation: str, rnd: random.Random, n_random: int):
         random_cases = [[rnd.randint(-50, 50) for _ in range(rnd.randint(0, 16))]
                         for _ in range(n_random)]
         return random_cases, EDGE_LISTS_INT
+    if annotation.replace(" ", "") == "tuple[int,int]":
+        random_cases = [[rnd.randint(-50, 50), rnd.randint(-50, 50)] for _ in range(n_random)]
+        edges = [[0, 0], [1, 1], [-1, -1], [1, -1], [-50, 50], [50, -50], [0, 50], [-7, 0]]
+        return random_cases, edges
     raise RefusedTarget(
         f"unsupported parameter type {annotation!r} — refactor hint: use one of "
-        "str/int/float/bool/list[int]/list[str], or convert the argument before the call")
+        "str/int/float/bool/list[int]/list[str]/tuple[int, int], or convert the argument "
+        "before the call")
+
+
+def coerce_specs(params: list[dict]) -> list:
+    """Worker-side coercion spec: JSON has no tuples, so tuple-annotated parameters
+    arrive as 2-element lists and are converted back before the call — the target
+    sees the same value the annotation promises, on both the Python and Rust side."""
+    return ["tuple" if (p.get("annotation") or "").replace(" ", "") == "tuple[int,int]" else None
+            for p in params]
 
 
 def generate_cases(params: list[dict], target_cases: int, seed: int) -> list[dict]:
@@ -114,7 +127,8 @@ def capture_oracle(*, run_dir: str, target_path: str, module_name: str, func_nam
     # 2. generate cases, record answers
     cases = generate_cases(params, target_cases, seed)
     req = {"mode": "run", "side": "python", "target_path": target_path, "module": module_name,
-           "func": func_name, "cases": cases, "check_mutation": True}
+           "func": func_name, "cases": cases, "check_mutation": True,
+           "coerce": coerce_specs(params)}
     try:
         res = run_worker(python_exe, req, timeout=180)
     except Exception as e:

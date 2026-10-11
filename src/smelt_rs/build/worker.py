@@ -99,8 +99,12 @@ def main() -> None:
         elif mode == "run":
             fn = _load_fn(req)
             results = []
+            coerce = req.get("coerce") or []
             for case in req["cases"]:
                 args = case.get("args", [])
+                if coerce:
+                    args = [tuple(a) if (s == "tuple" and isinstance(a, list)) else a
+                            for a, s in zip(args, coerce)]
                 kwargs = case.get("kwargs", {})
                 snap_a = copy.deepcopy(args)
                 snap_k = copy.deepcopy(kwargs)
@@ -120,10 +124,15 @@ def main() -> None:
             cases = req["cases"]
             reps = 1 if mode == "time_once" else int(req["reps"])
             durations = []
+            coerce = req.get("coerce") or []
             for _ in range(reps):
                 t0 = time.perf_counter()
                 for case in cases:
-                    fn(*case.get("args", []), **case.get("kwargs", {}))
+                    args = case.get("args", [])
+                    if coerce:
+                        args = [tuple(a) if (s == "tuple" and isinstance(a, list)) else a
+                                for a, s in zip(args, coerce)]
+                    fn(*args, **case.get("kwargs", {}))
                 durations.append(time.perf_counter() - t0)
             if mode == "time_once":
                 out["duration"] = durations[0]
