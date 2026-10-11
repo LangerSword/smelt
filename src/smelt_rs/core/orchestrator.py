@@ -173,6 +173,11 @@ def run(*, target: str, provider_name: str, model: str | None = None, candidate:
     except ConfigError as e:
         if not quiet:
             print(f"[smelt] config error: {e.message}")
+        if st is not None and run_dir and events:
+            st.status = "config_error"
+            st.stop_reason = f"{e.kind}: {e.message}"
+            events.emit("halt", kind=e.kind, message=e.message[:300])
+            _finish(run_dir, st, events, None)
         return 2, {"status": "config_error", "reason": e.message}
     except SmeltFailure as e:
         code = _halt(st, run_dir, events, e, quiet)
@@ -214,6 +219,11 @@ def resume(*, run_dir: str, max_attempts: int = 3, python_exe: str | None = None
     except ConfigError as e:
         if not quiet:
             print(f"[smelt] config error: {e.message}")
+        if st is not None and run_dir and events:
+            st.status = "config_error"
+            st.stop_reason = f"{e.kind}: {e.message}"
+            events.emit("halt", kind=e.kind, message=e.message[:300])
+            _finish(run_dir, st, events, None)
         return 2, {"status": "config_error", "reason": e.message}
     except SmeltFailure as e:
         code = _halt(st, run_dir, events, e, quiet)
