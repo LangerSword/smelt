@@ -1,0 +1,6 @@
+{"ts": 1791674719.2442558, "schema_version": "1", "event": "run_start", "node": "", "target": "/home/lakshaya/projects/smelt/examples/demo/run_length.py:rle_encode", "provider": "local", "model": "gemma-4-e2b-qat"}
+{"ts": 1791674719.2446277, "schema_version": "1", "event": "purity_ok", "node": ""}
+{"ts": 1791674719.3201096, "schema_version": "1", "event": "capture_done", "node": "", "n_cases": 225, "sha256": "5a5d00ff0d691820"}
+{"ts": 1791674719.3210948, "schema_version": "1", "event": "attempt_start", "node": "", "attempt": 1}
+{"ts": 1791674749.6557312, "schema_version": "1", "event": "accept", "node": "", "ratio": 2.0622927472639074, "ratio_ci_lo": 2.041366022304948, "flags": []}
+{"ts": 1791674749.6558366, "schema_version": "1", "event": "run_end", "node": "", "status": "accepted", "reason": "verified 225/225 cases; speedup 2.06x (conservative lower bound 2.04x)"}

@@ -1,0 +1,35 @@
+{
+  "run_id": "261011-045519-892ab0",
+  "created_at": "2026-10-11T04:55:19+0530",
+  "smelt_version": "0.1.0",
+  "target": {
+    "path": "source/run_length.py",
+    "qualname": "rle_encode",
+    "source_sha256": "62cd19ed82855ccdfedd223cc45f07b045c6fbe4f725a7fd1b17ecac29ae752e"
+  },
+  "oracle": {
+    "dir": "oracle",
+    "sha256": "5a5d00ff0d6918201148b5aca7562446caae0e54d374640cf8b8717ee0e5afdd",
+    "n_cases": 225,
+    "seed": 244658450
+  },
+  "config": {
+    "provider": "local",
+    "model": "gemma-4-e2b-qat",
+    "max_attempts": 3,
+    "cases": 200,
+    "bench_min_s": 0.1
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "source": "local",
+      "build": "ok",
+      "verify": "pass 225/225",
+      "bench": "2.06x (lb 2.04x)",
+      "outcome": "ACCEPTED"
+    }
+  ],
+  "status": "accepted",
+  "stop_reason": "verified 225/225 cases; speedup 2.06x (conservative lower bound 2.04x)"
+}

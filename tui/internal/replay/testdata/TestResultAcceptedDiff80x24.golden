@@ -1,0 +1,24 @@
+ FURNACE v0.7 · result · 261011-015326-a41353       gemini · gemma-4-26b-a4b-it
+  1 summary   2 rust   3 compare  [4 diff]
+╭──────────────────────────────────────────────────────────────────────────╮
+│ diff                                                                     │
+│# smelt apply — 261011-015326-a41353 · VIEW ONLY (nothing is written)     │
+│# target : source/run_length.py:rle_encode                                │
+│# status : accepted · 4.14x (lb 4.00x)                                    │
+│                                                                          │
+│--- /dev/null                                                             │
+│+++ rust/rle_encode/src/lib.rs                                            │
+│+use pyo3::prelude::*;                                                    │
+│+                                                                         │
+│+#[pyfunction]                                                            │
+│+fn rle_encode(text: &str) -> String {                                    │
+│+    if text.is_empty() {                                                 │
+│+        return String::new();                                            │
+│+    }                                                                    │
+│+                                                                         │
+│+    let mut out = String::new();                                         │
+│+    let mut chars = text.chars();                                        │
+│+                                                                         │
+╰──────────────────────────────────────────────────────────────────────────╯
+attempts  1 ◆ accepted · 4.14x (lb 4.00x)
+ 1-4/←→ tabs · tab next · j/k ↑/↓ scroll · r/esc back · q quit

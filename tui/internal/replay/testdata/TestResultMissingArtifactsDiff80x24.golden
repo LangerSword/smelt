@@ -1,0 +1,24 @@
+ FURNACE v0.7 · result · 261011-045519-892ab0           local · gemma-4-e2b-qat
+  1 summary   2 rust   3 compare  [4 diff]
+╭──────────────────────────────────────────────────────────────────────────╮
+│ diff                                                                     │
+│ smelt apply: candidate lib.rs not found in the run dir                   │
+│                                                                          │
+│ view only — smelt apply never writes into your repo                      │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+╰──────────────────────────────────────────────────────────────────────────╯
+attempts  1 ◆ accepted · 2.06x (lb 2.04x)
+ 1-4/←→ tabs · tab next · j/k ↑/↓ scroll · r/esc back · q quit

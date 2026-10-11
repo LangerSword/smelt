@@ -54,13 +54,19 @@ func TestResolveSmeltErrorsOnMissingExplicitPath(t *testing.T) {
 func TestLiveFakeRunCompletes(t *testing.T) {
 	m, _ := startFakeLive(t, map[string]string{"FAKE_SLEEP": "0"})
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(100, 30))
+	// the accepted run auto-opens the Result screen — its frame proves
+	// acceptance + done + auto-open in one condition (waiting for "INGOT"
+	// first would consume the same output chunk and miss this one)
 	teatest.WaitFor(t, tm.Output(),
-		func(b []byte) bool { return bytes.Contains(b, []byte("INGOT")) },
+		func(b []byte) bool { return bytes.Contains(b, []byte("[1 summary]")) },
 		teatest.WithDuration(8*time.Second))
 	tm.Send(keyRunes('q'))
 	tm.WaitFinished(t, teatest.WithFinalTimeout(3*time.Second))
 
 	fin := tm.FinalModel(t).(*Model)
+	if !fin.ResultOpen() {
+		t.Fatal("accepted live run must auto-open the Result screen")
+	}
 	if !fin.Done || fin.ExitCode != 0 {
 		t.Fatalf("done=%v exit=%d", fin.Done, fin.ExitCode)
 	}
@@ -78,6 +84,12 @@ func TestLiveFakeRunCompletes(t *testing.T) {
 func TestLiveBadJSONLineSkippedAndLogged(t *testing.T) {
 	m, _ := startFakeLive(t, map[string]string{"FAKE_SLEEP": "0", "FAKE_BADJSON": "1"})
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(100, 30))
+	// the run ends accepted → the Result screen auto-opens on top of the run
+	// screen; the log (with its skipped-line note) is visible again after esc
+	teatest.WaitFor(t, tm.Output(),
+		func(b []byte) bool { return bytes.Contains(b, []byte("[1 summary]")) },
+		teatest.WithDuration(8*time.Second))
+	tm.Send(tea.KeyMsg{Type: tea.KeyEscape})
 	teatest.WaitFor(t, tm.Output(),
 		func(b []byte) bool { return bytes.Contains(b, []byte("skipped")) },
 		teatest.WithDuration(8*time.Second))

@@ -1,0 +1,51 @@
+{
+  "run_id": "261011-054116-299276",
+  "created_at": "2026-10-11T05:41:16+0530",
+  "smelt_version": "0.1.0",
+  "target": {
+    "path": "source/divide.py",
+    "qualname": "divide",
+    "source_sha256": "2c485fb445f400ffefaa8bf50db7cbd85dfd94343dd456c718beff26aaa93329"
+  },
+  "oracle": {
+    "dir": "oracle",
+    "sha256": "5923e4f0ec22dd29b3bcbe03f261cf8971f266cf103e4d279df4e7bb6a67decb",
+    "n_cases": 141,
+    "seed": 736266551
+  },
+  "config": {
+    "provider": "file",
+    "model": null,
+    "max_attempts": 3,
+    "cases": 120,
+    "bench_min_s": 0.1
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "source": "file",
+      "build": "ok",
+      "verify": "mismatch 1/141",
+      "bench": "-",
+      "outcome": "verify_mismatch: e0074 outcome kind differs (returned vs raised)"
+    },
+    {
+      "attempt": 2,
+      "source": "file",
+      "build": "ok",
+      "verify": "mismatch 1/141",
+      "bench": "-",
+      "outcome": "verify_mismatch: e0074 outcome kind differs (returned vs raised)"
+    },
+    {
+      "attempt": 3,
+      "source": "file",
+      "build": "ok",
+      "verify": "mismatch 1/141",
+      "bench": "-",
+      "outcome": "verify_mismatch: e0074 outcome kind differs (returned vs raised)"
+    }
+  ],
+  "status": "rejected",
+  "stop_reason": "no candidate accepted within 3 attempt(s); last: verify_mismatch: e0074 outcome kind differs (returned vs raised)"
+}

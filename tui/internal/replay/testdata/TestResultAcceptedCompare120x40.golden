@@ -1,0 +1,40 @@
+ FURNACE v0.7 · result · 261011-015326-a41353                                               gemini · gemma-4-26b-a4b-it
+  1 summary   2 rust  [3 compare]  4 diff 
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ compare                                                                                                          │
+│python · run_length.py:rle_encode │ rust · attempts/it1/lib.rs                                                    │
+│"""Demo target for smelt: run-length encoder. │ use pyo3::prelude::*;                                             │
+│ │                                                                                                                │
+│Pure, deterministic, no imports, annotated. Written du… │ #[pyfunction]                                           │
+│end-to-end demo function (v0.1-core gate). │ fn rle_encode(text: &str) -> String {                                │
+│""" │     if text.is_empty() {                                                                                    │
+│ │         return String::new();                                                                                  │
+│ │     }                                                                                                          │
+│def rle_encode(text: str) -> str: │                                                                               │
+│    """Encode maximal runs of identical characters as … │     let mut out = String::new();                        │
+│ │     let mut chars = text.chars();                                                                              │
+│    Counts are always included (even for single charac… │                                                         │
+│    rle_encode("aabb") == "a2b2"; rle_encode("") == "". │     if let Some(mut prev) = chars.next() {              │
+│    """ │         let mut count = 1;                                                                              │
+│    if not text: │                                                                                                │
+│        return "" │         for ch in chars {                                                                     │
+│    out = [] │             if ch == prev {                                                                        │
+│    prev = text[0] │                 count += 1;                                                                  │
+│    count = 0 │             } else {                                                                              │
+│    for ch in text: │                 out.push(prev);                                                             │
+│        if ch == prev: │                 out.push_str(&count.to_string());                                        │
+│            count += 1 │                 prev = ch;                                                               │
+│        else: │                 count = 1;                                                                        │
+│            out.append(prev + str(count)) │             }                                                         │
+│            prev = ch │         }                                                                                 │
+│            count = 1 │         out.push(prev);                                                                   │
+│    out.append(prev + str(count)) │         out.push_str(&count.to_string());                                     │
+│    return "".join(out) │     }                                                                                   │
+│ │                                                                                                                │
+│ │     out                                                                                                        │
+│ │ }                                                                                                              │
+│ │                                                                                                                │
+│ │ #[pymodule]                                                                                                    │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+attempts  1 ◆ accepted · 4.14x (lb 4.00x)
+ 1-4/←→ tabs · tab next · j/k ↑/↓ scroll · r/esc back · q quit

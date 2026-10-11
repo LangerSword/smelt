@@ -1,0 +1,24 @@
+ FURNACE v0.7 · result · 261011-020454-f5e8d0       gemini · gemma-4-26b-a4b-it
+  1 summary  [2 rust]  3 compare   4 diff 
+╭──────────────────────────────────────────────────────────────────────────╮
+│ rust                                                                     │
+│attempt 3 · rejected candidate — not applied                              │
+│                                                                          │
+│   1 │ use pyo3::prelude::*;                                              │
+│   2 │                                                                    │
+│   3 │ #[pyfunction]                                                      │
+│   4 │ fn linear_score(x: f64) -> f64 {                                   │
+│   5 │     ((x * 1.7 + 3.3) * 0.5) - 2.0                                  │
+│   6 │ }                                                                  │
+│   7 │                                                                    │
+│   8 │ #[pymodule]                                                        │
+│   9 │ fn smelt_ext(m: &Bound<'_, PyModule>) -> PyResult<()> {            │
+│  10 │     m.add_function(wrap_pyfunction!(linear_score, m)?)?;           │
+│  11 │     Ok(())                                                         │
+│  12 │ }                                                                  │
+│                                                                          │
+╰──────────────────────────────────────────────────────────────────────────╯
+attempts  1 ◇ no gain · ratio 1.47x, lower bound 1.42x
+          2 ◇ no gain · ratio 1.30x, lower bound 1.26x
+          3 ◇ no gain · ratio 1.41x, lower bound 1.37x
+ 1-4/←→ tabs · tab next · j/k ↑/↓ scroll · r/esc back · q quit

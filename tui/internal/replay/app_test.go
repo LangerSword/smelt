@@ -66,9 +66,12 @@ func TestAppScanPickAndRun(t *testing.T) {
 	teatest.WaitFor(t, tm.Output(), contains("fake_fn"), teatest.WithDuration(5*time.Second))
 
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter}) // focus moved to candidates; run it
-	teatest.WaitFor(t, tm.Output(), contains("INGOT"), teatest.WithDuration(12*time.Second))
-
-	tm.Send(tea.KeyMsg{Type: tea.KeyEscape}) // back to home
+	// an accepted run auto-opens the Result screen (its frame carries INGOT
+	// too, so one wait covers acceptance + done + auto-open); the first esc
+	// closes it (the App delegates to the model), the second leaves the run
+	teatest.WaitFor(t, tm.Output(), contains("[1 summary]"), teatest.WithDuration(12*time.Second))
+	tm.Send(tea.KeyMsg{Type: tea.KeyEscape}) // result -> run screen
+	tm.Send(tea.KeyMsg{Type: tea.KeyEscape}) // run screen -> home
 	typeText(tm, "/quit")
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
 	tm.WaitFinished(t, teatest.WithFinalTimeout(3*time.Second))
@@ -118,6 +121,10 @@ func TestAppHistoryResumeAndDiff(t *testing.T) {
 	tm.Send(tea.KeyMsg{Type: tea.KeyTab})   // focus history
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter}) // open the run
 	teatest.WaitFor(t, tm.Output(), contains("INGOT"), teatest.WithDuration(5*time.Second))
+
+	tm.Send(keyRunes('r')) // result screen (replay mode)
+	teatest.WaitFor(t, tm.Output(), contains("[1 summary]"), teatest.WithDuration(5*time.Second))
+	tm.Send(tea.KeyMsg{Type: tea.KeyEscape}) // esc delegates: closes the result first
 
 	tm.Send(keyRunes('d')) // apply (view only)
 	teatest.WaitFor(t, tm.Output(), contains("VIEW ONLY"), teatest.WithDuration(5*time.Second))

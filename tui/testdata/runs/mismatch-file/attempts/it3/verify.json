@@ -1,0 +1,21 @@
+{
+  "n_cases": 141,
+  "n_mismatch": 1,
+  "sample": [
+    {
+      "case_id": "e0074",
+      "why": "outcome kind differs (returned vs raised)",
+      "args": [
+        -9223372036854775808,
+        -1
+      ],
+      "expected": {
+        "t": "int",
+        "v": 9223372036854775808
+      },
+      "got": null,
+      "expected_err": null,
+      "got_err": "PanicException: attempt to divide with overflow"
+    }
+  ]
+}

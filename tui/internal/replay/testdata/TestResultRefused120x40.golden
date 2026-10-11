@@ -1,0 +1,40 @@
+ FURNACE v0.7 · result · 261011-033114-6d5f72                                               gemini · gemma-4-26b-a4b-it
+ [1 summary]  2 rust   3 compare   4 diff 
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ summary                                                                                                          │
+│verdict   △ ASH — refused — impure target (a correct outcome)                                                     │
+│reason    refused_impure: impure target: module imports 'random' (side effects / nondeterminism)                  │
+│oracle    0 cases · sha —                                                                                         │
+│speedup   — (no measured candidate)                                                                               │
+│attempts  0 — nothing was generated                                                                               │
+│model     gemini · gemma-4-26b-a4b-it                                                                             │
+│time      —                                                                                                       │
+│target    impure_target.py:jittery_max                                                                            │
+│run       261011-033114-6d5f72 · 2026-10-11 03:31 · smelt 0.1.0                                                   │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+attempts  — none · refused before generation
+ 1-4/←→ tabs · tab next · j/k ↑/↓ scroll · r/esc back · q quit

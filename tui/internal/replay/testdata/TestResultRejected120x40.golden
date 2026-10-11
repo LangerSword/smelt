@@ -1,0 +1,40 @@
+ FURNACE v0.7 · result · 261011-020454-f5e8d0                                               gemini · gemma-4-26b-a4b-it
+ [1 summary]  2 rust   3 compare   4 diff 
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ summary                                                                                                          │
+│verdict   ◇ SLAG — rejected — correct but no meaningful gain (or budget exhausted)                                │
+│reason    no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.41x, lower bound 1.…│
+│oracle    206 cases · sha 74916654…                                                                               │
+│speedup   1.41x measured · conservative lower bound 1.37x                                                         │
+│attempts  3 — no meaningful gain (below the 1.5x threshold) — budget exhausted                                    │
+│model     gemini · gemma-4-26b-a4b-it                                                                             │
+│time      28s                                                                                                     │
+│target    linear_score.py:linear_score                                                                            │
+│run       261011-020454-f5e8d0 · 2026-10-11 02:04 · smelt 0.1.0                                                   │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+attempts  1 ◇ no gain · ratio 1.47x, lower bound 1.42x
+          2 ◇ no gain · ratio 1.30x, lower bound 1.26x
+          3 ◇ no gain · ratio 1.41x, lower bound 1.37x
+ 1-4/←→ tabs · tab next · j/k ↑/↓ scroll · r/esc back · q quit

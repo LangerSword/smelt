@@ -54,20 +54,32 @@ func (m *Model) View() string {
 	if !m.ready {
 		m.layout()
 	}
+	if m.ShowResult && m.Res != nil {
+		return m.resultView()
+	}
 	var b strings.Builder
 	b.WriteString(m.header() + "\n")
 	b.WriteString(m.mainArea() + "\n")
 	b.WriteString(m.logPane() + "\n")
 	b.WriteString(m.statusLine() + "\n")
-	b.WriteString(colDim.Render(fit(" ? help · tab panes · ↑/↓ j/k scroll · d diff · q quit", m.Width-1)))
+	b.WriteString(colDim.Render(fit(" ? help · tab panes · ↑/↓ j/k scroll · r result · d diff · q quit", m.Width-1)))
 	return b.String()
 }
 
 // header is persistent: name, version, run id, provider and model.
 func (m *Model) header() string {
-	left := fmt.Sprintf("FURNACE v%s · replay · %s", Version, m.Sum.RunID)
-	if m.Mode == ModeLive {
+	var left string
+	switch {
+	case m.ShowResult && m.Res != nil:
+		id := m.Res.Data.RunID
+		if id == "" {
+			id = m.Sum.RunID
+		}
+		left = fmt.Sprintf("FURNACE v%s · result · %s", Version, id)
+	case m.Mode == ModeLive:
 		left = fmt.Sprintf("FURNACE v%s · run · %s", Version, m.liveRunID())
+	default:
+		left = fmt.Sprintf("FURNACE v%s · replay · %s", Version, m.Sum.RunID)
 	}
 	model := DisplayModel(m.Sum.Provider, m.Sum.Model)
 	if m.Mode == ModeLive && m.Sum.Model == "" {
@@ -346,17 +358,7 @@ func (m *Model) verdictBox() string {
 	if m.Mode == ModeLive && m.KilledByUser {
 		word, sub = "COLD", "stopped by user — run left in progress (resumable)"
 	}
-	glyph := "○"
-	switch word {
-	case "INGOT":
-		glyph = "◆"
-	case "SLAG":
-		glyph = "◇"
-	case "ASH":
-		glyph = "△"
-	case "COLD":
-		glyph = "○"
-	}
+	glyph := verdictGlyph(word)
 	st := colGold
 	switch word {
 	case "INGOT":

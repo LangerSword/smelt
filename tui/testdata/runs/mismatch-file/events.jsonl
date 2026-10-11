@@ -1,0 +1,10 @@
+{"ts": 1791677476.7357955, "schema_version": "1", "event": "run_start", "node": "", "target": "/home/lakshaya/projects/smelt/examples/demo/divide.py:divide", "provider": "file", "model": "-"}
+{"ts": 1791677476.7361994, "schema_version": "1", "event": "purity_ok", "node": ""}
+{"ts": 1791677476.8580244, "schema_version": "1", "event": "capture_done", "node": "", "n_cases": 141, "sha256": "5923e4f0ec22dd29"}
+{"ts": 1791677476.8594089, "schema_version": "1", "event": "attempt_start", "node": "", "attempt": 1}
+{"ts": 1791677477.48441, "schema_version": "1", "event": "verify_mismatch", "node": "", "attempt": 1, "n_bad": 1}
+{"ts": 1791677477.4844644, "schema_version": "1", "event": "attempt_start", "node": "", "attempt": 2}
+{"ts": 1791677477.9438932, "schema_version": "1", "event": "verify_mismatch", "node": "", "attempt": 2, "n_bad": 1}
+{"ts": 1791677477.9439504, "schema_version": "1", "event": "attempt_start", "node": "", "attempt": 3}
+{"ts": 1791677478.4335742, "schema_version": "1", "event": "verify_mismatch", "node": "", "attempt": 3, "n_bad": 1}
+{"ts": 1791677478.4336956, "schema_version": "1", "event": "run_end", "node": "", "status": "rejected", "reason": "no candidate accepted within 3 attempt(s); last: verify_mismatch: e0074 outcome kind differs (returned vs raised)"}

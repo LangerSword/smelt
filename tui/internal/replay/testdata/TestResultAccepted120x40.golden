@@ -1,0 +1,40 @@
+ FURNACE v0.7 · result · 261011-015326-a41353                                               gemini · gemma-4-26b-a4b-it
+ [1 summary]  2 rust   3 compare   4 diff 
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ summary                                                                                                          │
+│verdict   ◆ INGOT — accepted — verified rewrite, speedup above the threshold                                      │
+│reason    verified 225/225 cases; speedup 4.14x (conservative lower bound 4.00x)                                  │
+│oracle    225 cases · sha 60ec5528…                                                                               │
+│speedup   4.14x measured · conservative lower bound 4.00x                                                         │
+│attempts  1 — accepted on attempt 1                                                                               │
+│model     gemini · gemma-4-26b-a4b-it                                                                             │
+│time      14s                                                                                                     │
+│target    run_length.py:rle_encode                                                                                │
+│run       261011-015326-a41353 · 2026-10-11 01:53 · smelt 0.1.0                                                   │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+attempts  1 ◆ accepted · 4.14x (lb 4.00x)
+ 1-4/←→ tabs · tab next · j/k ↑/↓ scroll · r/esc back · q quit

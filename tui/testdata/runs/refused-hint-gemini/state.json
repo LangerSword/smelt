@@ -1,0 +1,21 @@
+{
+  "run_id": "261011-054433-604a3c",
+  "created_at": "2026-10-11T05:44:33+0530",
+  "smelt_version": "0.1.0",
+  "target": {
+    "path": "source/number.py",
+    "qualname": "apnumber",
+    "source_sha256": "8faa9b6f4aceb7a75717579712995fcaba46873a2fb5dfd8c987b5c9b938f3cf"
+  },
+  "oracle": {},
+  "config": {
+    "provider": "gemini",
+    "model": "gemma-4-26b-a4b-it",
+    "max_attempts": 2,
+    "cases": 200,
+    "bench_min_s": 0.1
+  },
+  "attempts": [],
+  "status": "refused",
+  "stop_reason": "refused_unsupported_target: could not load the target module: ImportError: attempted relative import with no known parent package \u2014 package layouts (relative imports) are not supported yet; refactor hint: point smelt at a standalone module or copy the target file out of the package"
+}

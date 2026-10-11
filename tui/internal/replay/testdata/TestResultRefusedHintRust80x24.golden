@@ -1,0 +1,24 @@
+ FURNACE v0.7 · result · 261011-054433-604a3c       gemini · gemma-4-26b-a4b-it
+  1 summary  [2 rust]  3 compare   4 diff 
+╭──────────────────────────────────────────────────────────────────────────╮
+│ rust                                                                     │
+│candidate  not generated — the run was refused before generation          │
+│                                                                          │
+│reason     could not load the target module: ImportError: attempted relat…│
+│hint       point smelt at a standalone module or copy the target file out…│
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+╰──────────────────────────────────────────────────────────────────────────╯
+attempts  — none · refused before generation
+ 1-4/←→ tabs · tab next · j/k ↑/↓ scroll · r/esc back · q quit

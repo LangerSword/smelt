@@ -1,0 +1,40 @@
+ FURNACE v0.7 · result · 261011-015326-a41353                                               gemini · gemma-4-26b-a4b-it
+  1 summary  [2 rust]  3 compare   4 diff 
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ rust                                                                                                             │
+│attempt 1 · accepted candidate                                                                                    │
+│                                                                                                                  │
+│   1 │ use pyo3::prelude::*;                                                                                      │
+│   2 │                                                                                                            │
+│   3 │ #[pyfunction]                                                                                              │
+│   4 │ fn rle_encode(text: &str) -> String {                                                                      │
+│   5 │     if text.is_empty() {                                                                                   │
+│   6 │         return String::new();                                                                              │
+│   7 │     }                                                                                                      │
+│   8 │                                                                                                            │
+│   9 │     let mut out = String::new();                                                                           │
+│  10 │     let mut chars = text.chars();                                                                          │
+│  11 │                                                                                                            │
+│  12 │     if let Some(mut prev) = chars.next() {                                                                 │
+│  13 │         let mut count = 1;                                                                                 │
+│  14 │                                                                                                            │
+│  15 │         for ch in chars {                                                                                  │
+│  16 │             if ch == prev {                                                                                │
+│  17 │                 count += 1;                                                                                │
+│  18 │             } else {                                                                                       │
+│  19 │                 out.push(prev);                                                                            │
+│  20 │                 out.push_str(&count.to_string());                                                          │
+│  21 │                 prev = ch;                                                                                 │
+│  22 │                 count = 1;                                                                                 │
+│  23 │             }                                                                                              │
+│  24 │         }                                                                                                  │
+│  25 │         out.push(prev);                                                                                    │
+│  26 │         out.push_str(&count.to_string());                                                                  │
+│  27 │     }                                                                                                      │
+│  28 │                                                                                                            │
+│  29 │     out                                                                                                    │
+│  30 │ }                                                                                                          │
+│  31 │                                                                                                            │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+attempts  1 ◆ accepted · 4.14x (lb 4.00x)
+ 1-4/←→ tabs · tab next · j/k ↑/↓ scroll · r/esc back · q quit

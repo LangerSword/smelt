@@ -3,7 +3,7 @@
   "created_at": "2026-10-11T02:04:54+0530",
   "smelt_version": "0.1.0",
   "target": {
-    "path": "/home/lakshaya/projects/smelt/evals/corpus/float/linear_score.py",
+    "path": "source/linear_score.py",
     "qualname": "linear_score",
     "source_sha256": "10df00ec1d25a202e2807f6222b3c0dcde355f2df70a314446649608056d183e"
   },

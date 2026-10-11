@@ -3,7 +3,7 @@
   "created_at": "2026-10-11T03:31:14+0530",
   "smelt_version": "0.1.0",
   "target": {
-    "path": "/home/lakshaya/.hermes/cache/scratch/hacktober2026/refused/impure_target.py",
+    "path": "source/impure_target.py",
     "qualname": "jittery_max",
     "source_sha256": "a306e98ee4b6c8598bd0c729dfc204b5f644781e721e926bf7ce7a6f97786bea"
   },

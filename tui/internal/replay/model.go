@@ -43,6 +43,10 @@ type Model struct {
 
 	LogLines []string
 	ExtraLog []string
+
+	// Result screen (key r; auto-opened when a live run ends accepted/rejected)
+	Res        *ResultState
+	ShowResult bool
 }
 
 // New builds the replay viewer for a loaded run.
@@ -82,6 +86,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tickMsg:
 		return m.handleTick()
 	case tea.KeyMsg:
+		if m.ShowResult && m.Res != nil {
+			return m.updateResult(msg)
+		}
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
 			if m.Mode == ModeLive && !m.Done && m.Live != nil {
@@ -89,6 +96,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.KilledByUser = true
 			}
 			return m, tea.Quit
+		case "r":
+			m.openResult()
+			return m, nil
 		case "tab":
 			m.Focus = (m.Focus + 1) % 2
 			return m, nil
@@ -138,6 +148,11 @@ func (m *Model) handleTick() (tea.Model, tea.Cmd) {
 			for _, ln := range m.Live.StderrTail(3) {
 				m.ExtraLog = append(m.ExtraLog, "stderr: "+ln)
 			}
+		}
+		// Accepted/rejected runs open the Result screen automatically;
+		// refused/error stays on the run screen (r shows it on demand).
+		if !m.KilledByUser && (m.Sum.Status == "accepted" || m.Sum.Status == "rejected") {
+			m.openResult()
 		}
 		m.refreshLog()
 		return m, nil

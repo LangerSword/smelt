@@ -1,0 +1,24 @@
+ FURNACE v0.7 · result · 261011-045519-892ab0           local · gemma-4-e2b-qat
+ [1 summary]  2 rust   3 compare   4 diff 
+╭──────────────────────────────────────────────────────────────────────────╮
+│ summary                                                                  │
+│verdict   ◆ INGOT — accepted — verified rewrite, speedup above the thresh…│
+│reason    verified 225/225 cases; speedup 2.06x (conservative lower bound…│
+│oracle    225 cases · sha 5a5d00ff…                                       │
+│speedup   2.06x measured · conservative lower bound 2.04x                 │
+│attempts  1 — accepted on attempt 1                                       │
+│model     local · gemma-4-e2b-qat                                         │
+│time      30s                                                             │
+│target    run_length.py:rle_encode                                        │
+│run       261011-045519-892ab0 · 2026-10-11 04:55 · smelt 0.1.0           │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+│                                                                          │
+╰──────────────────────────────────────────────────────────────────────────╯
+attempts  1 ◆ accepted · 2.06x (lb 2.04x)
+ 1-4/←→ tabs · tab next · j/k ↑/↓ scroll · r/esc back · q quit

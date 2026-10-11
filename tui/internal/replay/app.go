@@ -80,8 +80,9 @@ const helpText = `furnace home — commands
 
 home keys:  tab complete/focus · ↑/↓ choose · enter run/open · esc cancel
             ? help · ctrl+r sessions · ctrl+c quit
-run view:   esc back · d diff (view only) · j/k ↑/↓ scroll · q quit
-            ctrl+c once stops the run (confirm), twice quits`
+run view:   esc back · r result · d diff (view only) · j/k ↑/↓ scroll · q quit
+            ctrl+c once stops the run (confirm), twice quits
+result:     1-4/←→ tabs · tab next · j/k ↑/↓ scroll · esc/r back · q quit`
 
 type cmdSpec struct{ name, desc string }
 
@@ -351,6 +352,11 @@ func (a *App) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			a.showText("help", helpText)
 			return a, nil
 		case "esc":
+			if a.Run != nil && a.Run.ResultOpen() {
+				rm, cmd := a.Run.Update(msg) // esc closes the result first
+				a.Run = rm.(*Model)
+				return a, cmd
+			}
 			a.stopLiveIfRunning()
 			a.Screen = ScreenHome
 			a.loadHistory()
@@ -803,7 +809,10 @@ func (a *App) View() string {
 		if a.Run == nil {
 			break
 		}
-		foot := colDim.Render(fit(" esc back · d diff (view only) · j/k scroll · ctrl+c once stops, twice quits · q quit", a.Width-1))
+		foot := colDim.Render(fit(" esc back · r result · d diff (view only) · j/k scroll · ctrl+c once stops, twice quits · q quit", a.Width-1))
+		if a.Run.ResultOpen() {
+			foot = colDim.Render(fit(" 1-4/←→ tabs · tab next · j/k ↑/↓ scroll · esc/r back · q quit", a.Width-1))
+		}
 		if a.Status != "" {
 			foot = colDim.Render(fit(" "+a.Status, a.Width-1)) + "\n" + foot
 		}

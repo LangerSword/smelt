@@ -20,7 +20,7 @@ import (
 
 const usage = `usage:
   furnace [--no-anim]                      home screen: scan · pick · run · history
-  furnace replay <run-dir>                 replay a finished run (q quit · tab panes · ↑/↓ scroll)
+  furnace replay <run-dir>                 replay a finished run (q quit · tab panes · ↑/↓ scroll · r result)
   furnace run <file.py:fn> [flags]         run smelt live and watch it
 
 flags for run:
