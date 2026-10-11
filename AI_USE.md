@@ -82,6 +82,14 @@ This file records how AI was used to build smelt, and who reviewed what.
   the blind list (same frozen sha — no tuning; comparison in `evals/general.md`), and
   packaged v0.6.0 (wheel + sdist; clean `uv tool install` verified; **not uploaded**).
   Developer reviews the domain-gap finding (i64-overflow edges) before any oracle change.
+- **Tuple widening (branch `feature/general`, unmerged at the 06:50 limit)**: Hermes added
+  the tuple battery to the meta-eval FIRST (3 injected wrong rewrites: no-abs, ignores
+  the second element, wrong exception), then implemented `tuple[int, int]` support
+  (worker-side coercion spec — JSON has no tuples; scan tier 1; case generation).
+  Evidence: 31 pytest passed (0 regressions), meta-eval **16/16 rejected** (the 3 tuple
+  wrongs caught on merits, exit 4), accept proof `gcd_pair` (loop-heavy; tiny `manhattan`
+  verifies 208/208 then is honestly rejected at 1.43x < 1.5x). Left unmerged on the
+  branch per the developer's hard limit; merge is the developer's call.
 
 ## Scope note
 
