@@ -803,7 +803,11 @@ func (a *App) View() string {
 		if a.Run == nil {
 			break
 		}
-		return a.Run.View() + "\n" + colDim.Render(fit(" esc back · d diff (view only) · q quit", a.Width-1))
+		foot := colDim.Render(fit(" esc back · d diff (view only) · j/k scroll · ctrl+c once stops, twice quits · q quit", a.Width-1))
+		if a.Status != "" {
+			foot = colDim.Render(fit(" "+a.Status, a.Width-1)) + "\n" + foot
+		}
+		return a.Run.View() + "\n" + foot
 	case ScreenText:
 		head := " " + fit("FURNACE · "+a.TextTitle, a.Width-2)
 		foot := colDim.Render(fit(" esc back · ↑/↓ scroll", a.Width-1))

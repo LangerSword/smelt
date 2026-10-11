@@ -75,6 +75,26 @@ func TestReplay80ColsRefused(t *testing.T) {
 	runReplayTeatest(t, "refused-gemini", 80, 24, "ASH")
 }
 
+// GATE: the 120x40 terminal is a required case (U1 two-column layout).
+func TestReplay120x40Accepted(t *testing.T) {
+	runReplayTeatest(t, "accepted-gemini", 120, 40, "INGOT")
+}
+
+// GATE: resize must never crash — shrink then grow mid-replay.
+func TestReplayResizeSafe(t *testing.T) {
+	sum, err := LoadRun(fixturesDir + "/accepted-gemini")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := New(sum)
+	for _, s := range [][2]int{{80, 24}, {160, 45}, {60, 20}, {200, 60}, {80, 24}} {
+		m.Update(tea.WindowSizeMsg{Width: s[0], Height: s[1]})
+		if v := m.View(); v == "" {
+			t.Fatalf("empty view at %dx%d", s[0], s[1])
+		}
+	}
+}
+
 // Key handling: q must quit (program finishes), tab must switch focus.
 func TestReplayTabFocusAndQuit(t *testing.T) {
 	sum, err := LoadRun(fixturesDir + "/accepted-gemini")
