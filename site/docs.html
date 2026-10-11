@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docs — smelt</title>
+  <meta name="description" content="smelt documentation: quickstart, how it works, CLI reference, providers, Furnace TUI, evals, limits, security, contributing.">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/fonts/fonts.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <nav class="site-nav">
+    <div class="container nav-inner">
+      <a class="brand" href="index.html"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L13 7 L12 7 L12 13 L8 13 L8 7 L7 7 Z" fill="#FF6D3A"/><rect x="7" y="14" width="6" height="2" fill="#D4A017"/></svg>smelt</a>
+      <div class="nav-links">
+        <a href="docs.html">Docs</a><a href="results.html">Results</a><a href="install.html">Install</a><a href="changelog.html">Changelog</a><a href="roadmap.html">Roadmap</a>
+        <a class="nav-star" href="https://github.com/LangerSword/smelt">Star</a>
+      </div>
+    </div>
+  </nav>
+  <main id="main">
+    <div class="container">
+      <div class="page-header"><h1>Docs</h1><p>Quickstart, how it works, CLI reference, providers, the Furnace TUI, evals, honest limits, and the security model.</p></div>
+      <div class="docs-layout">
+        <aside class="docs-sidebar">
+          <input class="docs-search" id="docs-search" type="search" placeholder="search docs…" aria-label="Search docs">
+          <nav class="docs-nav">
+            <a href="#quickstart" class="doc-item">Quickstart</a>
+            <a href="#how-it-works" class="doc-item">How it works</a>
+            <a href="#oracle" class="doc-item">Oracle</a>
+            <a href="#safety" class="doc-item">Safety</a>
+            <a href="#benchmark" class="doc-item">Benchmark rules</a>
+            <a href="#cli" class="doc-item">CLI reference</a>
+            <a href="#skill" class="doc-item">Agent skill</a>
+            <a href="#providers" class="doc-item">Providers</a>
+            <a href="#tui" class="doc-item">Furnace TUI</a>
+            <a href="#evals" class="doc-item">Evals &amp; meta-eval</a>
+            <a href="#limits" class="doc-item">Honest limits</a>
+            <a href="#security" class="doc-item">Security model</a>
+            <a href="#contributing" class="doc-item">Contributing</a>
+            <a href="#license" class="doc-item">License &amp; AI use</a>
+          </nav>
+        </aside>
+        <div class="docs-content">
+          <section class="doc-item" id="quickstart">
+            <h2>Quickstart</h2>
+            <pre><code>git clone https://github.com/LangerSword/smelt.git &amp;&amp; cd smelt
+uv sync
+uv run smelt doctor
+uv run smelt run examples/demo/run_length.py:rle_encode \
+      --provider gemini --model gemma-4-26b-a4b-it
+uv run smelt report runs/&lt;run-id&gt;</code></pre>
+            <p class="text-dim">Verify and benchmark steps never need the network. Model runs need a provider key.</p>
+          </section>
+
+          <section class="doc-item" id="how-it-works">
+            <h2>How it works</h2>
+            <pre><code>select ─▶ capture oracle ─▶ generate ─▶ build ─┬─ok─▶ verify ─┬─pass─▶ bench ─▶ accept ─▶ report
+                          (model writes       │            │
+                           lib.rs)            └─ errors ────┴─ mismatches ─▶ feed back ↺ (max 3 attempts)
+                                                                             else reject (honest)</code></pre>
+            <p>The orchestrator is deterministic; the model only acts inside <code>generate</code>. Transitions are checkpointed (<code>state.json</code> + <code>events.jsonl</code>), so runs resume.</p>
+          </section>
+
+          <section class="doc-item" id="oracle">
+            <h2>Oracle</h2>
+            <p>smelt takes ONE slow, pure Python function and freezes what it actually does into a differential oracle — 200+ recorded input/output cases, hashed and read-only. <strong>Code, not the model, checks that the Rust answers identically on every recorded case.</strong></p>
+          </section>
+
+          <section class="doc-item" id="safety">
+            <h2>Safety</h2>
+            <ul>
+              <li>Scaffold + <code>Cargo.toml</code> are pinned (pyo3 <code>=0.29.3</code>) and supplied by smelt — the model fills in one function body only.</li>
+              <li>Static scan before build rejects: <code>unsafe</code>, extra crates, <code>build.rs</code>, std net/process/fs, <code>include_*!</code>, <code>env!</code>.</li>
+              <li>Builds happen in run-scratch dirs; the extension executes in a separate worker process under resource limits. smelt never writes into your project.</li>
+            </ul>
+          </section>
+
+          <section class="doc-item" id="benchmark">
+            <h2>Benchmark rules</h2>
+            <p>The speedup must clear a conservative 1.5x lower bound, not the median. Every number is labeled with the model that produced it. Nothing is rounded up.</p>
+          </section>
+
+          <section class="doc-item" id="cli">
+            <h2>CLI reference</h2>
+            <p class="text-dim">Full generated reference on the <a href="results.html#cli">Results</a> page and in <a href="https://github.com/LangerSword/smelt/blob/main/docs/cli.md">docs/cli.md</a>.</p>
+            <pre><code>smelt run file.py:fn [--provider p] [--model m] [--candidate lib.rs] [--cases N] [--json]
+smelt capture file.py:fn [--cases N] [--json]
+smelt resume run-dir [--json]
+smelt report run-dir
+smelt scan path [--json]
+smelt apply run-dir          # VIEW ONLY
+smelt doctor [--probe] [--json]
+smelt evals [--provider p] [--model m] [--max-calls N] [--pause-s S] [--out-tag T]
+smelt furnace</code></pre>
+            <p>Exit codes: 0 accepted · 3 refused (impure) · 4 rejected · 5 harness error · 2 config.</p>
+          </section>
+
+          <section class="doc-item" id="skill">
+            <h2>Agent skill</h2>
+            <p><a href="https://github.com/LangerSword/smelt/blob/main/skills/smelt/SKILL.md">skills/smelt/SKILL.md</a> follows the Agent Skills open standard. Validated with <code>agentskills validate</code>. Install it into your agent so it can drive smelt itself.</p>
+          </section>
+
+          <section class="doc-item" id="providers">
+            <h2>Providers</h2>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Provider</th><th>Model</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td><code>gemini</code></td><td>gemma-4-26b-a4b-it (default), gemma-4-31b-it</td><td>working</td></tr>
+                <tr><td><code>local</code></td><td>any llama.cpp / OpenAI-compatible model</td><td>working (offline)</td></tr>
+                <tr><td><code>do</code></td><td>gemma-4-31B-it</td><td>wired, needs DIGITALOCEAN_TOKEN</td></tr>
+                <tr><td><code>openai</code></td><td>any OpenAI-compatible endpoint</td><td>wired</td></tr>
+                <tr><td><code>file</code> / <code>fake</code></td><td>hand-provided / CI candidates</td><td>working</td></tr>
+              </tbody>
+            </table></div>
+          </section>
+
+          <section class="doc-item" id="tui">
+            <h2>Furnace TUI</h2>
+            <p>Furnace is a Go TUI that replays finished runs and runs new ones live. It reads <code>runs/&lt;id&gt;/events.jsonl</code>: the loop as a horizontal flow, a results panel, a log pane, and the verdict — <strong>INGOT</strong>, <strong>SLAG</strong>, or <strong>ASH</strong>. It is a front end; the Python core stays the source of truth and it never runs generated code.</p>
+            <pre><code>cd tui &amp;&amp; go build -o furnace .    # Go 1.27+
+./furnace
+./furnace replay ../runs/&lt;run-id&gt;</code></pre>
+          </section>
+
+          <section class="doc-item" id="evals">
+            <h2>Evals &amp; meta-eval</h2>
+            <p>The corpus is frozen and run sequentially. Every table is generated from real run output; each number is labeled with the model. The meta-eval is a false-accept gate: <strong>10/10</strong> hand-written wrong rewrites rejected. See <a href="results.html">Results</a>.</p>
+          </section>
+
+          <section class="doc-item" id="limits">
+            <h2>Honest limits</h2>
+            <ul>
+              <li>Simple types only (str / int / float / bool / list[int] / list[str]); impure targets refused.</li>
+              <li>Integers tested inside the i64 range; big Python ints are outside the tested domain.</li>
+              <li>The oracle proves equivalence <strong>on the tested inputs</strong> — the claim is exactly that.</li>
+              <li>Small functions can legitimately fail to beat pyo3 call overhead — four corpus tasks were rejected at 1.22–1.46x.</li>
+              <li>Package layouts (relative imports) are not supported yet.</li>
+            </ul>
+          </section>
+
+          <section class="doc-item" id="security">
+            <h2>Security model</h2>
+            <p>Generated Rust is treated as untrusted. The model fills one function body in a pinned scaffold. Static scan, isolated build, separate worker process under resource limits. Secrets resolve env → project <code>.env</code> → <code>~/.hermes/.env</code>; never logged.</p>
+          </section>
+
+          <section class="doc-item" id="contributing">
+            <h2>Contributing</h2>
+            <p>Open a PR on <a href="https://github.com/LangerSword/smelt">GitHub</a>. Keep the core deterministic; the model only acts inside <code>generate</code>. Every number must come from a real run and name its model.</p>
+          </section>
+
+          <section class="doc-item" id="license">
+            <h2>License &amp; AI use</h2>
+            <p>MIT. See <a href="https://github.com/LangerSword/smelt/blob/main/AI_USE.md">AI_USE.md</a> for what was written by the build agent vs the human developer. Libraries and licenses: typer (MIT), rich (MIT), pyo3 (MIT OR Apache-2.0), maturin (MIT OR Apache-2.0), llama.cpp (MIT, local server). Site fonts (Space Grotesk, Inter, JetBrains Mono) are SIL OFL; GSAP is under the GreenSock No Charge license.</p>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="container footer-inner">
+    <div><p class="mono-label">smelt · MIT</p></div>
+    <div class="footer-links"><a href="https://github.com/LangerSword/smelt">GitHub</a><a href="https://github.com/LangerSword/smelt/issues">Issues</a><a href="index.html">Home</a></div>
+  </div></footer>
+  <script src="assets/js/vendor/gsap.min.js"></script>
+  <script src="assets/js/vendor/ScrollTrigger.min.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

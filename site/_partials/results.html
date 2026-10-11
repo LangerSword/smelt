@@ -1,0 +1,57 @@
+<p class="text-dim mono-label">Source: evals/results.json · provider <code>gemini</code> · model <code>gemma-4-26b-a4b-it</code> · ran on: laptop</p>
+<div class="results-strip">
+<div class="results-stat"><span class="num" data-count="24">24</span><span class="lbl">tasks</span></div>
+<div class="results-stat"><span class="num ingot" data-count="20">20</span><span class="lbl">accepted</span></div>
+<div class="results-stat"><span class="num slag" data-count="4">4</span><span class="lbl">rejected</span></div>
+<div class="results-stat"><span class="num ash" data-count="0">0</span><span class="lbl">errors</span></div>
+</div>
+<div class="table-wrap"><table class="results-table">
+<thead><tr><th>function</th><th>category</th><th>status</th><th>attempts</th><th>oracle cases</th><th>speedup</th><th>lower bound</th></tr></thead>
+<tbody>
+<tr><td><code>linear_score</code></td><td>float</td><td><span class="verdict-badge verdict-slag">rejected</span></td><td>3</td><td>206</td><td class="mono">1.41x</td><td class="mono text-dim">1.37x</td></tr>
+<tr><td><code>sigmoid_approx</code></td><td>float</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>2</td><td>206</td><td class="mono">1.65x</td><td class="mono text-dim">1.60x</td></tr>
+<tr><td><code>collatz_steps</code></td><td>int</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>209</td><td class="mono">22.68x</td><td class="mono text-dim">21.79x</td></tr>
+<tr><td><code>digital_root</code></td><td>int</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>209</td><td class="mono">3.32x</td><td class="mono text-dim">3.24x</td></tr>
+<tr><td><code>popcount</code></td><td>int</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>209</td><td class="mono">4.99x</td><td class="mono text-dim">4.72x</td></tr>
+<tr><td><code>reverse_digits</code></td><td>int</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>209</td><td class="mono">2.19x</td><td class="mono text-dim">2.16x</td></tr>
+<tr><td><code>sum_digits_sq</code></td><td>int</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>209</td><td class="mono">3.01x</td><td class="mono text-dim">2.83x</td></tr>
+<tr><td><code>triangular</code></td><td>int</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>209</td><td class="mono">47.14x</td><td class="mono text-dim">46.97x</td></tr>
+<tr><td><code>bucket_hash</code></td><td>list</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>2</td><td>204</td><td class="mono">2.23x</td><td class="mono text-dim">2.17x</td></tr>
+<tr><td><code>count_peaks</code></td><td>list</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>204</td><td class="mono">2.13x</td><td class="mono text-dim">2.02x</td></tr>
+<tr><td><code>longest_run</code></td><td>list</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>2</td><td>204</td><td class="mono">1.64x</td><td class="mono text-dim">1.54x</td></tr>
+<tr><td><code>max_subarray</code></td><td>list</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>204</td><td class="mono">1.72x</td><td class="mono text-dim">1.56x</td></tr>
+<tr><td><code>median_doubled</code></td><td>list</td><td><span class="verdict-badge verdict-slag">rejected</span></td><td>3</td><td>204</td><td class="mono">1.38x</td><td class="mono text-dim">1.35x</td></tr>
+<tr><td><code>prefix_max_sum</code></td><td>list</td><td><span class="verdict-badge verdict-slag">rejected</span></td><td>3</td><td>204</td><td class="mono">1.46x</td><td class="mono text-dim">1.41x</td></tr>
+<tr><td><code>sum_squares</code></td><td>list</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>204</td><td class="mono">1.74x</td><td class="mono text-dim">1.66x</td></tr>
+<tr><td><code>caesar_shift</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">11.51x</td><td class="mono text-dim">11.48x</td></tr>
+<tr><td><code>count_vowel_runs</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">5.96x</td><td class="mono text-dim">5.28x</td></tr>
+<tr><td><code>count_words</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">7.36x</td><td class="mono text-dim">6.74x</td></tr>
+<tr><td><code>is_palindrome_norm</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">2.40x</td><td class="mono text-dim">2.39x</td></tr>
+<tr><td><code>longest_alpha_run</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">6.77x</td><td class="mono text-dim">6.30x</td></tr>
+<tr><td><code>normalize_spaces</code></td><td>string</td><td><span class="verdict-badge verdict-slag">rejected</span></td><td>3</td><td>225</td><td class="mono">1.22x</td><td class="mono text-dim">1.20x</td></tr>
+<tr><td><code>reverse_words</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">1.61x</td><td class="mono text-dim">1.58x</td></tr>
+<tr><td><code>snake_to_camel</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>1</td><td>225</td><td class="mono">2.66x</td><td class="mono text-dim">2.49x</td></tr>
+<tr><td><code>top_word</code></td><td>string</td><td><span class="verdict-badge verdict-ingot">accepted</span></td><td>2</td><td>225</td><td class="mono">4.96x</td><td class="mono text-dim">4.74x</td></tr>
+</tbody></table></div>
+<h3>Speedups — measured, not modeled</h3>
+<p class="text-dim">The gold mark is the conservative lower bound — the acceptance rule reads it, not the median.</p>
+<div class="speedup-row"><code>triangular</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="100.0"></div><div class="speedup-lb" style="left:99.6%"></div></div><span class="mono">47.14x</span></div>
+<div class="speedup-row"><code>collatz_steps</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="48.1"></div><div class="speedup-lb" style="left:46.2%"></div></div><span class="mono">22.68x</span></div>
+<div class="speedup-row"><code>caesar_shift</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="24.4"></div><div class="speedup-lb" style="left:24.3%"></div></div><span class="mono">11.51x</span></div>
+<div class="speedup-row"><code>count_words</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="15.6"></div><div class="speedup-lb" style="left:14.3%"></div></div><span class="mono">7.36x</span></div>
+<div class="speedup-row"><code>longest_alpha_run</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="14.4"></div><div class="speedup-lb" style="left:13.4%"></div></div><span class="mono">6.77x</span></div>
+<div class="speedup-row"><code>count_vowel_runs</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="12.6"></div><div class="speedup-lb" style="left:11.2%"></div></div><span class="mono">5.96x</span></div>
+<div class="speedup-row"><code>popcount</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="10.6"></div><div class="speedup-lb" style="left:10.0%"></div></div><span class="mono">4.99x</span></div>
+<div class="speedup-row"><code>top_word</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="10.5"></div><div class="speedup-lb" style="left:10.0%"></div></div><span class="mono">4.96x</span></div>
+<div class="speedup-row"><code>digital_root</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="7.0"></div><div class="speedup-lb" style="left:6.9%"></div></div><span class="mono">3.32x</span></div>
+<div class="speedup-row"><code>sum_digits_sq</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="6.4"></div><div class="speedup-lb" style="left:6.0%"></div></div><span class="mono">3.01x</span></div>
+<div class="speedup-row"><code>snake_to_camel</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="5.6"></div><div class="speedup-lb" style="left:5.3%"></div></div><span class="mono">2.66x</span></div>
+<div class="speedup-row"><code>is_palindrome_norm</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="5.1"></div><div class="speedup-lb" style="left:5.1%"></div></div><span class="mono">2.40x</span></div>
+<div class="speedup-row"><code>bucket_hash</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="4.7"></div><div class="speedup-lb" style="left:4.6%"></div></div><span class="mono">2.23x</span></div>
+<div class="speedup-row"><code>reverse_digits</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="4.6"></div><div class="speedup-lb" style="left:4.6%"></div></div><span class="mono">2.19x</span></div>
+<div class="speedup-row"><code>count_peaks</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="4.5"></div><div class="speedup-lb" style="left:4.3%"></div></div><span class="mono">2.13x</span></div>
+<div class="speedup-row"><code>sum_squares</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.7"></div><div class="speedup-lb" style="left:3.5%"></div></div><span class="mono">1.74x</span></div>
+<div class="speedup-row"><code>max_subarray</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.6"></div><div class="speedup-lb" style="left:3.3%"></div></div><span class="mono">1.72x</span></div>
+<div class="speedup-row"><code>sigmoid_approx</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.5"></div><div class="speedup-lb" style="left:3.4%"></div></div><span class="mono">1.65x</span></div>
+<div class="speedup-row"><code>longest_run</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.5"></div><div class="speedup-lb" style="left:3.3%"></div></div><span class="mono">1.64x</span></div>
+<div class="speedup-row"><code>reverse_words</code><div class="speedup-track"><div class="speedup-bar-fill" data-w="3.4"></div><div class="speedup-lb" style="left:3.3%"></div></div><span class="mono">1.61x</span></div>

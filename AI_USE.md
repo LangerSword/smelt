@@ -82,6 +82,17 @@ This file records how AI was used to build smelt, and who reviewed what.
   the blind list (same frozen sha — no tuning; comparison in `evals/general.md`), and
   packaged v0.6.0 (wheel + sdist; clean `uv tool install` verified; **not uploaded**).
   Developer reviews the domain-gap finding (i64-overflow edges) before any oracle change.
+- **Website (branch `feature/site`)**: Hermes build agent built the static site under
+  `site/` — hand-written HTML/CSS/JS, original SVG illustrations (anvil, ingot, ore→ingot
+  pipeline), vendored GSAP 3.13 (No Charge license) and self-hosted SIL-OFL fonts (Space
+  Grotesk, Inter, JetBrains Mono), the results/CLI generation scripts
+  (`site/scripts/gen_results.py`, `gen_cli_ref.py`, `build.py`, `check_links.py`), the
+  POSIX install script (`site/install.sh`, shellcheck-clean at warning level, dry-run
+  tested on Linux; **untested on macOS**), and the GitHub Pages deploy workflow
+  (`.github/workflows/deploy-site.yml`). Every number on the site is generated from
+  `evals/results.json`; the CI drift check fails if the page and JSON differ. The Python
+  core and the oracle were not touched. Developer approves the design brief and reviews
+  the deploy preview before merge.
 
 ## Scope note
 

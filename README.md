@@ -200,6 +200,14 @@ whether it is. Licenses for the Go stack: [`tui/README.md`](tui/README.md#licens
 See [`AI_USE.md`](AI_USE.md): what was written by the build agent vs the human developer,
 and the runtime model (Gemma 4) that generates candidates inside the loop.
 
+## Website
+
+[`site/`](site/) — the project site (forge and fire, ore to metal). Static, deployed to
+GitHub Pages via `.github/workflows/deploy-site.yml`. Results and the CLI reference are
+generated from `evals/results.json` and `smelt --help` at build time, never hand-edited.
+Libraries (with licenses): GSAP 3.13 (GreenSock No Charge), Space Grotesk / Inter /
+JetBrains Mono (SIL OFL). Build locally: `python3 site/scripts/build.py`.
+
 ## License
 
 MIT.

@@ -1,0 +1,2 @@
+# generated partials are committed so the drift check has a baseline,
+# but local _partials output is fine to ignore if you prefer

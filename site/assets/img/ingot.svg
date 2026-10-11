@@ -1,0 +1,12 @@
+<!-- Ingot with hallmark stamp — original SVG. -->
+<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A gold ingot with a hallmark stamp">
+  <!-- glow -->
+  <ellipse cx="80" cy="88" rx="45" ry="5" fill="#D4A017" opacity="0.15"/>
+  <!-- ingot body -->
+  <path d="M20 50 L60 36 L120 36 L140 50 L120 70 L60 70 Z" fill="#D4A017" stroke="#B8901A" stroke-width="1.5"/>
+  <!-- top face -->
+  <path d="M60 36 L120 36 L110 28 L70 28 Z" fill="#E8B923"/>
+  <!-- hallmark stamp -->
+  <path d="M75 44 L85 44 L85 60 L75 60 Z" fill="none" stroke="#171A1F" stroke-width="2"/>
+  <text x="80" y="55" text-anchor="middle" font-family="monospace" font-size="8" fill="#171A1F" font-weight="bold">S</text>
+</svg>

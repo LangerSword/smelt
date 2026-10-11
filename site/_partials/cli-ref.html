@@ -1,0 +1,49 @@
+<h2 id="cli-reference">CLI reference</h2>
+<p class="text-dim">Generated from <code>smelt --help</code> and <code>docs/cli.md</code>. Every command, flag and exit code.</p>
+<h3>Commands</h3>
+<pre class="terminal-body"><code>
+smelt run &lt;file.py:fn&gt; [--provider p] [--model m] [--candidate lib.rs] [--cases N] [--json]
+smelt capture &lt;file.py:fn&gt; [--cases N] [--json]      # freeze an oracle, no generation
+smelt resume &lt;run-dir&gt; [--json]                       # continue an interrupted run
+smelt report &lt;run-dir&gt;                                # print the run report (markdown)
+smelt scan &lt;path&gt; [--json]                            # candidates with tier + skip reasons
+smelt apply &lt;run-dir&gt;                                 # VIEW ONLY diff + fallback shim
+smelt doctor [--probe] [--json]                       # environment + provider checks
+smelt evals [--provider p] [--model m] [--max-calls N] [--pause-s S] [--out-tag T]
+smelt furnace                                         # launch the Go TUI if installed
+</code></pre>
+<h3>Exit codes</h3>
+<div class="table-wrap"><table><thead><tr><th>code</th><th>meaning</th></tr></thead><tbody>
+<tr><td class="mono">0</td><td>accepted — verified, speedup clears the conservative 1.5x lower bound</td></tr>
+<tr><td class="mono">2</td><td>config error (bad target, dotted qualname, unsupported annotation on a required path)</td></tr>
+<tr><td class="mono">3</td><td>refused — impure target or unsupported-but-understood shape (typed, with a hint)</td></tr>
+<tr><td class="mono">4</td><td>rejected — no acceptable rewrite within budget (a correct, honest outcome)</td></tr>
+<tr><td class="mono">5</td><td>harness/internal error (report the run dir)</td></tr>
+</tbody></table></div>
+<h3>Live <code>smelt --help</code></h3>
+<pre class="terminal-body"><code>                                                                                
+ Usage: smelt [OPTIONS] COMMAND [ARGS]...                                       
+                                                                                
+ Smelt a slow pure Python function into a verified Rust extension. Only proven  
+ metal ships.                                                                   
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ run      Run the full smelt loop on one function: path/to/file.py:function   │
+│ capture  Capture + freeze the oracle only (no generation, no build).         │
+│ resume   Resume an interrupted run from its checkpoint.                      │
+│ report   Print a run&#x27;s report (markdown).                                    │
+│ scan     List candidate functions under &lt;path&gt; (source for the TUI picker).  │
+│ apply    Print the proposed change for an accepted run — VIEW ONLY, never    │
+│          writes.                                                             │
+│ furnace  Launch the Furnace TUI (Go binary) if installed; print build steps  │
+│          otherwise.                                                          │
+│ doctor   Check toolchain, sandbox, local server, and provider keys. Green =  │
+│          no FAIL rows.                                                       │
+│ evals    Run the frozen corpus sequentially; writes evals/results.json +     │
+│          results.md.                                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+</code></pre>

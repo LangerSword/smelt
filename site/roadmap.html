@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roadmap &amp; FAQ — smelt</title>
+  <meta name="description" content="smelt roadmap and frequently asked questions, answered honestly.">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/fonts/fonts.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <nav class="site-nav">
+    <div class="container nav-inner">
+      <a class="brand" href="index.html"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L13 7 L12 7 L12 13 L8 13 L8 7 L7 7 Z" fill="#FF6D3A"/><rect x="7" y="14" width="6" height="2" fill="#D4A017"/></svg>smelt</a>
+      <div class="nav-links">
+        <a href="docs.html">Docs</a><a href="results.html">Results</a><a href="install.html">Install</a><a href="changelog.html">Changelog</a><a href="roadmap.html">Roadmap</a>
+        <a class="nav-star" href="https://github.com/LangerSword/smelt">Star</a>
+      </div>
+    </div>
+  </nav>
+  <main id="main">
+    <div class="container">
+      <div class="page-header"><h1>Roadmap &amp; FAQ</h1><p>What is planned, and honest answers to common questions. Anything planned is labeled <span class="mono-label">planned</span>.</p></div>
+
+      <section class="section">
+        <h2>Roadmap</h2>
+        <div class="roadmap-list">
+          <div class="roadmap-item done"><span class="mono-label">done</span><h3>PyPI publish (<code>smelt-rs</code>)</h3><p class="text-dim">Wheel and sdist build green and install-verify from disk. Upload pending the maintainer's go. Name <code>smelt-rs</code> is unclaimed.</p></div>
+          <div class="roadmap-item done"><span class="mono-label">done</span><h3>Multi-parameter oracle</h3><p class="text-dim">Independent random columns + capped edge product (~40–140 cases).</p></div>
+          <div class="roadmap-item planned"><span class="mono-label">planned</span><h3>Package layout support</h3><p class="text-dim">Relative-import modules are refused today; a refactor hint points at a standalone module.</p></div>
+          <div class="roadmap-item planned"><span class="mono-label">planned</span><h3>i64 domain-policy decision</h3><p class="text-dim">Inputs whose Python result exceeds i64 cannot be matched by an i64 rewrite; whether to filter such cases at capture time is open.</p></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>FAQ</h2>
+        <div class="faq-list">
+          <div class="faq-item">
+            <h3>Is this part of Python?</h3>
+            <p class="text-dim">No — it is an external tool. It uses <code>pip</code>/<code>uv</code> to install, <strong>PyO3</strong> to bind Rust to Python, and <strong>maturin</strong> to package the extension into a wheel. smelt itself is a CLI you run on a function; it does not patch the interpreter.</p>
+          </div>
+          <div class="faq-item">
+            <h3>Does it work on any code?</h3>
+            <p class="text-dim">No. It works on ONE pure function of simple types (str / int / float / bool / list[int] / list[str]). Impure targets (I/O, randomness, time, globals) are refused with a hint. Package layouts with relative imports are refused today. Rejections are honest outcomes, not failures.</p>
+          </div>
+          <div class="faq-item">
+            <h3>Is the generated code safe?</h3>
+            <p class="text-dim">Generated Rust is treated as untrusted. The model fills one function body in a pinned scaffold (pyo3 <code>=0.29.3</code>). A static scan rejects <code>unsafe</code>, extra crates, <code>build.rs</code>, std net/process/fs, <code>include_*!</code>, <code>env!</code>. Builds run in scratch dirs and the extension executes in a separate worker process under resource limits. What is <em>not</em> isolated: the model still generates arbitrary (but scanned) Rust — the guarantee is that it passes the oracle, not that it is free of all bugs.</p>
+          </div>
+          <div class="faq-item">
+            <h3>Which models?</h3>
+            <p class="text-dim"><code>gemma-4-26b-a4b-it</code> (default, free-tier friendly) and <code>gemma-4-31b-it</code> (strongest, slower) via the Gemini API. A fully offline <code>local</code> provider (llama.cpp, <code>gemma-4-e2b-qat</code>) is also tested. Every result in this repo names the exact model that produced it.</p>
+          </div>
+          <div class="faq-item">
+            <h3>Is it a thin wrapper around a model?</h3>
+            <p class="text-dim">No — the model only writes candidate text. Acceptance, refusal, retries, verification and benchmarking are code. The model never decides anything.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="container footer-inner">
+    <div><p class="mono-label">smelt · MIT</p></div>
+    <div class="footer-links"><a href="https://github.com/LangerSword/smelt">GitHub</a><a href="https://github.com/LangerSword/smelt/issues">Issues</a><a href="index.html">Home</a></div>
+  </div></footer>
+  <script src="assets/js/vendor/gsap.min.js"></script>
+  <script src="assets/js/vendor/ScrollTrigger.min.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!-- Pipeline: ore block (Python-side) to ingot (Rust-side) — original SVG.
+     Animated via DrawSVG on .pipeline-path. -->
+<svg viewBox="0 0 600 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A pipeline transforming a Python ore block into a Rust ingot">
+  <!-- ore block (cool, slag) -->
+  <g>
+    <rect x="10" y="20" width="50" height="40" rx="4" fill="#6B7280" stroke="#9CA3AF" stroke-width="1"/>
+    <rect x="18" y="28" width="12" height="12" fill="#4B5563"/>
+    <rect x="38" y="40" width="12" height="12" fill="#4B5563"/>
+    <text x="35" y="74" text-anchor="middle" font-family="monospace" font-size="10" fill="#9CA3AF">ore · py</text>
+  </g>
+
+  <!-- pipeline path -->
+  <path class="pipeline-path" d="M65 40 C120 40, 140 40, 180 40 L430 40" fill="none" stroke="#FF6D3A" stroke-width="2" stroke-dasharray="6 4" opacity="0.7"/>
+
+  <!-- furnace flame mark -->
+  <g transform="translate(240,10)">
+    <path d="M10 30 C10 20, 20 15, 15 5 C25 12, 30 18, 30 30 Z" fill="#FF6D3A" opacity="0.8"/>
+  </g>
+
+  <!-- ingot (hot, ember/gold) -->
+  <g transform="translate(440,20)">
+    <path d="M10 10 L40 4 L70 10 L60 40 L20 40 Z" fill="#FF6D3A" stroke="#D4A017" stroke-width="1.5"/>
+    <path d="M20 40 L60 40 L55 48 L25 48 Z" fill="#D4A017"/>
+    <text x="40" y="60" text-anchor="middle" font-family="monospace" font-size="10" fill="#D4A017">ingot · rs</text>
+  </g>
+</svg>

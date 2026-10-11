@@ -1,0 +1,13 @@
+<!-- Anvil — original SVG. Forge/metalworking. -->
+<svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="An anvil with heat glow beneath it">
+  <!-- heat glow -->
+  <ellipse cx="100" cy="118" rx="55" ry="8" fill="#FF6D3A" opacity="0.12"/>
+  <!-- horn -->
+  <path d="M40 60 L18 50 L18 46 L44 54 Z" fill="#6B7280"/>
+  <!-- body -->
+  <path d="M44 54 L156 54 L156 62 L160 62 L160 72 L150 72 L150 90 L146 90 L146 104 L128 104 L128 96 L120 96 L120 110 L104 110 L104 96 L96 96 L96 110 L80 110 L80 96 L72 96 L72 104 L54 104 L54 90 L50 90 L50 72 L40 72 L40 62 Z" fill="#2A2F38" stroke="#3A4150" stroke-width="1"/>
+  <!-- top face highlight -->
+  <path d="M44 54 L156 54 L156 58 L44 58 Z" fill="#3A4150"/>
+  <!-- ember shimmer -->
+  <circle cx="100" cy="118" r="3" fill="#FF6D3A" opacity="0.4"/>
+</svg>
