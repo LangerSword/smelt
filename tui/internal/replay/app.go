@@ -830,7 +830,7 @@ func banner() string {
 func (a *App) homeView() string {
 	var b strings.Builder
 	right := fit(a.Provider+" · "+a.modelDisplay(), a.Width/3)
-	left := fit("FURNACE · smelt home", a.Width-lipgloss.Width(right)-3)
+	left := fit("FURNACE v"+Version+" · smelt home", a.Width-lipgloss.Width(right)-3)
 	pad := a.Width - 2 - lipgloss.Width(left) - lipgloss.Width(right)
 	if pad < 1 {
 		pad = 1
