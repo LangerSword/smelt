@@ -58,7 +58,7 @@ CONSERVATIVE lower bound ≥ 1.5x. Flags: `suspicious_scaling` (ratios >100x re-
 protects the claim.
 
 ## providers/providers.py — where candidates come from
-Six providers behind one interface: `gemini` (native REST, `gemma-4-31b-it`), `do` (DigitalOcean Inference,
+Six providers behind one interface: `gemini` (native REST, default `gemma-4-26b-a4b-it`), `do` (DigitalOcean Inference,
 OpenAI-compatible), `local` (llama.cpp), `openai` (any OpenAI-compatible endpoint), `file` (fixtures),
 `fake` (CI, no model involved). Secrets resolve env → project `.env` → `~/.hermes/.env`, and are never logged.
 All HTTP goes through one retrying poster (3 retries, exponential backoff + jitter, honors Retry-After on
@@ -85,6 +85,28 @@ Ten hand-written WRONG rewrites of the demo function (each broken differently, e
 must come back REJECTED (exit 4) through the full pipeline; any acceptance means the verifier has a
 false-accept bug and the script exits non-zero. This is the miniature answer to "how do you know the
 oracle works?".
+
+## docs/events.md — the events contract (TUI input)
+`events.jsonl` is the run's append-only stream; every record now carries `schema_version`
+(currently `1`). The contract — event table, per-event field sets, terminal verdicts — is
+documented in `docs/events.md`, pinned by `tests/test_events_schema.py` (fingerprint +
+golden real-run fixture), and regenerable via `scripts/schema_fingerprint.py`. The stream
+is what the Go TUI (Furnace) consumes; the `node` field is reserved and the flow position
+is derived from the event type.
+
+## tui/ — Furnace (Go TUI, replay + live run + home)
+A single Go binary (`tui/`, own go.mod). Replay mode renders a finished run from
+`events.jsonl` (+ `state.json`): horizontal flow (derived from event types — the `node`
+field is reserved), results panel, log pane, and the INGOT/SLAG/ASH verdict (COLD for a
+killed run). Live mode (`furnace run`) spawns `smelt run --json` as a subprocess,
+discovers the new run dir, tails its events.jsonl, shows attempts and a
+"waiting for the model…" status, and kills the whole process group on quit (printing
+the `smelt resume` command). The home screen (`furnace`, `app.go`) adds a prompt box
+with slash commands, a scan picker fed by `smelt scan --json` (minimal T3 prerequisite
+in the Python CLI), run history, and a view-only diff via `smelt apply`. The Python
+core remains the source of truth; Furnace never runs generated code. Tests: 26 (unit +
+teatest, incl. a deterministic fake-smelt suite and the required 80-column cases); runs
+locally today — the Go CI job lands with T4.
 
 ## skills/smelt — the agent skill
 SKILL.md (Agent Skills open standard; `agentskills validate ./skills/smelt` → exit 0) plus four

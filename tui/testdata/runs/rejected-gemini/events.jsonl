@@ -1,0 +1,10 @@
+{"ts": 1791664494.9829922, "event": "run_start", "node": "", "target": "/home/lakshaya/projects/smelt/evals/corpus/float/linear_score.py:linear_score", "provider": "gemini", "model": "gemma-4-26b-a4b-it"}
+{"ts": 1791664494.983275, "event": "purity_ok", "node": ""}
+{"ts": 1791664495.097877, "event": "capture_done", "node": "", "n_cases": 206, "sha256": "74916654ef002a07"}
+{"ts": 1791664495.099194, "event": "attempt_start", "node": "", "attempt": 1}
+{"ts": 1791664502.9683073, "event": "reject_no_meaningful_gain", "node": "", "ratio": 1.4675489232303638}
+{"ts": 1791664502.9683473, "event": "attempt_start", "node": "", "attempt": 2}
+{"ts": 1791664517.3910577, "event": "reject_no_meaningful_gain", "node": "", "ratio": 1.3012611963978675}
+{"ts": 1791664517.3910902, "event": "attempt_start", "node": "", "attempt": 3}
+{"ts": 1791664523.4754703, "event": "reject_no_meaningful_gain", "node": "", "ratio": 1.409129387519788}
+{"ts": 1791664523.4755638, "event": "run_end", "node": "", "status": "rejected", "reason": "no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.41x, lower bound 1.37x"}

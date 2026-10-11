@@ -1,0 +1,30 @@
+ FURNACE · replay · 261011-020454-f5e8d0                                gemini · gemma-4-26b-a4b-it
+ select✔ ─▶ oracle✔ ─▶ generate✔ ─▶ build✔ ─▶ verify✔ ─▶ bench✔ ─▶ verdict★
+╭──────────────────────────────────────────╮
+│target   linear_score.py:linear_score     │
+│provider gemini · model gemma-4-26b-a4b-it│
+│oracle   206 cases · sha 74916654…        │
+│attempts 3                                │
+│speedup  1.41x · lower bound 1.37x        │
+╰──────────────────────────────────────────╯
+ VERDICT: SLAG
+ rejected — correct but no meaningful gain (or budget exhausted)
+ no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.41x, lower …
+╭──────────────────────────────────────────────────────────────────────────────────────────────╮
+│ log · 10 lines                                                                               │
+│run start · provider=gemini model=gemma-4-26b-a4b-it                                          │
+│oracle frozen · 206 cases · sha 74916654ef002a07                                              │
+│attempt 1 · generate                                                                          │
+│reject · 1.47x median (below 1.5x threshold)                                                  │
+│attempt 2 · generate                                                                          │
+│reject · 1.30x median (below 1.5x threshold)                                                  │
+│attempt 3 · generate                                                                          │
+│reject · 1.41x median (below 1.5x threshold)                                                  │
+│end · rejected                                                                                │
+│reason · no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.4│
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+ q quit · tab panes · ↑/↓ scroll · schema v1

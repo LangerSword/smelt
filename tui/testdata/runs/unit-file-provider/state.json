@@ -1,0 +1,35 @@
+{
+  "run_id": "261011-024849-b4f411",
+  "created_at": "2026-10-11T02:48:49+0530",
+  "smelt_version": "0.1.0",
+  "target": {
+    "path": "/home/lakshaya/projects/smelt/examples/demo/run_length.py",
+    "qualname": "rle_encode",
+    "source_sha256": "62cd19ed82855ccdfedd223cc45f07b045c6fbe4f725a7fd1b17ecac29ae752e"
+  },
+  "oracle": {
+    "dir": "oracle",
+    "sha256": "033b13d605ac44a763540f735c153a7a068307c7ac56a429eaa6a815a18cc2ab",
+    "n_cases": 85,
+    "seed": 520032927
+  },
+  "config": {
+    "provider": "file",
+    "model": null,
+    "max_attempts": 3,
+    "cases": 60,
+    "bench_min_s": 0.1
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "source": "file",
+      "build": "ok",
+      "verify": "pass 85/85",
+      "bench": "3.28x (lb 3.25x)",
+      "outcome": "ACCEPTED"
+    }
+  ],
+  "status": "accepted",
+  "stop_reason": "verified 85/85 cases; speedup 3.28x (conservative lower bound 3.25x)"
+}

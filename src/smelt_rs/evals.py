@@ -40,7 +40,7 @@ def _write_md(results: list, summary: dict, path: str = RESULTS_MD) -> None:
         lines.append("| `%s` | %s | %s | %s | %s | %s | %s | %s |" % (
             r.get("function"), r.get("category"), r.get("status"), r.get("attempts", "—"),
             r.get("oracle_cases", "—"), sp, lb, note))
-    with open(RESULTS_MD, "w") as f:
+    with open(path, "w") as f:
         f.write("\n".join(lines) + "\n")
 
 

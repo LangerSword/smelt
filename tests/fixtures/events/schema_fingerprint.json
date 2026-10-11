@@ -1,0 +1,105 @@
+{
+  "common": [
+    "model",
+    "node",
+    "provider",
+    "schema_version",
+    "target",
+    "ts"
+  ],
+  "events": {
+    "accept": [
+      "event",
+      "flags",
+      "node",
+      "ratio",
+      "ratio_ci_lo",
+      "schema_version",
+      "ts"
+    ],
+    "attempt_start": [
+      "attempt",
+      "event",
+      "node",
+      "schema_version",
+      "ts"
+    ],
+    "build_error": [
+      "attempt",
+      "event",
+      "node",
+      "schema_version",
+      "subkind",
+      "ts"
+    ],
+    "capture_done": [
+      "event",
+      "n_cases",
+      "node",
+      "schema_version",
+      "sha256",
+      "ts"
+    ],
+    "halt": [
+      "event",
+      "kind",
+      "message",
+      "node",
+      "schema_version",
+      "ts"
+    ],
+    "purity_ok": [
+      "event",
+      "node",
+      "schema_version",
+      "ts"
+    ],
+    "reject_no_meaningful_gain": [
+      "event",
+      "node",
+      "ratio",
+      "schema_version",
+      "ts"
+    ],
+    "resume": [
+      "event",
+      "from_attempt",
+      "node",
+      "schema_version",
+      "ts"
+    ],
+    "run_end": [
+      "event",
+      "node",
+      "reason",
+      "schema_version",
+      "status",
+      "ts"
+    ],
+    "run_start": [
+      "event",
+      "model",
+      "node",
+      "provider",
+      "schema_version",
+      "target",
+      "ts"
+    ],
+    "safety_violation": [
+      "attempt",
+      "event",
+      "node",
+      "schema_version",
+      "ts"
+    ],
+    "verify_mismatch": [
+      "attempt",
+      "event",
+      "n_bad",
+      "node",
+      "schema_version",
+      "ts"
+    ]
+  },
+  "version": "1"
+}

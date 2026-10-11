@@ -46,6 +46,35 @@ This file records how AI was used to build smelt, and who reviewed what.
   references + a thin wrapper script; validated with `agentskills validate` → exit 0)
   and composed the README from the generated eval results. Developer reviews the
   SKILL.md and the results table for accuracy.
+- **Furnace T0 (branch `feature/furnace`)**: Hermes build agent wrote `docs/events.md`,
+  the `EVENT_SCHEMA_VERSION` field, the fingerprint tool + schema tests, and folded in
+  the local-model arm results; fixed the `evals --out-tag` markdown path bug found
+  during the fold-in. Developer reviews anything touching the emitter or the eval writer.
+- **Furnace T1 (branch `feature/furnace`)**: Hermes build agent wrote the Go replay
+  viewer (`tui/`: events parser, Bubble Tea model, view, main), the teatest golden
+  tests over real-run fixtures (three REAL Gemini runs + one file-provider unit
+  fixture), and the 80-column test. Developer reviews the parser (events → summary)
+  and the fixture provenance table (`tui/testdata/runs/README.md`).
+- **Furnace T2 (branch `feature/furnace`)**: Hermes build agent wrote the live-run
+  mode (`tui/`: subprocess runner + event tailer, "waiting for the model…" status,
+  process-group kill with the resume message, deterministic fake-smelt test suite)
+  and ran the real gates: live gemini run (3.24x, lb 3.07x), live local run (2.08x,
+  lb 1.95x), kill-midway with no orphan processes. Developer reviews the tailer and
+  the kill path.
+- **Furnace T3 (branch `feature/furnace`)**: Hermes build agent wrote the home screen
+  (`tui/app.go`): prompt box + slash commands (/scan /run /resume /report /provider
+  /doctor /help /quit), scan picker with skip reasons, run history, and a view-only
+  diff via `smelt apply` — plus the minimal Python prerequisites `smelt scan` /
+  `smelt apply` (commit `194382c`; honest capability report, NOT the full G3).
+  Real gate: scan → pick → run → view result, all inside the TUI (INGOT 2.06x,
+  lb 2.04x). Developer reviews the command surface and the scan/apply additions.
+- **Furnace T4 (branch `feature/furnace`)**: Hermes build agent added theme polish
+  (flame banner, heat-pulse with `--no-anim` / NO_COLOR auto-off, `?` help overlay),
+  the **Go CI job** (build + vet + test in `.github/workflows/ci.yml`), the
+  `smelt furnace` launcher + `smelt doctor` check, and demo assets — a VHS tape
+  (`tui/testdata/demo.tape`, ready to record; vhs/ttyd were not installed) and a
+  GIF rendered from real captured session frames (`tui/testdata/demo.gif`).
+  Developer reviews the tape before recording.
 
 ## Scope note
 

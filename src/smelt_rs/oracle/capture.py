@@ -9,7 +9,7 @@ import json
 import os
 import random
 
-from smelt_rs.core.failures import CaptureFailed, OracleTampered
+from smelt_rs.core.failures import CaptureFailed, OracleTampered, RefusedTarget
 from smelt_rs.core.state import sha256_bytes
 from smelt_rs.worker_client import run_worker
 
@@ -40,12 +40,16 @@ def gen_cases_for_param(annotation: str, rnd: random.Random, n_random: int):
         random_cases = [[rnd.randint(-50, 50) for _ in range(rnd.randint(0, 16))]
                         for _ in range(n_random)]
         return random_cases, EDGE_LISTS_INT
-    raise CaptureFailed(f"unsupported parameter type for generation: {annotation!r}")
+    raise RefusedTarget(
+        f"unsupported parameter type {annotation!r} — refactor hint: use one of "
+        "str/int/float/bool/list[int]/list[str], or convert the argument before the call")
 
 
 def generate_cases(params: list[dict], target_cases: int, seed: int) -> list[dict]:
     if len(params) != 1:
-        raise CaptureFailed("this build supports single-parameter functions only (multi-param is planned)")
+        raise RefusedTarget(
+            f"this build supports single-parameter functions only (found {len(params)}) — "
+            "refactor hint: wrap the values in one dataclass or tuple parameter")
     p = params[0]
     rnd = random.Random(seed)
     random_cases, edges = gen_cases_for_param(p["annotation"], rnd, target_cases)
@@ -67,6 +71,14 @@ def capture_oracle(*, run_dir: str, target_path: str, module_name: str, func_nam
         intro = run_worker(python_exe, req, timeout=60)
     except Exception as e:
         raise CaptureFailed(f"introspection failed: {e}")
+    if intro.get("error"):
+        err = str(intro["error"])
+        if "import" in err.lower() or "no module named" in err.lower():
+            raise RefusedTarget(
+                f"could not load the target module: {err} — package layouts (relative "
+                "imports) are not supported yet; refactor hint: point smelt at a "
+                "standalone module or copy the target file out of the package")
+        raise CaptureFailed(f"could not load the target: {err}")
     params = intro.get("params") or []
     ret_ann = intro.get("return_annotation")
     if not params:

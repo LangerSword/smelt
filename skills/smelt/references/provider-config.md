@@ -4,7 +4,7 @@ Six providers behind one interface (`generate(prompt) -> list[str]` of `lib.rs` 
 
 | name | what it is | key env var |
 |---|---|---|
-| `gemini` | Google AI Studio, native REST — `gemma-4-31b-it` (default) or `gemma-4-26b-a4b-it` | `GEMINI_API_KEY` (falls back to `GOOGLE_API_KEY`) |
+| `gemini` | Google AI Studio, native REST — `gemma-4-26b-a4b-it` (default, free-tier friendly) or `gemma-4-31b-it` (strongest, slower) | `GEMINI_API_KEY` (falls back to `GOOGLE_API_KEY`) |
 | `do` | DigitalOcean Inference, OpenAI-compatible — `gemma-4-31B-it` | `DIGITALOCEAN_TOKEN` |
 | `local` | any OpenAI-compatible server (llama.cpp, Ollama, vLLM); default `http://127.0.0.1:8080/v1` | none (or `SMELT_PROVIDER_KEY`) |
 | `openai` | generic OpenAI-compatible (set base URL) | `SMELT_OPENAI_KEY`, base in `SMELT_OPENAI_BASE` |
@@ -28,7 +28,7 @@ Order: process environment → project `.env` → `~/.hermes/.env`.
 
 - Gemma 4 thinking mode is ON by default upstream and can consume the entire token
   budget; smelt requests `thinkingLevel: "minimal"` and extracts only non-thought parts.
-- Speed guidance: `gemma-4-26b-a4b-it` (MoE, 4B active) answers in seconds;
-  `gemma-4-31b-it` is stronger but much slower per call.
+- Speed guidance: `gemma-4-26b-a4b-it` is the default (MoE, 4B active — answers in
+  seconds; free-tier friendly). `gemma-4-31b-it` is stronger but much slower per call.
 - Transcripts: each call logs model + prompt size + usage to
   `runs/<id>/transcripts/provider.jsonl`; keys are never written.

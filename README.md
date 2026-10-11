@@ -63,7 +63,12 @@ provider calls: 36 attempts (cap 120)**
 | `top_word` | string | accepted | 2 | 225 | 4.96x | 4.74x | verified 225/225 cases; speedup 4.96x (conservative lower bound 4.74x) |
 
 Meta-eval (false-accept gate): **10/10 hand-written wrong rewrites rejected** — [`scripts/meta_eval.py`](scripts/meta_eval.py).
-_Local-model arm (gemma-4-e2b-qat via llama.cpp) was still running when this README was generated; its table folds in at the next commit._
+_Local-model arm (`gemma-4-e2b-qat` via llama.cpp, fully offline): **18 accepted / 6 rejected / 0 errors of 24 tasks** — 44 provider calls; full table in `evals/results-local.md`._
+
+**Model story (one story, kept consistent):** `gemma-4-26b-a4b-it` is the default — fast and
+free-tier friendly; every result in this repo (evals, TUI fixtures, gate runs) was produced
+with it, and the demo uses it. `gemma-4-31b-it` remains available for the strongest output
+when the wait is worth it (slower per call; it powered the one v0.2 gate spot-check).
 
 Every number is labeled with the model that produced it; nothing is rounded up (the CI
 lower bound sits next to every speedup, and the acceptance rule reads it, not the median).
@@ -108,7 +113,7 @@ Exit codes: 0 accepted · 3 refused (impure) · 4 rejected · 5 harness error ·
 
 | Provider | Model | Status |
 |---|---|---|
-| `gemini` — Google AI Studio (native REST) | `gemma-4-31b-it` (default), `gemma-4-26b-a4b-it` | **working** — used for all results above |
+| `gemini` — Google AI Studio (native REST) | `gemma-4-26b-a4b-it` (default — free-tier friendly), `gemma-4-31b-it` (strongest, slower) | **working** — used for all results above |
 | `local` — llama.cpp / OpenAI-compatible | any local model | working (offline fallback) |
 | `do` — DigitalOcean Inference | `gemma-4-31B-it` | wired; activates with `DIGITALOCEAN_TOKEN` |
 | `openai` — any OpenAI-compatible endpoint | set per provider | wired |
@@ -136,6 +141,40 @@ llama.cpp (MIT, local model server) · Rust std (MIT OR Apache-2.0).
 
 [`skills/smelt/SKILL.md`](skills/smelt/SKILL.md) follows the Agent Skills open standard.
 Validated: `agentskills validate ./skills/smelt` → exit 0.
+
+## TUI — Furnace (branch `feature/furnace`)
+
+[`tui/`](tui/README.md) holds **Furnace**, a Go TUI that replays finished runs
+and runs new ones live. It reads `runs/<id>/events.jsonl`: the loop as a
+horizontal flow (`select → … → verdict`, ✔/·/◐/★), a results panel (oracle
+cases, speedup with lower bound, attempts, exact model label), a log pane
+(build errors, mismatches, halts) and the verdict — **INGOT** (accepted),
+**SLAG** (rejected), **ASH** (refused/error). Furnace is a front end: the
+Python core stays the source of truth, and it never runs generated code.
+
+```bash
+cd tui && go build -o furnace .          # Go 1.27+
+./furnace                                # home: scan · pick · run · history
+./furnace replay ../runs/<run-id>        # q quit · tab panes · ↑/↓ scroll
+./furnace run ../examples/demo/run_length.py:rle_encode \
+      --provider gemini --model gemma-4-26b-a4b-it    # live: flow heats as events land
+```
+
+The home screen is the interactive layer: prompt box with slash commands
+(`/scan` with skip reasons, `/run`, `/resume`, `/report`, `/provider`,
+`/doctor`, `/help`, `/quit`), a candidate picker, recent-run history, and a
+view-only diff (`d` → `smelt apply`; never writes into the target).
+
+Live mode starts `smelt run … --json` as a subprocess, tails the new run's
+events stream, shows attempts and a "waiting for the model…" status during long
+generations, and `q`/Ctrl-C stops the run (whole process group) printing the
+`smelt resume` command — no orphan cargo/worker processes (verified).
+
+Tests: **26** — run locally **and in CI** (the new `go` job: build + vet +
+test). Demo: [`tui/testdata/demo.gif`](tui/testdata/demo.gif) (real captured
+frames) + a ready-to-record VHS tape (`tui/testdata/demo.tape`).
+`smelt furnace` launches the binary when installed, and `smelt doctor` reports
+whether it is. Licenses for the Go stack: [`tui/README.md`](tui/README.md#licenses-verified-from-module-cache-license-files).
 
 ## AI use
 
