@@ -75,3 +75,15 @@ The conversions that ARE possible today were proven separately: the corpus (24 s
 functions) and the multi-parameter accept (`examples/demo/clamp_all.py` — 131/131 cases,
 4.06x lb 3.77x, file-provider fixture) plus the extended meta-eval (13/13 wrong rewrites
 rejected, including the multi-param battery).
+
+## Corpus re-run (after the fixes — same 24-function list)
+
+Same corpus, same provider/model (`gemini` · `gemma-4-26b-a4b-it`), same cap.
+
+- **Before** (`evals/results.md`): accepted 20 / rejected 4 / errors 0 · calls 36 · median 2.83x
+- **After** (`evals/results-after.md`): accepted 23 / rejected 1 / errors 0 · calls 27 · median 2.72x
+
+Single-parameter behavior was kept byte-identical in the generator, so this
+delta is run-to-run model variance (different generated candidates), not a
+behavior change. Zero errors and zero false accepts in both runs; rejections
+stay below the 1.5x conservative threshold.

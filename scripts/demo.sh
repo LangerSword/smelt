@@ -10,6 +10,7 @@ echo "=== 1/3  ACCEPTED — clamp_all (list[int], int, int) → verified Rust, m
 $SMELT run examples/demo/clamp_all.py:clamp_all --provider file \
   --candidate tests/fixtures/candidates/clamp_all_correct.rs --cases 200
 echo "exit=$? (0 = accepted)"
+RID=$(ls -dt runs/*/ | head -1)   # the accepted run (phase 1) — used for the replay below
 echo
 
 echo "=== 2/3  REJECTED — a WRONG rewrite is never accepted (the oracle catches it)"
@@ -24,7 +25,6 @@ echo "exit=$? (3 = refused — impure target)"
 echo
 
 echo "=== furnace: replay the accepted run (q quits)"
-RID=$(ls -dt runs/*/ | head -1)
 echo "run: $RID"
 if [ -x ./tui/furnace ]; then
   ./tui/furnace replay "$RID"
