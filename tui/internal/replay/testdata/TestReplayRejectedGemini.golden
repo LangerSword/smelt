@@ -1,15 +1,15 @@
- FURNACE · replay · 261011-020454-f5e8d0                                gemini · gemma-4-26b-a4b-it
- select✔ ─▶ oracle✔ ─▶ generate✔ ─▶ build✔ ─▶ verify✔ ─▶ bench✔ ─▶ verdict★
-╭──────────────────────────────────────────╮
-│target   linear_score.py:linear_score     │
-│provider gemini · model gemma-4-26b-a4b-it│
-│oracle   206 cases · sha 74916654…        │
-│attempts 3                                │
-│speedup  1.41x · lower bound 1.37x        │
-╰──────────────────────────────────────────╯
- VERDICT: SLAG
- rejected — correct but no meaningful gain (or budget exhausted)
- no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.41x, lower …
+ FURNACE v0.7 · replay · 261011-020454-f5e8d0                           gemini · gemma-4-26b-a4b-it
+ select✔ ─▶ oracle✔ ─▶ generate✔ ─▶ build✔ ─▶ verify✔ ─▶ bench✔ ─▶ verdict★                        ╭───────────────────────────────────────────╮
+ VERDICT: SLAG                                                                                     │status                                     │
+ rejected — correct but no meaningful gain (or budget exhausted)                                   │oracle   [████████████████████████████████…│
+ no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.41x, lower …  │cases    206/206 passed                    │
+╭──────────────────────────────────────────╮                                                       │attempts 3                                 │
+│target   linear_score.py:linear_score     │                                                       │speedup  1.41x · lb 1.37x                  │
+│provider gemini · model gemma-4-26b-a4b-it│                                                       │last     reason · no candidate accepted wi…│
+│oracle   206 cases · sha 74916654…        │                                                       ╰───────────────────────────────────────────╯
+│attempts 3                                │                                                                                                    
+│speedup  1.41x · lower bound 1.37x        │                                                                                                    
+╰──────────────────────────────────────────╯                                                                                                    
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
 │ log · 10 lines                                                                               │
 │run start · provider=gemini model=gemma-4-26b-a4b-it                                          │
@@ -25,6 +25,6 @@
 │                                                                                              │
 │                                                                                              │
 │                                                                                              │
-│                                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
- q quit · tab panes · ↑/↓ scroll · schema v1
+ done · rejected · 28s · verdict SLAG
+ ? help · tab panes · ↑/↓ j/k scroll · d diff · q quit

@@ -1,15 +1,15 @@
- FURNACE · replay · 261011-015326-a41353                                gemini · gemma-4-26b-a4b-it
- select✔ ─▶ oracle✔ ─▶ generate✔ ─▶ build✔ ─▶ verify✔ ─▶ bench✔ ─▶ verdict★
-╭──────────────────────────────────────────╮
-│target   run_length.py:rle_encode         │
-│provider gemini · model gemma-4-26b-a4b-it│
-│oracle   225 cases · sha 60ec5528…        │
-│attempts 1                                │
-│speedup  4.14x · lower bound 4.00x        │
-╰──────────────────────────────────────────╯
- VERDICT: INGOT
- accepted — verified rewrite, speedup above the threshold
- verified 225/225 cases; speedup 4.14x (conservative lower bound 4.00x)
+ FURNACE v0.7 · replay · 261011-015326-a41353                           gemini · gemma-4-26b-a4b-it
+ select✔ ─▶ oracle✔ ─▶ generate✔ ─▶ build✔ ─▶ verify✔ ─▶ bench✔ ─▶ verdict★  ╭───────────────────────────────────────────╮
+ VERDICT: INGOT                                                              │status                                     │
+ accepted — verified rewrite, speedup above the threshold                    │oracle   [████████████████████████████████…│
+ verified 225/225 cases; speedup 4.14x (conservative lower bound 4.00x)      │cases    225/225 passed                    │
+╭──────────────────────────────────────────╮                                 │attempts 1                                 │
+│target   run_length.py:rle_encode         │                                 │speedup  4.14x · lb 4.00x                  │
+│provider gemini · model gemma-4-26b-a4b-it│                                 │last     reason · verified 225/225 cases; …│
+│oracle   225 cases · sha 60ec5528…        │                                 ╰───────────────────────────────────────────╯
+│attempts 1                                │                                                                              
+│speedup  4.14x · lower bound 4.00x        │                                                                              
+╰──────────────────────────────────────────╯                                                                              
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
 │ log · 6 lines                                                                                │
 │run start · provider=gemini model=gemma-4-26b-a4b-it                                          │
@@ -25,6 +25,6 @@
 │                                                                                              │
 │                                                                                              │
 │                                                                                              │
-│                                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
- q quit · tab panes · ↑/↓ scroll · schema v1
+ done · accepted · 14s · verdict INGOT
+ ? help · tab panes · ↑/↓ j/k scroll · d diff · q quit

@@ -18,6 +18,9 @@ var (
 	borderNormal  = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("240"))
 )
 
+// Version is the Furnace build shown in the persistent header.
+const Version = "0.7"
+
 // fit truncates s to at most w display columns (ellipsis when cut).
 func fit(s string, w int) string {
 	if w <= 0 {
@@ -41,27 +44,30 @@ func fitLines(lines []string, w int) []string {
 	return out
 }
 
+// View renders the furnace run screen (U1 layout):
+//
+//	header  (FURNACE vX · run id · provider · model)
+//	main    (two columns when width >= 100: flow/verdict/results | live panel)
+//	log     (scrollable transcript)
+//	status  (state · elapsed · verdict) + keys hint
 func (m *Model) View() string {
 	if !m.ready {
 		m.layout()
 	}
 	var b strings.Builder
 	b.WriteString(m.header() + "\n")
-	b.WriteString(" " + m.flowLine() + "\n")
-	if m.Mode == ModeLive {
-		b.WriteString(" " + m.liveStatus() + "\n")
-	}
-	b.WriteString(m.resultsBox() + "\n")
-	b.WriteString(m.verdictBox() + "\n")
+	b.WriteString(m.mainArea() + "\n")
 	b.WriteString(m.logPane() + "\n")
-	b.WriteString(colDim.Render(fit(" q quit · tab panes · ↑/↓ scroll · schema v1", m.Width-1)))
+	b.WriteString(m.statusLine() + "\n")
+	b.WriteString(colDim.Render(fit(" ? help · tab panes · ↑/↓ j/k scroll · d diff · q quit", m.Width-1)))
 	return b.String()
 }
 
+// header is persistent: name, version, run id, provider and model.
 func (m *Model) header() string {
-	left := "FURNACE · replay · " + m.Sum.RunID
+	left := fmt.Sprintf("FURNACE v%s · replay · %s", Version, m.Sum.RunID)
 	if m.Mode == ModeLive {
-		left = "FURNACE · run · " + m.liveRunID()
+		left = fmt.Sprintf("FURNACE v%s · run · %s", Version, m.liveRunID())
 	}
 	model := DisplayModel(m.Sum.Provider, m.Sum.Model)
 	if m.Mode == ModeLive && m.Sum.Model == "" {
@@ -79,6 +85,22 @@ func (m *Model) header() string {
 	return " " + left + strings.Repeat(" ", pad) + right
 }
 
+// mainArea lays out the two columns (or a stack on narrow terminals).
+func (m *Model) mainArea() string {
+	if m.Width >= 100 {
+		colW := (m.Width - 5) / 2
+		left := lipgloss.JoinVertical(lipgloss.Left,
+			" "+m.flowLine(), m.verdictBox(), m.resultsBoxW(colW))
+		right := m.livePanel(colW)
+		return lipgloss.JoinHorizontal(lipgloss.Top, left, "  ", right)
+	}
+	return strings.Join([]string{
+		" " + m.flowLine(),
+		m.livePanel(m.Width - 4),
+		m.verdictBox(),
+	}, "\n")
+}
+
 func (m *Model) liveRunID() string {
 	if m.Live == nil || m.Live.RunDir == "" {
 		return "…"
@@ -89,24 +111,119 @@ func (m *Model) liveRunID() string {
 	return m.Live.RunDir
 }
 
-func (m *Model) liveStatus() string {
-	elapsed := time.Since(m.Started).Round(time.Second)
-	if elapsed < 0 {
-		elapsed = 0
+// livePanel is the right column: oracle progress bar, attempts, speedup and the
+// last build/verify message.
+func (m *Model) livePanel(w int) string {
+	s := m.Sum
+	passed := m.casesPassed()
+	bar := progressBar(passed, s.NCases, w-12)
+	lines := []string{
+		"oracle   " + bar,
+		fmt.Sprintf("cases    %d/%d passed", passed, s.NCases),
+		fmt.Sprintf("attempts %d", s.Attempts),
 	}
-	state := "heating · " + m.activePhase()
-	if m.WaitingModel {
-		state = "waiting for the model…"
+	switch {
+	case s.HasSpeedup && s.HasLB:
+		lines = append(lines, fmt.Sprintf("speedup  %.2fx · lb %.2fx", s.Speedup, s.SpeedupLB))
+	case s.HasSpeedup:
+		lines = append(lines, fmt.Sprintf("speedup  %.2fx · lb —", s.Speedup))
+	default:
+		lines = append(lines, "speedup  —")
 	}
-	if m.Done {
-		if m.KilledByUser {
-			state = "stopped by user"
-		} else {
-			state = "finished · " + m.Sum.Status
+	lines = append(lines, "last     "+m.lastMessage())
+	title := "live"
+	if m.Mode != ModeLive || m.Done {
+		title = "status"
+	}
+	body := strings.Join(fitLines(lines, w-4), "\n")
+	style := borderNormal
+	if m.Width < 100 && m.Focus == 0 {
+		style = borderFocused
+	}
+	return style.Render(fit(title, w-4) + "\n" + body)
+}
+
+// progressBar renders a text progress bar (colour never carries meaning).
+func progressBar(done, total, w int) string {
+	if total <= 0 {
+		return "—"
+	}
+	if w < 10 {
+		w = 10
+	}
+	f := float64(done) / float64(total)
+	if f > 1 {
+		f = 1
+	}
+	if f < 0 {
+		f = 0
+	}
+	fill := int(f * float64(w))
+	bar := strings.Repeat("█", fill) + strings.Repeat("░", w-fill)
+	return fmt.Sprintf("[%s] %3.0f%%", bar, f*100)
+}
+
+// casesPassed is the number of oracle cases proven equal (verify pass).
+func (m *Model) casesPassed() int {
+	s := m.Sum
+	if s.HasSpeedup { // accept / reject_no_meaningful_gain both imply verify passed
+		return s.NCases
+	}
+	switch s.Status {
+	case "accepted", "rejected":
+		return s.NCases
+	}
+	return 0
+}
+
+// lastMessage is the newest transcript line (build/verify/halt news).
+func (m *Model) lastMessage() string {
+	if n := len(m.LogLines); n > 0 {
+		last := m.LogLines[n-1]
+		if last != "" {
+			return last
 		}
 	}
-	line := fmt.Sprintf("run %s · %s · %s", m.liveRunID(), elapsed, state)
-	return fit(line, m.Width-3)
+	return "—"
+}
+
+// statusLine shows state, elapsed time and the verdict word (always labelled).
+func (m *Model) statusLine() string {
+	state := "done · " + m.Sum.Status
+	if m.Mode == ModeLive && !m.Done {
+		state = "running · heating"
+		if m.WaitingModel {
+			sp := "◐"
+			if m.Anim {
+				sp = []string{"◐", "◓", "◑", "◒"}[m.pulse%4]
+			}
+			state = "waiting for the model " + sp
+		}
+	} else if m.Mode == ModeLive && m.KilledByUser {
+		state = "done · stopped by user"
+	}
+	el := ""
+	if d := m.eventSpan(); d >= time.Second {
+		el = " · " + d.Round(time.Second).String()
+	}
+	word, _ := Verdict(m.Sum.Status)
+	if m.Mode == ModeLive && m.KilledByUser {
+		word = "COLD"
+	}
+	return colDim.Render(fit(fmt.Sprintf(" %s%s · verdict %s", state, el, word), m.Width-1))
+}
+
+// eventSpan is the wall time covered by the events stream.
+func (m *Model) eventSpan() time.Duration {
+	if len(m.Sum.Events) < 2 {
+		return 0
+	}
+	first := m.Sum.Events[0].Ts
+	last := m.Sum.Events[len(m.Sum.Events)-1].Ts
+	if first <= 0 || last <= first {
+		return 0
+	}
+	return time.Duration((last - first) * float64(time.Second))
 }
 
 func (m *Model) flowLine() string {
@@ -164,6 +281,10 @@ func shortSHA(s string) string {
 }
 
 func (m *Model) resultsBox() string {
+	return m.resultsBoxW(m.Width - 4)
+}
+
+func (m *Model) resultsBoxW(w int) string {
 	s := m.Sum
 	lines := []string{
 		"target   " + shortTarget(s.Target),
@@ -179,7 +300,7 @@ func (m *Model) resultsBox() string {
 	default:
 		lines = append(lines, "speedup  — (no accepted candidate)")
 	}
-	body := strings.Join(fitLines(lines, m.Width-4), "\n")
+	body := strings.Join(fitLines(lines, w-4), "\n")
 	style := borderNormal
 	if m.Focus == 0 {
 		style = borderFocused

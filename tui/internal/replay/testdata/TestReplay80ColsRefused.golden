@@ -1,12 +1,13 @@
- FURNACE · replay · 261011-033114-6d5f72            gemini · gemma-4-26b-a4b-it
+ FURNACE v0.7 · replay · 261011-033114-6d5f72       gemini · gemma-4-26b-a4b-it
  select✔ ─▶ oracle· ─▶ generate· ─▶ build· ─▶ verify· ─▶ bench· ─▶ verdict★
-╭──────────────────────────────────────────╮
-│target   impure_target.py:jittery_max     │
-│provider gemini · model gemma-4-26b-a4b-it│
-│oracle   0 cases · sha —                  │
-│attempts 0                                │
-│speedup  — (no accepted candidate)        │
-╰──────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────╮
+│status                                                                  │
+│oracle   —                                                              │
+│cases    0/0 passed                                                     │
+│attempts 0                                                              │
+│speedup  —                                                              │
+│last     reason · refused_impure: impure target: module imports 'random…│
+╰────────────────────────────────────────────────────────────────────────╯
  VERDICT: ASH
  refused — impure target (a correct outcome)
  refused_impure: impure target: module imports 'random' (side effects / nond…
@@ -21,4 +22,5 @@
 │                                                                          │
 │                                                                          │
 ╰──────────────────────────────────────────────────────────────────────────╯
- q quit · tab panes · ↑/↓ scroll · schema v1
+ done · refused · verdict ASH
+ ? help · tab panes · ↑/↓ j/k scroll · d diff · q quit

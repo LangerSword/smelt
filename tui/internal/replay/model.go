@@ -92,6 +92,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "tab":
 			m.Focus = (m.Focus + 1) % 2
 			return m, nil
+		case "pgup", "pgdown", "j", "k", "up", "down":
+			// transcript scrolling works from either focus (U1/U2)
+			if m.ready {
+				var cmd tea.Cmd
+				m.LogVP, cmd = m.LogVP.Update(msg)
+				return m, cmd
+			}
+			return m, nil
 		}
 		if m.Focus == 1 && m.ready {
 			var cmd tea.Cmd
@@ -162,10 +170,11 @@ func (m *Model) refreshLog() {
 }
 
 func (m *Model) layout() {
-	logH := m.Height - 16
-	if m.Mode == ModeLive {
-		logH--
+	mainH := 10 // stacked: flow(1) + live panel(~6) + verdict(3)
+	if m.Width >= 100 {
+		mainH = 11 // two columns: flow+verdict+results
 	}
+	logH := m.Height - mainH - 6 // header + log chrome + status + keys
 	if logH < 3 {
 		logH = 3
 	}
