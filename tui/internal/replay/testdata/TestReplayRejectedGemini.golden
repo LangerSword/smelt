@@ -1,26 +1,27 @@
  FURNACE v0.7 · replay · 261011-020454-f5e8d0                           gemini · gemma-4-26b-a4b-it
  select✔ ─▶ oracle✔ ─▶ generate✔ ─▶ build✔ ─▶ verify✔ ─▶ bench✔ ─▶ verdict★                        ╭───────────────────────────────────────────╮
- VERDICT: SLAG                                                                                     │status                                     │
+ VERDICT: ◇ SLAG                                                                                   │status                                     │
  rejected — correct but no meaningful gain (or budget exhausted)                                   │oracle   [████████████████████████████████…│
  no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.41x, lower …  │cases    206/206 passed                    │
-╭──────────────────────────────────────────╮                                                       │attempts 3                                 │
-│target   linear_score.py:linear_score     │                                                       │speedup  1.41x · lb 1.37x                  │
-│provider gemini · model gemma-4-26b-a4b-it│                                                       │last     reason · no candidate accepted wi…│
-│oracle   206 cases · sha 74916654…        │                                                       ╰───────────────────────────────────────────╯
-│attempts 3                                │                                                                                                    
-│speedup  1.41x · lower bound 1.37x        │                                                                                                    
-╰──────────────────────────────────────────╯                                                                                                    
+╭───────────────────────────────────────────╮                                                      │attempts 3                                 │
+│target   linear_score.py:linear_score      │                                                      │speedup  1.41x · lb 1.37x                  │
+│provider gemini · model gemma-4-26b-a4b-it │                                                      │last     reason · no candidate accepted wi…│
+│oracle   206 cases · sha 74916654…         │                                                      ╰───────────────────────────────────────────╯
+│attempts 3                                 │                                                                                                   
+│speedup  [██░░░░░░░░░░░░░░░░░] 1.41x lb 1.…│                                                                                                   
+│time     28s                               │                                                                                                   
+╰───────────────────────────────────────────╯                                                                                                   
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
 │ log · 10 lines                                                                               │
-│run start · provider=gemini model=gemma-4-26b-a4b-it                                          │
-│oracle frozen · 206 cases · sha 74916654ef002a07                                              │
-│attempt 1 · generate                                                                          │
-│reject · 1.47x median (below 1.5x threshold)                                                  │
-│attempt 2 · generate                                                                          │
-│reject · 1.30x median (below 1.5x threshold)                                                  │
-│attempt 3 · generate                                                                          │
-│reject · 1.41x median (below 1.5x threshold)                                                  │
-│end · rejected                                                                                │
+│02:04:54 · run start · provider=gemini model=gemma-4-26b-a4b-it                               │
+│02:04:55 · oracle frozen · 206 cases · sha 74916654ef002a07                                   │
+│02:04:55 · attempt 1 · generate                                                               │
+│02:05:02 · reject · 1.47x median (below 1.5x threshold)                                       │
+│02:05:02 · attempt 2 · generate                                                               │
+│02:05:17 · reject · 1.30x median (below 1.5x threshold)                                       │
+│02:05:17 · attempt 3 · generate                                                               │
+│02:05:23 · reject · 1.41x median (below 1.5x threshold)                                       │
+│02:05:23 · end · rejected                                                                     │
 │reason · no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.4│
 │                                                                                              │
 │                                                                                              │

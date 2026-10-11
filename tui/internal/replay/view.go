@@ -143,6 +143,28 @@ func (m *Model) livePanel(w int) string {
 	return style.Render(fit(title, w-4) + "\n" + body)
 }
 
+// speedupBar renders the measured speedup as a bar with the conservative lower
+// bound in text (bar scale: 10x = full; colour never carries meaning).
+func speedupBar(ratio, lb float64, w int) string {
+	if w < 14 {
+		w = 14
+	}
+	barW := w - 14
+	if barW < 6 {
+		barW = 6
+	}
+	f := ratio / 10
+	if f > 1 {
+		f = 1
+	}
+	if f < 0 {
+		f = 0
+	}
+	fill := int(f * float64(barW))
+	bar := strings.Repeat("█", fill) + strings.Repeat("░", barW-fill)
+	return fmt.Sprintf("[%s] %.2fx lb %.2fx", bar, ratio, lb)
+}
+
 // progressBar renders a text progress bar (colour never carries meaning).
 func progressBar(done, total, w int) string {
 	if total <= 0 {
@@ -294,11 +316,14 @@ func (m *Model) resultsBoxW(w int) string {
 	}
 	switch {
 	case s.HasSpeedup && s.HasLB:
-		lines = append(lines, fmt.Sprintf("speedup  %.2fx · lower bound %.2fx", s.Speedup, s.SpeedupLB))
+		lines = append(lines, "speedup  "+speedupBar(s.Speedup, s.SpeedupLB, w-14))
 	case s.HasSpeedup:
 		lines = append(lines, fmt.Sprintf("speedup  %.2fx · lower bound —", s.Speedup))
 	default:
 		lines = append(lines, "speedup  — (no accepted candidate)")
+	}
+	if d := m.eventSpan(); d >= time.Second {
+		lines = append(lines, "time     "+d.Round(time.Second).String())
 	}
 	body := strings.Join(fitLines(lines, w-4), "\n")
 	style := borderNormal
@@ -321,6 +346,17 @@ func (m *Model) verdictBox() string {
 	if m.Mode == ModeLive && m.KilledByUser {
 		word, sub = "COLD", "stopped by user — run left in progress (resumable)"
 	}
+	glyph := "○"
+	switch word {
+	case "INGOT":
+		glyph = "◆"
+	case "SLAG":
+		glyph = "◇"
+	case "ASH":
+		glyph = "△"
+	case "COLD":
+		glyph = "○"
+	}
 	st := colGold
 	switch word {
 	case "INGOT":
@@ -330,7 +366,7 @@ func (m *Model) verdictBox() string {
 	case "ASH", "COLD":
 		st = colDim
 	}
-	out := " " + st.Render("VERDICT: "+word) + "\n" +
+	out := " " + st.Render("VERDICT: "+glyph+" "+word) + "\n" +
 		" " + colDim.Render(fit(sub, m.Width-2))
 	if m.CrashNote != "" {
 		out += "\n " + colDim.Render(fit(m.CrashNote+" — see log", m.Width-2))

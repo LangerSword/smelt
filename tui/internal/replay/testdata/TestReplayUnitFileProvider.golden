@@ -1,6 +1,6 @@
  FURNACE v0.7 · replay · 261011-024849-b4f411                     file · — (no model: file fixture)
  select✔ ─▶ oracle✔ ─▶ generate✔ ─▶ build✔ ─▶ verify✔ ─▶ bench✔ ─▶ verdict★  ╭───────────────────────────────────────────╮
- VERDICT: INGOT                                                              │status                                     │
+ VERDICT: ◆ INGOT                                                            │status                                     │
  accepted — verified rewrite, speedup above the threshold                    │oracle   [████████████████████████████████…│
  verified 85/85 cases; speedup 3.28x (conservative lower bound 3.25x)        │cases    85/85 passed                      │
 ╭───────────────────────────────────────────╮                                │attempts 1                                 │
@@ -8,15 +8,16 @@
 │provider file · model — (no model: file fi…│                                │last     reason · verified 85/85 cases; sp…│
 │oracle   85 cases · sha 033b13d6…          │                                ╰───────────────────────────────────────────╯
 │attempts 1                                 │                                                                             
-│speedup  3.28x · lower bound 3.25x         │                                                                             
+│speedup  [██████░░░░░░░░░░░░░] 3.28x lb 3.…│                                                                             
+│time     5s                                │                                                                             
 ╰───────────────────────────────────────────╯                                                                             
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
 │ log · 6 lines                                                                                │
-│run start · provider=file model=— (no model: file fixture)                                    │
-│oracle frozen · 85 cases · sha 033b13d605ac44a7                                               │
-│attempt 1 · generate                                                                          │
-│accept · 3.28x (lower bound 3.25x)                                                            │
-│end · accepted                                                                                │
+│02:48:49 · run start · provider=file model=— (no model: file fixture)                         │
+│02:48:49 · oracle frozen · 85 cases · sha 033b13d605ac44a7                                    │
+│02:48:49 · attempt 1 · generate                                                               │
+│02:48:54 · accept · 3.28x (lower bound 3.25x)                                                 │
+│02:48:54 · end · accepted                                                                     │
 │reason · verified 85/85 cases; speedup 3.28x (conservative lower bound 3.25x)                 │
 │                                                                                              │
 │                                                                                              │

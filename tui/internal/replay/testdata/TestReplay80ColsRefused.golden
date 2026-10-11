@@ -8,14 +8,14 @@
 │speedup  —                                                              │
 │last     reason · refused_impure: impure target: module imports 'random…│
 ╰────────────────────────────────────────────────────────────────────────╯
- VERDICT: ASH
+ VERDICT: △ ASH
  refused — impure target (a correct outcome)
  refused_impure: impure target: module imports 'random' (side effects / nond…
 ╭──────────────────────────────────────────────────────────────────────────╮
 │ log · 4 lines                                                            │
-│run start · provider=gemini model=gemma-4-26b-a4b-it                      │
-│halt · impure target: module imports 'random' (side effects / nondetermini│
-│end · refused                                                             │
+│03:31:14 · run start · provider=gemini model=gemma-4-26b-a4b-it           │
+│03:31:14 · ✗ halt · impure target: module imports 'random' (side effects /│
+│03:31:14 · end · refused                                                  │
 │reason · refused_impure: impure target: module imports 'random' (side effe│
 │                                                                          │
 │                                                                          │
