@@ -15,7 +15,8 @@ The honest claim: **no wrong rewrite is accepted on the tested inputs.**
 smelt is a metalworking metaphor, not a networking tool.
 
 > Status: built live at **sudo Hacktober** (MLH, SRM AP Amaravati), Oct 10–11 2026, solo.
-> **Minimum submission: v0.4-skill** — core loop + CLI + evals + validated agent skill.
+> **v0.6.0** — core loop + CLI + evals + validated agent skill + Furnace TUI +
+> multi-parameter oracle (wheel/sdist built and install-verified; PyPI upload pending).
 
 ## How it works
 
