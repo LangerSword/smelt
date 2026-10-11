@@ -60,7 +60,7 @@ def scan_path(root: str) -> dict:
             with open(path, encoding="utf-8") as f:
                 tree = ast.parse(f.read(), filename=path)
         except (SyntaxError, UnicodeDecodeError) as e:
-            candidates.append({"file": rel, "function": "", "status": "skip",
+            candidates.append({"file": rel, "function": "", "status": "skip", "tier": "refused",
                                "reason": f"cannot parse: {type(e).__name__}"})
             continue
         funcs = [n for n in tree.body if isinstance(n, ast.FunctionDef)]
@@ -70,34 +70,45 @@ def scan_path(root: str) -> dict:
         for fn_node in funcs:
             entry = {"file": rel, "function": fn_node.name, "line": fn_node.lineno}
             if relative:
-                entry.update(status="skip",
+                entry.update(status="skip", tier="refused",
                              reason="relative imports — package loading not supported yet (BUG-1)")
                 candidates.append(entry)
                 continue
             reasons = purity.probe(path, fn_node.name)
             if reasons:
-                entry.update(status="skip", reason="impure: " + reasons[0])
+                entry.update(status="skip", tier="refused", reason="impure: " + reasons[0])
                 candidates.append(entry)
                 continue
             args = fn_node.args
-            total = len(args.posonlyargs) + len(args.args) + len(args.kwonlyargs)
-            if total == 0:
-                entry.update(status="skip", reason="no parameters")
+            positional = args.posonlyargs + args.args
+            if not positional and not args.kwonlyargs:
+                entry.update(status="skip", tier="refused", reason="no parameters")
                 candidates.append(entry)
                 continue
-            if total > 1 or args.vararg or args.kwarg:
-                entry.update(status="skip",
-                             reason="multiple parameters (single-parameter build)")
+            if args.vararg or args.kwarg:
+                entry.update(status="skip", tier="refused",
+                             reason="variadic parameters (*args/**kwargs) are not supported yet")
                 candidates.append(entry)
                 continue
-            ann = _ann_str(args.args[0].annotation if args.args else args.posonlyargs[0].annotation)
-            if ann not in SUPPORTED_PARAMS:
-                entry.update(status="skip",
-                             reason=f"unsupported parameter type: {ann or 'unannotated'}")
+            if args.kwonlyargs:
+                entry.update(status="skip", tier="refused",
+                             reason="keyword-only parameters are not supported yet — "
+                                    "refactor hint: make them positional")
                 candidates.append(entry)
                 continue
-            entry.update(status="candidate", tier="simple", param=ann,
-                         reason=f"one {ann} parameter")
+            anns = [_ann_str(a.annotation) for a in positional]
+            bad = [a for a in anns if a not in SUPPORTED_PARAMS]
+            if bad:
+                entry.update(status="skip", tier="refused",
+                             reason=f"unsupported parameter type: {bad[0] or 'unannotated'} — "
+                                    "refactor hint: use str/int/float/bool/list[int]/list[str]")
+                candidates.append(entry)
+                continue
+            n = len(positional)
+            entry.update(status="candidate", tier="1",
+                         param=anns[0] if n == 1 else f"{n} params",
+                         reason=(f"one {anns[0]} parameter" if n == 1
+                                 else f"{n} simple parameters: {', '.join(anns)}"))
             candidates.append(entry)
 
     summary = {

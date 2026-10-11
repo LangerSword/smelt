@@ -11,7 +11,7 @@ import os
 import time
 from dataclasses import asdict, dataclass, field
 
-SMELT_VERSION = "0.1.0"
+SMELT_VERSION = "0.6.0"
 
 EVENT_SCHEMA_VERSION = "1"
 

@@ -5,6 +5,7 @@ Python function (never by trusting the spec), hashed, and made read-only. Any la
 tamper is detected by hash. Reviewed closely by the developer.
 """
 
+import itertools
 import json
 import os
 import random
@@ -46,19 +47,38 @@ def gen_cases_for_param(annotation: str, rnd: random.Random, n_random: int):
 
 
 def generate_cases(params: list[dict], target_cases: int, seed: int) -> list[dict]:
-    if len(params) != 1:
-        raise RefusedTarget(
-            f"this build supports single-parameter functions only (found {len(params)}) — "
-            "refactor hint: wrap the values in one dataclass or tuple parameter")
-    p = params[0]
+    if len(params) == 1:
+        # Single parameter: byte-identical to the original generator (corpus oracles
+        # must stay reproducible).
+        p = params[0]
+        rnd = random.Random(seed)
+        random_cases, edges = gen_cases_for_param(p["annotation"], rnd, target_cases)
+        cases = [{"case_id": f"r{i:04d}", "args": [v], "kwargs": {}, "tags": ["random"]}
+                 for i, v in enumerate(random_cases)]
+        cases += [{"case_id": f"e{i:04d}", "args": [v], "kwargs": {}, "tags": ["edge"]}
+                  for i, v in enumerate(edges)]
+        if len(cases) < target_cases:
+            raise CaptureFailed(f"generated only {len(cases)} cases (< target {target_cases})")
+        return cases
+
+    # Multi-parameter (G1 widening): independent random columns per parameter,
+    # plus a capped product of the edge batteries.
     rnd = random.Random(seed)
-    random_cases, edges = gen_cases_for_param(p["annotation"], rnd, target_cases)
-    cases = [{"case_id": f"r{i:04d}", "args": [v], "kwargs": {}, "tags": ["random"]}
-             for i, v in enumerate(random_cases)]
-    cases += [{"case_id": f"e{i:04d}", "args": [v], "kwargs": {}, "tags": ["edge"]}
-              for i, v in enumerate(edges)]
-    if len(cases) < target_cases:
-        raise CaptureFailed(f"generated only {len(cases)} cases (< target {target_cases})")
+    per = max(20, target_cases // len(params))
+    cols = [gen_cases_for_param(p["annotation"], rnd, per) for p in params]
+    n_rand = min(len(c[0]) for c in cols)
+    cases = []
+    for i in range(n_rand):
+        args = [c[0][i] for c in cols]
+        cases.append({"case_id": f"r{i:04d}", "args": args, "kwargs": {}, "tags": ["random"]})
+    edge_combos = list(itertools.product(*[c[1] for c in cols]))
+    if len(edge_combos) > 60:
+        step = max(1, len(edge_combos) // 60)
+        edge_combos = edge_combos[::step]
+    for i, combo in enumerate(edge_combos):
+        cases.append({"case_id": f"e{i:04d}", "args": list(combo), "kwargs": {}, "tags": ["edge"]})
+    if len(cases) < 40:
+        raise CaptureFailed(f"generated only {len(cases)} cases for {len(params)} parameters")
     return cases
 
 
@@ -83,6 +103,13 @@ def capture_oracle(*, run_dir: str, target_path: str, module_name: str, func_nam
     ret_ann = intro.get("return_annotation")
     if not params:
         raise CaptureFailed("target function has no parameters (nothing to test)")
+    bad_kinds = [p for p in params
+                 if p.get("kind") in ("KEYWORD_ONLY", "VAR_POSITIONAL", "VAR_KEYWORD")]
+    if bad_kinds:
+        raise RefusedTarget(
+            f"unsupported parameter kind for {bad_kinds[0]['name']!r} "
+            f"({bad_kinds[0].get('kind')}) — refactor hint: make all parameters positional "
+            "(keyword-only / variadic parameters are not supported yet)")
 
     # 2. generate cases, record answers
     cases = generate_cases(params, target_cases, seed)

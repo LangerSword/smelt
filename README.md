@@ -84,8 +84,21 @@ uv run smelt run examples/demo/run_length.py:rle_encode \
 uv run smelt report runs/<run-id>
 ```
 
-`uv tool install smelt-rs` lands with the PyPI release. Verify/benchmark steps never need
-the network; model runs need a provider (see below).
+`uv tool install smelt-rs` works once the PyPI release is out. The v0.6.0
+wheel and sdist build green and install cleanly from disk
+(`uv tool install ./dist/smelt_rs-0.6.0-py3-none-any.whl`); the PyPI upload is
+pending the maintainer's go (name `smelt-rs` is unclaimed). Verify/benchmark
+steps never need the network; model runs need a provider (see below).
+
+## Docs
+
+- [`docs/how-it-works.md`](docs/how-it-works.md) — the pipeline, oracle, acceptance
+- [`docs/cli.md`](docs/cli.md) — every command, flag and exit code
+- [`docs/providers.md`](docs/providers.md) — providers, models, secrets policy
+- [`docs/safety.md`](docs/safety.md) — untrusted-code handling and boundaries
+- [`docs/evals.md`](docs/evals.md) — corpus, meta-eval, blind test
+- [`docs/faq.md`](docs/faq.md) — common questions, honest limits
+- [`docs/events.md`](docs/events.md) — the events.jsonl contract (TUI input)
 
 ## Commands
 
@@ -121,7 +134,12 @@ Exit codes: 0 accepted · 3 refused (impure) · 4 rejected · 5 harness error ·
 
 ## Honest limits
 
-- One parameter per function in this build (str / int / float / bool / list[int] / list[str]).
+- Up to N parameters of simple types (str / int / float / bool / list[int] / list[str]);
+  multi-parameter oracles use independent random columns + a capped edge product
+  (~40–140 cases). Known domain gap: inputs whose Python result exceeds the i64 range
+  (e.g. `i64::MIN // -1`, or a product of two extreme values) cannot be matched by an
+  i64 rewrite — such candidates are honestly rejected; the domain-policy decision is
+  with the developer.
 - Integers are tested inside the 64-bit range; big Python ints are outside the tested
   domain and are never silently truncated.
 - The oracle proves equivalence **on the tested inputs** — the claim is exactly that.

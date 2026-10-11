@@ -17,9 +17,10 @@ function — never synthesized from a spec.
 All three files are chmod 444 (read-only). `load_oracle()` re-hashes before every use;
 any mismatch aborts the run with `oracle_tampered`.
 
-## Case generation (single-parameter functions in this build)
+## Case generation
 
-1. Seeded random cases (default target 200): per type —
+1. Seeded random cases (default target 200; multi-parameter targets use independent
+   random columns per parameter, `max(20, target // n)` each): per type —
    - `str`: random strings over a small alphabet, lengths 0–40
    - `int`: uniform within ±10^6
    - `float`: uniform ±100, rounded

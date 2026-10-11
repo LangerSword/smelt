@@ -1,9 +1,14 @@
 #!/usr/bin/env python
-"""Meta-eval: prove the oracle rejects KNOWN-WRONG rewrites (gate: 10/10 rejected).
+"""Meta-eval: prove the oracle rejects KNOWN-WRONG rewrites (gate: all rejected).
 
-Each candidate below is a hand-written rle_encode that is wrong in a different way but
-still compiles. Every one must come back REJECTED (verify_mismatch, exit code 4) when
-run through the full pipeline against the frozen oracle. If any is accepted, the
+Two target sets:
+  1) rle_encode (single str param) — 10 wrong rewrites, the original battery;
+  2) divide (two int params, raises on b==0) — the G1 multi-parameter battery:
+     wrong value / wrong exception (returns instead of raising) / panic where the
+     Python returns (panics must become Python exceptions, never abort the process).
+
+Every candidate must come back REJECTED (verify_mismatch, exit code 4) when run
+through the full pipeline against the frozen oracle. If any is accepted, the
 verifier has a false-accept bug — the gate for that is: unexpected == 0.
 """
 
@@ -21,6 +26,15 @@ GLUE = """
 #[pymodule]
 fn smelt_ext(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(rle_encode, m)?)?;
+    Ok(())
+}
+"""
+
+GLUE_DIVIDE = """
+
+#[pymodule]
+fn smelt_ext(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(divide, m)?)?;
     Ok(())
 }
 """
@@ -196,6 +210,52 @@ fn rle_encode(text: &str) -> String {
 """ + GLUE,
 }
 
+WRONG_MULTI = {
+    # wrong value: modulo instead of integer division (returns when Python returns,
+    # but the value is wrong)
+    "m01_wrong_value": """use pyo3::prelude::*;
+
+#[pyfunction]
+fn divide(a: i64, b: i64) -> PyResult<i64> {
+    if b == 0 {
+        return Err(pyo3::exceptions::PyZeroDivisionError::new_err("integer division or modulo by zero"));
+    }
+    Ok(a % b)
+}
+""" + GLUE_DIVIDE,
+    # wrong exception behaviour: returns 0 where the Python raises ZeroDivisionError
+    "m02_wrong_exception": """use pyo3::prelude::*;
+
+#[pyfunction]
+fn divide(a: i64, b: i64) -> PyResult<i64> {
+    if b == 0 {
+        return Ok(0);
+    }
+    Ok(a / b)
+}
+""" + GLUE_DIVIDE,
+    # panic where the Python returns: panics must become Python exceptions and the
+    # worker must survive (never abort the process)
+    "m03_panic_where_python_returns": """use pyo3::prelude::*;
+
+#[pyfunction]
+fn divide(a: i64, b: i64) -> PyResult<i64> {
+    if a < 0 {
+        panic!("boom: negative dividend");
+    }
+    if b == 0 {
+        return Err(pyo3::exceptions::PyZeroDivisionError::new_err("integer division or modulo by zero"));
+    }
+    Ok(a / b)
+}
+""" + GLUE_DIVIDE,
+}
+
+TARGETS = [
+    ("rle_encode", "examples/demo/run_length.py", "rle_encode", WRONG),
+    ("divide", "examples/demo/divide.py", "divide", WRONG_MULTI),
+]
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -204,23 +264,25 @@ def main() -> int:
     args = ap.parse_args()
 
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    target = os.path.join(repo, "examples/demo/run_length.py") + ":rle_encode"
     runs_root = tempfile.mkdtemp(prefix="smelt-meta-")
     results = []
-    for name, src in sorted(WRONG.items()):
-        d = os.path.join(runs_root, name)
-        os.makedirs(d, exist_ok=True)
-        cand = os.path.join(d, "candidate.rs")
-        with open(cand, "w") as f:
-            f.write(src)
-        code, info = orchestrator.run(target=target, provider_name="file", candidate=cand,
-                                      runs_dir=d, max_attempts=1, target_cases=args.cases,
-                                      quiet=True)
-        rejected = code == 4
-        results.append({"wrong": name, "exit_code": code, "rejected": rejected,
-                        "reason": (info.get("stop_reason") or "")[:140]})
-        print(("REJECTED ok " if rejected else "ACCEPTED  !! ") + name + f"  (exit {code})",
-              flush=True)
+    for set_name, rel_path, func, wrong in TARGETS:
+        target = os.path.join(repo, rel_path) + ":" + func
+        for name, src in sorted(wrong.items()):
+            d = os.path.join(runs_root, name)
+            os.makedirs(d, exist_ok=True)
+            cand = os.path.join(d, "candidate.rs")
+            with open(cand, "w") as f:
+                f.write(src)
+            code, info = orchestrator.run(target=target, provider_name="file", candidate=cand,
+                                          runs_dir=d, max_attempts=1, target_cases=args.cases,
+                                          quiet=True)
+            rejected = code == 4
+            results.append({"set": set_name, "wrong": name, "exit_code": code,
+                            "rejected": rejected,
+                            "reason": (info.get("stop_reason") or "")[:140]})
+            print(("REJECTED ok " if rejected else "ACCEPTED  !! ") + name + f"  (exit {code})",
+                  flush=True)
     summary = {"n": len(results),
                "rejected": sum(1 for r in results if r["rejected"]),
                "unexpected_accepted": sum(1 for r in results if not r["rejected"])}
