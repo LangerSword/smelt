@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -68,13 +69,43 @@ const helpText = `furnace home — commands
   <file.py:fn>              same as /run with the current provider/model
   /resume <run-dir>         open a finished (or interrupted) run
   /report <run-dir>         show the run's markdown report
-  /provider <name> [model]  set the provider (bare: show availability)
+  /provider [name] [model]  picker when bare; sets directly with args
+  /model                    choose the model (picker)
+  /sessions  (ctrl+r)       run history picker — verdict · speedup · target
+  /diff                     view-only diff for the open run (smelt apply)
   /doctor                   environment + provider checks (smelt doctor --json)
+  /clear                    clear the candidate list
   /help                     this text
   /quit                     leave furnace
 
-home keys:  tab panes · ↑/↓ select · enter run/open · ctrl+c quit
-run view:   esc back · d diff (smelt apply, view only) · q quit`
+home keys:  tab complete/focus · ↑/↓ choose · enter run/open · esc cancel
+            ? help · ctrl+r sessions · ctrl+c quit
+run view:   esc back · d diff (view only) · j/k ↑/↓ scroll · q quit
+            ctrl+c once stops the run (confirm), twice quits`
+
+type cmdSpec struct{ name, desc string }
+
+var commandSpecs = []cmdSpec{
+	{"/scan", "list candidate functions (with skip reasons)"},
+	{"/run", "start a live run: /run file.py:fn [--provider p] [--model m]"},
+	{"/resume", "open a finished or interrupted run"},
+	{"/report", "show a run's markdown report"},
+	{"/provider", "choose a provider (picker)"},
+	{"/model", "choose a model (picker)"},
+	{"/sessions", "run history picker (ctrl+r)"},
+	{"/diff", "view-only diff for the open run"},
+	{"/doctor", "environment + provider checks"},
+	{"/clear", "clear the candidate list"},
+	{"/help", "keybindings and commands"},
+	{"/quit", "leave furnace"},
+}
+
+type pickerState struct {
+	kind  string // provider | model | sessions
+	items []string
+	notes []string
+	sel   int
+}
 
 // App is the T3 home screen: prompt box, scan picker, history, and the
 // run/text screens it delegates to.
@@ -87,14 +118,20 @@ type App struct {
 	Model         string
 	Anim          bool
 
-	Input    textinput.Model
-	Focus    int // 0 input, 1 candidates, 2 history
-	Cands    []scanItem
-	CandSel  int
-	ScanRoot string
-	History  []string
-	HistSel  int
-	Status   string
+	Input      textinput.Model
+	Focus      int // 0 input, 1 candidates, 2 history
+	Cands      []scanItem
+	CandSel    int
+	ScanRoot   string
+	History    []string
+	HistSel    int
+	Status     string
+	Prompts    []string // submitted prompt history (↑/↓)
+	PromptIdx  int
+	MenuSel    int
+	menuHidden bool
+	Picker     *pickerState
+	lastCtrlC  time.Time
 
 	Run       *Model
 	TextTitle string
@@ -138,6 +175,142 @@ func (a *App) modelDisplay() string {
 		return "(provider default)"
 	}
 	return a.Model
+}
+
+// menuMatches filters the slash-command list by the current input.
+func (a *App) menuMatches() []cmdSpec {
+	v := strings.TrimSpace(a.Input.Value())
+	if !strings.HasPrefix(v, "/") || strings.Contains(v, " ") {
+		return nil
+	}
+	var out []cmdSpec
+	for _, c := range commandSpecs {
+		if strings.HasPrefix(c.name, v) {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+// promptBack / promptForward walk the submitted-prompt history (↑/↓).
+func (a *App) promptBack() {
+	if len(a.Prompts) == 0 {
+		return
+	}
+	if a.PromptIdx > 0 {
+		a.PromptIdx--
+	}
+	a.Input.SetValue(a.Prompts[a.PromptIdx])
+	a.Input.CursorEnd()
+}
+
+func (a *App) promptForward() {
+	if len(a.Prompts) == 0 {
+		return
+	}
+	if a.PromptIdx < len(a.Prompts)-1 {
+		a.PromptIdx++
+		a.Input.SetValue(a.Prompts[a.PromptIdx])
+	} else {
+		a.PromptIdx = len(a.Prompts)
+		a.Input.SetValue("")
+	}
+	a.Input.CursorEnd()
+}
+
+func (a *App) openPicker(kind string, items []string, current string) {
+	p := &pickerState{kind: kind, items: items}
+	for _, it := range items {
+		note := ""
+		if it == current {
+			note = "current"
+		}
+		p.notes = append(p.notes, note)
+	}
+	a.Picker = p
+}
+
+func (a *App) openSessionsPicker() {
+	p := &pickerState{kind: "sessions"}
+	for _, dir := range a.History {
+		note := "unreadable"
+		if sum, err := LoadRun(dir); err == nil {
+			word, _ := Verdict(sum.Status)
+			note = word
+			if sum.HasSpeedup {
+				note += fmt.Sprintf(" · %.2fx", sum.Speedup)
+			}
+			if sum.Target != "" {
+				note += " · " + shortTarget(sum.Target)
+			}
+		}
+		p.items = append(p.items, filepath.Base(dir))
+		p.notes = append(p.notes, note)
+	}
+	a.Picker = p
+}
+
+func (a *App) pickerEnter() (tea.Model, tea.Cmd) {
+	p := a.Picker
+	if p == nil || len(p.items) == 0 {
+		a.Picker = nil
+		return a, nil
+	}
+	sel := p.items[p.sel]
+	a.Picker = nil
+	switch p.kind {
+	case "provider":
+		a.Provider = sel
+		a.Status = "provider set: " + a.Provider
+	case "model":
+		if sel == "(provider default)" {
+			a.Model = ""
+		} else {
+			a.Model = sel
+		}
+		a.Status = "model set: " + a.modelDisplay()
+	case "sessions":
+		return a, a.openRun(filepath.Join(a.RunsDir, sel))
+	}
+	return a, nil
+}
+
+func (a *App) pickerView() string {
+	p := a.Picker
+	title := map[string]string{"provider": "choose provider", "model": "choose model", "sessions": "run history"}[p.kind]
+	lines := []string{title}
+	if len(p.items) == 0 {
+		lines = append(lines, "  (nothing to choose)")
+	}
+	for i, it := range p.items {
+		mark := "  "
+		if i == p.sel {
+			mark = "▸ "
+		}
+		note := ""
+		if i < len(p.notes) && p.notes[i] != "" {
+			note = "  — " + p.notes[i]
+		}
+		lines = append(lines, fit(mark+it+note, a.Width-10))
+	}
+	lines = append(lines, "", " enter select · esc cancel")
+	return borderFocused.Render(strings.Join(lines, "\n"))
+}
+
+// colorizeDiff gives added lines the ember tint (view-only diffs, U4).
+func colorizeDiff(s string) string {
+	var out []string
+	for _, ln := range strings.Split(s, "\n") {
+		switch {
+		case strings.HasPrefix(ln, "+"):
+			out = append(out, colEmber.Render(ln))
+		case strings.HasPrefix(ln, "-"):
+			out = append(out, colSlag.Render(ln))
+		default:
+			out = append(out, ln)
+		}
+	}
+	return strings.Join(out, "\n")
 }
 
 func (a *App) Init() tea.Cmd { return textinput.Blink }
@@ -189,9 +362,27 @@ func (a *App) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				return a, a.runApply(a.runDir())
 			}
 			return a, nil
-		case "q", "ctrl+c":
+		case "q":
 			a.stopLiveIfRunning()
 			return a, tea.Quit
+		case "ctrl+c":
+			running := a.Run != nil && a.Run.Mode == ModeLive && !a.Run.Done
+			if running {
+				if time.Since(a.lastCtrlC) < 3*time.Second {
+					a.stopLiveIfRunning()
+					return a, tea.Quit
+				}
+				a.lastCtrlC = time.Now()
+				a.stopLiveIfRunning()
+				a.Status = "stopped — ctrl+c again to quit (the run is resumable)"
+				return a, nil
+			}
+			if time.Since(a.lastCtrlC) < 3*time.Second {
+				return a, tea.Quit
+			}
+			a.lastCtrlC = time.Now()
+			a.Status = "press ctrl+c again to quit"
+			return a, nil
 		}
 		rm, cmd := a.Run.Update(msg)
 		a.Run = rm.(*Model)
@@ -208,10 +399,37 @@ func (a *App) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		a.textVP, cmd = a.textVP.Update(msg)
 		return a, cmd
 	case ScreenHome:
+		if a.Picker != nil {
+			switch msg.String() {
+			case "esc", "q":
+				a.Picker = nil
+			case "up", "k":
+				if a.Picker.sel > 0 {
+					a.Picker.sel--
+				}
+			case "down", "j":
+				if a.Picker.sel < len(a.Picker.items)-1 {
+					a.Picker.sel++
+				}
+			case "enter":
+				return a.pickerEnter()
+			}
+			return a, nil
+		}
 		switch msg.String() {
 		case "ctrl+c":
 			return a, tea.Quit
+		case "ctrl+r":
+			a.openSessionsPicker()
+			return a, nil
 		case "tab":
+			if a.Focus == 0 {
+				if m := a.menuMatches(); len(m) > 0 {
+					a.Input.SetValue(m[a.MenuSel%len(m)].name + " ")
+					a.MenuSel = 0
+					return a, nil
+				}
+			}
 			a.Focus = (a.Focus + 1) % 3
 			if a.Focus == 0 {
 				a.Input.Focus()
@@ -224,14 +442,51 @@ func (a *App) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return a, nil
 		case "enter":
 			return a.homeEnter()
-		case "up", "k":
+		case "esc":
+			a.menuHidden = true
+			return a, nil
+		case "up":
+			if a.Focus == 0 && len(a.menuMatches()) > 0 {
+				if a.MenuSel > 0 {
+					a.MenuSel--
+				}
+				return a, nil
+			}
+			if a.Focus == 0 {
+				a.promptBack()
+				return a, nil
+			}
 			if a.Focus == 1 && a.CandSel > 0 {
 				a.CandSel--
 			} else if a.Focus == 2 && a.HistSel > 0 {
 				a.HistSel--
 			}
 			return a, nil
-		case "down", "j":
+		case "down":
+			if a.Focus == 0 && len(a.menuMatches()) > 0 {
+				if a.MenuSel < len(a.menuMatches())-1 {
+					a.MenuSel++
+				}
+				return a, nil
+			}
+			if a.Focus == 0 {
+				a.promptForward()
+				return a, nil
+			}
+			if a.Focus == 1 && a.CandSel < len(a.Cands)-1 {
+				a.CandSel++
+			} else if a.Focus == 2 && a.HistSel < len(a.History)-1 {
+				a.HistSel++
+			}
+			return a, nil
+		case "k":
+			if a.Focus == 1 && a.CandSel > 0 {
+				a.CandSel--
+			} else if a.Focus == 2 && a.HistSel > 0 {
+				a.HistSel--
+			}
+			return a, nil
+		case "j":
 			if a.Focus == 1 && a.CandSel < len(a.Cands)-1 {
 				a.CandSel++
 			} else if a.Focus == 2 && a.HistSel < len(a.History)-1 {
@@ -240,6 +495,7 @@ func (a *App) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return a, nil
 		}
 		if a.Focus == 0 {
+			a.menuHidden = false
 			var cmd tea.Cmd
 			a.Input, cmd = a.Input.Update(msg)
 			return a, cmd
@@ -254,6 +510,13 @@ func (a *App) homeEnter() (tea.Model, tea.Cmd) {
 	case 0:
 		line := strings.TrimSpace(a.Input.Value())
 		a.Input.SetValue("")
+		if line != "" {
+			a.Prompts = append(a.Prompts, line)
+			if len(a.Prompts) > 50 {
+				a.Prompts = a.Prompts[1:]
+			}
+			a.PromptIdx = len(a.Prompts)
+		}
 		return a, a.execute(line)
 	case 1:
 		if len(a.Cands) == 0 {
@@ -350,7 +613,26 @@ func (a *App) execute(line string) tea.Cmd {
 			a.Status = "provider set: " + a.Provider + " · model " + a.modelDisplay()
 			return nil
 		}
-		return a.runSmeltCmd("doctor", "", "doctor")
+		a.openPicker("provider", []string{"gemini", "local", "do", "openai", "file", "fake"}, a.Provider)
+		return nil
+	case "/model":
+		a.openPicker("model",
+			[]string{"gemma-4-26b-a4b-it", "gemma-4-31b-it", "(provider default)"},
+			a.modelDisplay())
+		return nil
+	case "/sessions":
+		a.openSessionsPicker()
+		return nil
+	case "/diff":
+		if a.Run != nil {
+			return a.runApply(a.runDir())
+		}
+		a.Status = "no run open — /sessions or /resume <dir> first"
+		return nil
+	case "/clear":
+		a.Cands = nil
+		a.Status = "cleared"
+		return nil
 	default:
 		a.Status = "unknown command: " + parts[0] + " (try /help)"
 		return nil
@@ -452,7 +734,7 @@ func (a *App) handleSmeltResult(msg smeltResultMsg) tea.Cmd {
 			a.Status = "apply failed: " + msg.err.Error()
 			return nil
 		}
-		a.showText("apply (view only) · "+msg.arg, msg.out)
+		a.showText("apply (view only) · "+msg.arg, colorizeDiff(msg.out))
 		return nil
 	case "started":
 		if msg._live == nil {
@@ -521,7 +803,11 @@ func (a *App) View() string {
 		if a.Run == nil {
 			break
 		}
-		return a.Run.View() + "\n" + colDim.Render(fit(" esc back · d diff (view only) · q quit", a.Width-1))
+		foot := colDim.Render(fit(" esc back · d diff (view only) · j/k scroll · ctrl+c once stops, twice quits · q quit", a.Width-1))
+		if a.Status != "" {
+			foot = colDim.Render(fit(" "+a.Status, a.Width-1)) + "\n" + foot
+		}
+		return a.Run.View() + "\n" + foot
 	case ScreenText:
 		head := " " + fit("FURNACE · "+a.TextTitle, a.Width-2)
 		foot := colDim.Render(fit(" esc back · ↑/↓ scroll", a.Width-1))
@@ -544,13 +830,24 @@ func banner() string {
 func (a *App) homeView() string {
 	var b strings.Builder
 	right := fit(a.Provider+" · "+a.modelDisplay(), a.Width/3)
-	left := fit("FURNACE · smelt home", a.Width-lipgloss.Width(right)-3)
+	left := fit("FURNACE v"+Version+" · smelt home", a.Width-lipgloss.Width(right)-3)
 	pad := a.Width - 2 - lipgloss.Width(left) - lipgloss.Width(right)
 	if pad < 1 {
 		pad = 1
 	}
 	b.WriteString(" " + left + strings.Repeat(" ", pad) + right + "\n")
-	b.WriteString(banner() + "\n")
+	if a.Height >= 30 {
+		b.WriteString(banner() + "\n")
+	}
+	if a.Picker != nil {
+		b.WriteString(a.pickerView() + "\n")
+		b.WriteString(a.Input.View() + "\n")
+		b.WriteString(colDim.Render(fit(" picker: ↑/↓ choose · enter select · esc cancel", a.Width-1)))
+		return b.String()
+	}
+	if len(a.Cands) == 0 && len(a.History) == 0 {
+		b.WriteString(colDim.Render(fit(" welcome — try /scan . (list candidates) or /run file.py:fn", a.Width-1)) + "\n")
+	}
 
 	// two side-by-side boxes: candidates | recent runs
 	boxW := a.Width/2 - 2
@@ -602,6 +899,18 @@ func (a *App) homeView() string {
 	candBox := borderNormal.Render(strings.Join(candLines, "\n"))
 	histBox := borderNormal.Render(strings.Join(histLines, "\n"))
 	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, candBox, " ", histBox) + "\n")
+	if m := a.menuMatches(); len(m) > 0 && !a.menuHidden {
+		if len(m) > 6 {
+			m = m[:6]
+		}
+		for i, c := range m {
+			mark := "  "
+			if i == a.MenuSel%len(m) {
+				mark = "▸ "
+			}
+			b.WriteString(fit(" "+mark+c.name+"  "+c.desc, a.Width-1) + "\n")
+		}
+	}
 	b.WriteString(a.Input.View() + "\n")
 	if a.Status != "" {
 		b.WriteString(colDim.Render(fit(" "+a.Status, a.Width-1)) + "\n")

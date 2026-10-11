@@ -1,0 +1,41 @@
+ FURNACE v0.7 · replay · 261011-015326-a41353                                               gemini · gemma-4-26b-a4b-it
+ select✔ ─▶ oracle✔ ─▶ generate✔ ─▶ build✔ ─▶ verify✔ ─▶ bench✔ ─▶ verdict★  ╭─────────────────────────────────────────────────────╮
+ VERDICT: ◆ INGOT                                                            │status                                               │
+ accepted — verified rewrite, speedup above the threshold                    │oracle   [██████████████████████████████████████████…│
+ verified 225/225 cases; speedup 4.14x (conservative lower bound 4.00x)      │cases    225/225 passed                              │
+╭─────────────────────────────────────────────────────╮                      │attempts 1                                           │
+│target   run_length.py:rle_encode                    │                      │speedup  4.14x · lb 4.00x                            │
+│provider gemini · model gemma-4-26b-a4b-it           │                      │last     reason · verified 225/225 cases; speedup 4.…│
+│oracle   225 cases · sha 60ec5528…                   │                      ╰─────────────────────────────────────────────────────╯
+│attempts 1                                           │                                                                             
+│speedup  [████████████░░░░░░░░░░░░░░░░░] 4.14x lb 4.…│                                                                             
+│time     14s                                         │                                                                             
+╰─────────────────────────────────────────────────────╯                                                                             
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ log · 6 lines                                                                                                    │
+│01:53:26 · run start · provider=gemini model=gemma-4-26b-a4b-it                                                   │
+│01:53:26 · oracle frozen · 225 cases · sha 60ec55285b236e6c                                                       │
+│01:53:26 · attempt 1 · generate                                                                                   │
+│01:53:39 · accept · 4.14x (lower bound 4.00x)                                                                     │
+│01:53:39 · end · accepted                                                                                         │
+│reason · verified 225/225 cases; speedup 4.14x (conservative lower bound 4.00x)                                   │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+ done · accepted · 14s · verdict INGOT
+ ? help · tab panes · ↑/↓ j/k scroll · d diff · q quit

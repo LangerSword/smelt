@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Event is one line of events.jsonl (docs/events.md).
@@ -228,30 +229,36 @@ func deriveStatus(s *RunSummary) string {
 
 func (s *RunSummary) buildLog() []string {
 	var out []string
+	stamp := func(ev Event) string {
+		if ev.Ts <= 0 {
+			return ""
+		}
+		return time.Unix(int64(ev.Ts), 0).Format("15:04:05") + " · "
+	}
 	for _, ev := range s.Events {
 		switch ev.Event {
 		case "run_start":
-			out = append(out, "run start · provider="+s.Provider+" model="+DisplayModel(s.Provider, s.Model))
+			out = append(out, stamp(ev)+"run start · provider="+s.Provider+" model="+DisplayModel(s.Provider, s.Model))
 		case "capture_done":
-			out = append(out, fmt.Sprintf("oracle frozen · %d cases · sha %s", s.NCases, s.OracleSHA))
+			out = append(out, stamp(ev)+fmt.Sprintf("oracle frozen · %d cases · sha %s", s.NCases, s.OracleSHA))
 		case "attempt_start":
-			out = append(out, fmt.Sprintf("attempt %d · generate", int(asFloat(ev.Raw["attempt"]))))
+			out = append(out, stamp(ev)+fmt.Sprintf("attempt %d · generate", int(asFloat(ev.Raw["attempt"]))))
 		case "resume":
-			out = append(out, fmt.Sprintf("resume · from attempt %d", int(asFloat(ev.Raw["from_attempt"]))))
+			out = append(out, stamp(ev)+fmt.Sprintf("resume · from attempt %d", int(asFloat(ev.Raw["from_attempt"]))))
 		case "safety_violation":
-			out = append(out, fmt.Sprintf("attempt %d · safety violation", int(asFloat(ev.Raw["attempt"]))))
+			out = append(out, stamp(ev)+fmt.Sprintf("✗ safety violation · attempt %d", int(asFloat(ev.Raw["attempt"]))))
 		case "build_error":
-			out = append(out, fmt.Sprintf("attempt %d · build error · %s", int(asFloat(ev.Raw["attempt"])), asStr(ev.Raw["subkind"])))
+			out = append(out, stamp(ev)+fmt.Sprintf("✗ build error · attempt %d · %s", int(asFloat(ev.Raw["attempt"])), asStr(ev.Raw["subkind"])))
 		case "verify_mismatch":
-			out = append(out, fmt.Sprintf("attempt %d · verify mismatch · %d case(s) differ", int(asFloat(ev.Raw["attempt"])), int(asFloat(ev.Raw["n_bad"]))))
+			out = append(out, stamp(ev)+fmt.Sprintf("✗ verify mismatch · attempt %d · %d case(s) differ", int(asFloat(ev.Raw["attempt"])), int(asFloat(ev.Raw["n_bad"]))))
 		case "accept":
-			out = append(out, fmt.Sprintf("accept · %.2fx (lower bound %.2fx)", asFloat(ev.Raw["ratio"]), asFloat(ev.Raw["ratio_ci_lo"])))
+			out = append(out, stamp(ev)+fmt.Sprintf("accept · %.2fx (lower bound %.2fx)", asFloat(ev.Raw["ratio"]), asFloat(ev.Raw["ratio_ci_lo"])))
 		case "reject_no_meaningful_gain":
-			out = append(out, fmt.Sprintf("reject · %.2fx median (below 1.5x threshold)", asFloat(ev.Raw["ratio"])))
+			out = append(out, stamp(ev)+fmt.Sprintf("reject · %.2fx median (below 1.5x threshold)", asFloat(ev.Raw["ratio"])))
 		case "halt":
-			out = append(out, "halt · "+asStr(ev.Raw["message"]))
+			out = append(out, stamp(ev)+"✗ halt · "+asStr(ev.Raw["message"]))
 		case "run_end":
-			out = append(out, "end · "+asStr(ev.Raw["status"]))
+			out = append(out, stamp(ev)+"end · "+asStr(ev.Raw["status"]))
 		}
 	}
 	if s.Reason != "" {

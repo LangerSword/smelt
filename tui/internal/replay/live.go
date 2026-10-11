@@ -58,6 +58,12 @@ func StartLive(smeltBin, target, provider, model, runsDir string) (*LiveRun, err
 	if model != "" {
 		args = append(args, "--model", model)
 	}
+	if runsDir != "" {
+		// Keep the subprocess and the viewer pointed at the same directory
+		// (regression: without this, smelt wrote to its cwd-relative default
+		// and the viewer tailed an empty directory).
+		args = append(args, "--runs-dir", runsDir)
+	}
 	cmd := exec.Command(smeltBin, args...)
 	cmd.Stdout = &l.Stdout
 	cmd.Stderr = &l.Stderr

@@ -22,10 +22,39 @@ go build -o furnace .        # requires Go 1.27+
       --provider gemini --model gemma-4-26b-a4b-it
 ```
 
-Keys: `q` quit (during a live run it stops the run first) · `tab` switch pane ·
-`↑`/`↓` (also `pgup`/`pgdn`) scroll the log when focused · `?` help overlay.
-`--no-anim` freezes the heat-pulse (also automatic with `NO_COLOR` or `TERM=dumb`).
-The footer states the schema version.
+## One-command install
+
+```bash
+go install github.com/LangerSword/smelt/tui@main
+```
+
+The binary lands in `$(go env GOPATH)/bin/furnace`. While the UX branch is open,
+use `@feature/furnace-ux`. Release binaries via `gh release` are planned; the
+PyPI `smelt-rs` package and the `smelt furnace` launcher stay the Python side's
+job (this TUI must not depend on them to build).
+
+## UX layout (v0.7)
+
+- **Header** (persistent): FURNACE v0.7 · run id · provider · model.
+- **Two columns when width ≥ 100** (stacked below): left = the loop flow
+  (`select → … → verdict` with heating/poured marks) + verdict + results;
+  right = live panel — oracle progress bar, cases passed, attempts, speedup
+  with lower bound, and the last build/verify message.
+- **Transcript** with timestamps; error lines carry a `✗` label. `j/k`,
+  `↑/↓`, `pgup/pgdn` scroll from either focus.
+- **Composer**: slash-command autocomplete (tab completes, arrows choose,
+  esc cancels), prompt history (↑/↓).
+- **Overlays**: `?` help · `/provider`, `/model`, `/sessions` (`ctrl+r`)
+  pickers · `d` view-only diff with added-line colouring.
+- **Status line**: state (ready/running/waiting for the model/done) · elapsed ·
+  verdict word. Colour never carries meaning; `--no-anim`, `NO_COLOR` and
+  `TERM=dumb` respected. Renders at 80×24 and 160×45; resize-safe.
+
+Keys: `q` quit (during a live run it stops the run first) · `tab` focus/complete ·
+`↑/↓`/`j/k` (also `pgup`/`pgdn`) scroll · `esc` back/cancel · `ctrl+c` once stops
+a live run (confirm line), twice quits · `d` diff · `ctrl+r` sessions ·
+`?` help overlay. `--no-anim` freezes the heat-pulse (also automatic with
+`NO_COLOR` or `TERM=dumb`).
 
 What it shows:
 

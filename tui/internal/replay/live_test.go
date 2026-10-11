@@ -155,3 +155,18 @@ func TestLiveViewFits80Columns(t *testing.T) {
 func splitView(m *Model) []string {
 	return strings.Split(m.View(), "\n")
 }
+
+// Regression: StartLive must pass --runs-dir so the subprocess writes to the
+// same directory the viewer tails (it silently wrote to the cwd default before).
+func TestStartLivePassesRunsDir(t *testing.T) {
+	bin := fakeSmeltPath(t)
+	l, err := StartLive(bin, "fake/demo/fake.py:fake_fn", "fake", "", "custom-runs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer l.Kill()
+	joined := strings.Join(l.Cmd.Args, " ")
+	if !strings.Contains(joined, "--runs-dir custom-runs") {
+		t.Fatalf("StartLive args missing --runs-dir: %s", joined)
+	}
+}

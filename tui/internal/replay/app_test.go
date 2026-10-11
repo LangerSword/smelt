@@ -167,6 +167,67 @@ func TestAppHomeFits80Columns(t *testing.T) {
 	}
 }
 
+// GATE: the help overlay (U4).
+func TestAppHelpOverlay(t *testing.T) {
+	app := startFakeApp(t, nil)
+	tm := teatest.NewTestModel(t, app, teatest.WithInitialTermSize(100, 30))
+	teatest.WaitFor(t, tm.Output(), contains("smelt home"), teatest.WithDuration(5*time.Second))
+
+	tm.Send(keyRunes('?'))
+	teatest.WaitFor(t, tm.Output(), contains("/sessions"), teatest.WithDuration(5*time.Second))
+	tm.Send(tea.KeyMsg{Type: tea.KeyEscape})
+
+	typeText(tm, "/quit")
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	tm.WaitFinished(t, teatest.WithFinalTimeout(3*time.Second))
+}
+
+// GATE: the command autocomplete panel (U3) — typing /se lists matches,
+// tab completes to the selected command, enter runs it.
+func TestAppAutocompletePanel(t *testing.T) {
+	app := startFakeApp(t, nil)
+	tm := teatest.NewTestModel(t, app, teatest.WithInitialTermSize(100, 30))
+	teatest.WaitFor(t, tm.Output(), contains("smelt home"), teatest.WithDuration(5*time.Second))
+
+	typeText(tm, "/se")
+	teatest.WaitFor(t, tm.Output(), contains("run history picker"), teatest.WithDuration(5*time.Second))
+	tm.Send(tea.KeyMsg{Type: tea.KeyTab})   // completes to "/sessions "
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter}) // opens the sessions picker
+	teatest.WaitFor(t, tm.Output(), contains("run history"), teatest.WithDuration(5*time.Second))
+	tm.Send(tea.KeyMsg{Type: tea.KeyEscape})
+
+	typeText(tm, "/quit")
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	tm.WaitFinished(t, teatest.WithFinalTimeout(3*time.Second))
+
+	fin := tm.FinalModel(t).(*App)
+	if !strings.Contains(strings.Join(fin.Prompts, " "), "/sessions") {
+		t.Fatalf("prompt history missing /sessions: %v", fin.Prompts)
+	}
+}
+
+// GATE: a killed run (U3) — ctrl+c once stops with a confirm line, twice quits;
+// the run is marked stopped-by-user and stays resumable.
+func TestAppCtrlCStopsRun(t *testing.T) {
+	app := startFakeApp(t, map[string]string{"FAKE_SLEEP": "3"})
+	tm := teatest.NewTestModel(t, app, teatest.WithInitialTermSize(100, 30))
+	teatest.WaitFor(t, tm.Output(), contains("smelt home"), teatest.WithDuration(5*time.Second))
+
+	typeText(tm, "/run fake/demo/fake.py:fake_fn")
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	teatest.WaitFor(t, tm.Output(), contains("FURNACE v"), teatest.WithDuration(5*time.Second))
+
+	tm.Send(tea.KeyMsg{Type: tea.KeyCtrlC})
+	teatest.WaitFor(t, tm.Output(), contains("stopped — ctrl+c again"), teatest.WithDuration(5*time.Second))
+	tm.Send(tea.KeyMsg{Type: tea.KeyCtrlC})
+	tm.WaitFinished(t, teatest.WithFinalTimeout(5*time.Second))
+
+	fin := tm.FinalModel(t).(*App)
+	if fin.Run == nil || !fin.Run.KilledByUser {
+		t.Fatalf("run not marked killed-by-user: %+v", fin.Run)
+	}
+}
+
 func splitView2(s string) []string {
 	return strings.Split(s, "\n")
 }
