@@ -17,10 +17,13 @@ Three evidence layers, all reproducible, all with failures shown:
    open-source repos / 10 functions, list frozen BEFORE any run (sha256 in
    `evals/general_freeze_proof.txt`, unchanged across re-runs — no tuning).
    Before the fixes: 3 refused / 7 errors (six with a misleading message).
-   After: **9 refused / 1 config error / 0 errors, every message carrying the
-   real cause and a refactor hint; 0 provider calls; 0 crashes** — the list is
-   honestly non-convertible today (package layouts / unsupported shapes /
-   impurity), so it measures classification quality, not conversion.
+   After: **0 accepted, 9 refused, 1 config error, 0 errors, 0 provider calls** —
+   refusals: 6 package layouts (relative imports), 2 impurity, 1 unsupported type;
+   the config error is a dotted qualname (exit 2). Every message carries the real
+   cause and a refactor hint; nothing crashed. **This shows safety, not
+   generality** — the list is honestly non-convertible today (package layouts /
+   unsupported shapes / impurity), so it measures classification quality, not
+   conversion.
 
 Also: `tests/` (pytest, 26 tests incl. typed-refusal and multi-param suites),
 the Go TUI suite (26 tests, teatest goldens over REAL run fixtures), and CI

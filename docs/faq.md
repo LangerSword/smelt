@@ -25,6 +25,13 @@ i64 (e.g. `i64::MIN // -1`, or a product of two extreme values) cannot be
 matched by an i64 rewrite — candidates are honestly rejected on those edges.
 The domain-policy decision (e.g. filtering such cases at capture time) is open.
 
+**Are tuples supported?**
+`tuple[int, int]` parameters are implemented on `feature/general` (unmerged at
+the developer's 06:50 hard limit; meta-eval 16/16 there). Other tuple shapes and
+tuple returns are typed refusals with a hint. JSON has no tuples — a per-parameter
+coercion spec converts 2-element lists back before every call, so the target sees
+the same value the annotation promises.
+
 **Does it use Gemma?**
 Yes — Gemma 4 via the Gemini API (`gemma-4-26b-a4b-it` default,
 `gemma-4-31b-it` opt-in) or fully offline via llama.cpp (`--provider local`).

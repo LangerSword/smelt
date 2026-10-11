@@ -65,11 +65,11 @@ these functions** — the list and its sha are identical to the run above.
 | 5 | `src/validators/email.py:email` | error · capture_failed: target function has no parameters (nothing to test) | refused · refused_unsupported_target: could not load the target module: ImportError: attempted relative import with no k |
 | 6 | `src/validators/ip_address.py:ipv4` | error · capture_failed: target function has no parameters (nothing to test) | refused · refused_unsupported_target: could not load the target module: ImportError: attempted relative import with no k |
 | 7 | `shortuuid/main.py:encode` | refused · refused_impure: impure target: module imports 'secrets' (side effects / nondeterminism) | refused · refused_impure: impure target: module imports 'secrets' (side effects / nondeterminism) |
-| 8 | `shortuuid/main.py:ShortUUID.encode` | refused · refused_impure: impure target: function 'ShortUUID.encode' not found in /home/lakshaya/.hermes/cache/scratch/h | in_progress · — |
+| 8 | `shortuuid/main.py:ShortUUID.encode` | refused · refused_impure: function 'ShortUUID.encode' not found in … | config error · function 'ShortUUID.encode' not found — dotted qualnames (Class.method) are not supported yet; refactor hint: point smelt at a module-level function (exit 2) |
 | 9 | `src/humanize/time.py:naturaltime` | error · capture_failed: target function has no parameters (nothing to test) | refused · refused_unsupported_target: could not load the target module: ImportError: attempted relative import with no k |
 | 10 | `shortuuid/main.py:uuid` | refused · refused_impure: impure target: module imports 'secrets' (side effects / nondeterminism) | refused · refused_impure: impure target: module imports 'secrets' (side effects / nondeterminism) |
 
-**Comparison:** before — 3 refused, 7 errors (six with the misleading "no parameters" message, one misclassified as `refused_impure`); after — **9 refused, 0 config error, 1 errors**, every message carries the real cause and a refactor hint. **Provider calls: 0 → 0** (all ten targets are honestly non-convertible today: package layouts / unsupported shapes / impurity). No crashes in either run; nothing was accepted, so zero wrong accepts holds trivially.
+**Comparison:** before — 3 refused, 7 errors (six with the misleading "no parameters" message, one misclassified as `refused_impure`); after — **9 refused, 1 config error (exit 2, dotted qualname), 0 errors**, every message carries the real cause and a refactor hint. **Provider calls: 0 → 0** (all ten targets are honestly non-convertible today: package layouts / unsupported shapes / impurity). No crashes in either run; nothing was accepted, so zero wrong accepts holds trivially. **This shows safety, not generality**: the outcomes are typed and honest, but the list was never convertible with the current support envelope.
 
 The conversions that ARE possible today were proven separately: the corpus (24 single-param
 functions) and the multi-parameter accept (`examples/demo/clamp_all.py` — 131/131 cases,
@@ -83,7 +83,11 @@ Same corpus, same provider/model (`gemini` · `gemma-4-26b-a4b-it`), same cap.
 - **Before** (`evals/results.md`): accepted 20 / rejected 4 / errors 0 · calls 36 · median 2.83x
 - **After** (`evals/results-after.md`): accepted 23 / rejected 1 / errors 0 · calls 27 · median 2.72x
 
-Single-parameter behavior was kept byte-identical in the generator, so this
-delta is run-to-run model variance (different generated candidates), not a
-behavior change. Zero errors and zero false accepts in both runs; rejections
-stay below the 1.5x conservative threshold.
+Single-parameter behavior was kept byte-identical in the generator, and the
+prompt, scaffold and acceptance rule were untouched between the two runs. Each
+run draws a **fresh random seed** (`--seed` defaults to a time-derived value) and
+the model samples its candidates, so the tested case values and the generated
+code differ run to run. The three status flips (`linear_score`, `median_doubled`,
+`prefix_max_sum`) sit at 1.38–1.46x vs 1.59–1.62x — boundary cases at the 1.5x
+conservative rule, on both sides of it. Zero errors and zero false accepts in
+both runs.
