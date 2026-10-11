@@ -115,7 +115,7 @@
       <section class="section" id="cli">
         <!-- GENERATED_CLI:START -->
 <h2 id="cli-reference">CLI reference</h2>
-<p class="text-dim">Generated from <code>smelt --help</code> and <code>docs/cli.md</code>. Every command, flag and exit code.</p>
+<p class="text-dim">Commands, flags and exit codes. The help text is a captured snapshot of <code>smelt --help</code>; regenerate it with <code>python3 site/scripts/gen_cli_ref.py --refresh</code>.</p>
 <h3>Commands</h3>
 <pre class="terminal-body"><code>
 smelt run &lt;file.py:fn&gt; [--provider p] [--model m] [--candidate lib.rs] [--cases N] [--json]
@@ -141,7 +141,7 @@ smelt furnace                                         # launch the Go TUI if ins
  Usage: smelt [OPTIONS] COMMAND [ARGS]...                                       
                                                                                 
  Smelt a slow pure Python function into a verified Rust extension. Only proven  
- metal ships.                                                                   
+ metal ships. Bare `smelt` launches the Furnace TUI.                            
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --help          Show this message and exit.                                  │

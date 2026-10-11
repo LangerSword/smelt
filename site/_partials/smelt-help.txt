@@ -1,0 +1,25 @@
+                                                                                
+ Usage: smelt [OPTIONS] COMMAND [ARGS]...                                       
+                                                                                
+ Smelt a slow pure Python function into a verified Rust extension. Only proven  
+ metal ships. Bare `smelt` launches the Furnace TUI.                            
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ run      Run the full smelt loop on one function: path/to/file.py:function   │
+│ capture  Capture + freeze the oracle only (no generation, no build).         │
+│ resume   Resume an interrupted run from its checkpoint.                      │
+│ report   Print a run's report (markdown).                                    │
+│ scan     List candidate functions under <path> (source for the TUI picker).  │
+│ apply    Print the proposed change for an accepted run — VIEW ONLY, never    │
+│          writes.                                                             │
+│ furnace  Launch the Furnace TUI (Go binary) if installed; print build steps  │
+│          otherwise.                                                          │
+│ doctor   Check toolchain, sandbox, local server, and provider keys. Green =  │
+│          no FAIL rows.                                                       │
+│ evals    Run the frozen corpus sequentially; writes evals/results.json +     │
+│          results.md.                                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+

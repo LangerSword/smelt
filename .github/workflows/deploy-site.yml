@@ -1,11 +1,25 @@
 name: deploy-site
 
+# The static site: build it, regenerate the generated pages, check the links,
+# run Lighthouse (report only), deploy to GitHub Pages, then keep exactly one
+# deployment.
+#
+# The generated pages (results, CLI reference) are rebuilt here from committed
+# inputs — evals/results.json, docs/cli.md, and the captured
+# site/_partials/smelt-help.txt snapshot — so this job is reproducible on a bare
+# runner. If a rebuild changes the committed pages, the build fails: the pages
+# on main must always match what the generator produces.
+#
+# No untrusted event input reaches any `run:` block here (the triggers are push
+# and workflow_dispatch only).
+
 on:
   push:
     branches: [main]
     paths:
       - "site/**"
       - "evals/results.json"
+      - "docs/cli.md"
       - ".github/workflows/deploy-site.yml"
   workflow_dispatch:
 
@@ -29,41 +43,40 @@ jobs:
           python-version: "3.11"
 
       - name: Regenerate results + CLI reference
-        run: |
-          python3 site/scripts/gen_results.py
-          python3 site/scripts/gen_cli_ref.py
+        run: python3 site/scripts/build.py
 
-      - name: Check generated results match committed page
+      - name: Pages must match the generators (no drift)
         run: |
-          python3 site/scripts/build.py
-          # The build injects generated HTML into the pages; ensure git sees no
-          # drift beyond the generated partials (results are regenerated, not hand-edited).
-          if ! git diff --quiet -- site/index.html site/results.html; then
-            echo "::error::generated results differ from committed page — run build.py and commit"
-            git --no-pager diff --stat -- site/index.html site/results.html
+          if ! git diff --quiet -- site/; then
+            echo "::error::the committed pages differ from what the generators produce — run 'python3 site/scripts/build.py' and commit"
+            git --no-pager diff --stat -- site/
             exit 1
           fi
-          echo "results page matches evals/results.json"
+          echo "generated pages match their sources"
 
       - name: Check internal links
         run: python3 site/scripts/check_links.py
 
+      - name: Serve the site for Lighthouse
+        run: |
+          cd site && python3 -m http.server 8080 &
+          for i in $(seq 1 20); do
+            curl -sf -o /dev/null http://localhost:8080/index.html && exit 0
+            sleep 0.5
+          done
+          echo "::error::site did not come up on :8080"; exit 1
+
       - name: Lighthouse CI (report only)
         uses: treosh/lighthouse-ci-action@v11
         with:
-          urls: |
-            http://localhost:8080/index.html
+          urls: http://localhost:8080/index.html
           uploadArtifacts: true
-          configPath: ./site/lighthouserc.json
+          temporaryPublicStorage: true
         continue-on-error: true
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v5
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
@@ -77,9 +90,10 @@ jobs:
       - uses: actions/checkout@v4
       - id: deployment
         uses: actions/deploy-pages@v4
-      # One deployment, always — keep only the newest, delete older Pages deployments.
-      # The default GITHUB_TOKEN cannot delete deployments (403), so this is best-effort;
-      # run `node tools/prune-deployments.mjs` locally with a PAT when history piles up.
+      # One deployment, always — keep only the newest, delete older Pages
+      # deployments. The default GITHUB_TOKEN cannot delete deployments (403,
+      # "Resource not accessible by integration"), so this is best-effort here;
+      # run `node tools/prune-deployments.mjs` locally with a PAT when needed.
       - name: Prune old deployments
         continue-on-error: true
         env:
