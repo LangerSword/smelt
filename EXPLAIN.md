@@ -130,6 +130,16 @@ of other shapes (3+, mixed types) and tuple returns are not supported yet — ty
 refusals with hints. This work sits on `feature/general`, unmerged at the developer's
 06:50 hard limit.
 
+## Furnace UX upgrade (branch `feature/furnace-ux`)
+One screen, Hermes-style: persistent header, two-column main area at width ≥ 100
+(loop flow + verdict + results | live panel with oracle progress bar, attempts,
+speedup bar, last message), timestamped transcript with `✗`-labelled errors,
+composer with slash-command autocomplete and prompt history, overlays (help,
+provider/model/sessions pickers, view-only diff colouring), status line with
+state/elapsed/verdict. `StartLive` now passes `--runs-dir` to the subprocess so
+viewer and writer agree (regression test). Live gate: real gemini run at 120×40
+— INGOT, 3.05x lb 2.97x, 225/225. Events schema untouched (schema_version "1").
+
 ## skills/smelt — the agent skill
 SKILL.md (Agent Skills open standard; `agentskills validate ./skills/smelt` → exit 0) plus four
 references — oracle format, benchmark protocol, failure taxonomy, provider config — and a thin CLI

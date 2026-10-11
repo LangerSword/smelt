@@ -104,5 +104,17 @@ This file records how AI was used to build smelt, and who reviewed what.
 
 ## Scope note
 
+- Furnace UX upgrade (branch `feature/furnace-ux`, U1–U5): layout (persistent
+  header, two columns ≥100 cols, live panel with oracle progress bar, status
+  line), transcript timestamps + error labels, verdict glyphs, speedup bar,
+  composer with slash-command autocomplete + prompt history + ctrl+C
+  stop/quit semantics, overlays (help, provider/model/sessions pickers, diff
+  colouring), welcome line, banner hidden below 30 rows. Live-run gate on the
+  real gemini provider: full flow, INGOT, 3.05x (lb 2.97x), 225/225 cases at
+  120×40. Found and fixed a real bug: `StartLive` never passed `--runs-dir`, so
+  the subprocess wrote to its cwd default while the viewer tailed an empty
+  directory (regression test added). Cuts per the order: U2 429 countdown (no
+  such events exist; schema frozen), U5 extra animations. No new dependencies.
+
 - No AI was used to write code before the event start; nothing was copied from
   prior projects or scratch experiments.
