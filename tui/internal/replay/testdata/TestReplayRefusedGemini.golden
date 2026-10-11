@@ -12,9 +12,9 @@
 ╰──────────────────────────────────────────╯                                                                                          
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
 │ log · 4 lines                                                                                │
-│03:31:14 · run start · provider=gemini model=gemma-4-26b-a4b-it                               │
-│03:31:14 · ✗ halt · impure target: module imports 'random' (side effects / nondeterminism)    │
-│03:31:14 · end · refused                                                                      │
+│22:01:14 · run start · provider=gemini model=gemma-4-26b-a4b-it                               │
+│22:01:14 · ✗ halt · impure target: module imports 'random' (side effects / nondeterminism)    │
+│22:01:14 · end · refused                                                                      │
 │reason · refused_impure: impure target: module imports 'random' (side effects / nondeterminism│
 │                                                                                              │
 │                                                                                              │

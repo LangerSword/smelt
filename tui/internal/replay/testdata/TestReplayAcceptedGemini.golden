@@ -13,11 +13,11 @@
 ╰───────────────────────────────────────────╯                                                                             
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
 │ log · 6 lines                                                                                │
-│01:53:26 · run start · provider=gemini model=gemma-4-26b-a4b-it                               │
-│01:53:26 · oracle frozen · 225 cases · sha 60ec55285b236e6c                                   │
-│01:53:26 · attempt 1 · generate                                                               │
-│01:53:39 · accept · 4.14x (lower bound 4.00x)                                                 │
-│01:53:39 · end · accepted                                                                     │
+│20:23:26 · run start · provider=gemini model=gemma-4-26b-a4b-it                               │
+│20:23:26 · oracle frozen · 225 cases · sha 60ec55285b236e6c                                   │
+│20:23:26 · attempt 1 · generate                                                               │
+│20:23:39 · accept · 4.14x (lower bound 4.00x)                                                 │
+│20:23:39 · end · accepted                                                                     │
 │reason · verified 225/225 cases; speedup 4.14x (conservative lower bound 4.00x)               │
 │                                                                                              │
 │                                                                                              │

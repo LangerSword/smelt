@@ -13,15 +13,15 @@
 ╰───────────────────────────────────────────╯                                                                                                   
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
 │ log · 10 lines                                                                               │
-│02:04:54 · run start · provider=gemini model=gemma-4-26b-a4b-it                               │
-│02:04:55 · oracle frozen · 206 cases · sha 74916654ef002a07                                   │
-│02:04:55 · attempt 1 · generate                                                               │
-│02:05:02 · reject · 1.47x median (below 1.5x threshold)                                       │
-│02:05:02 · attempt 2 · generate                                                               │
-│02:05:17 · reject · 1.30x median (below 1.5x threshold)                                       │
-│02:05:17 · attempt 3 · generate                                                               │
-│02:05:23 · reject · 1.41x median (below 1.5x threshold)                                       │
-│02:05:23 · end · rejected                                                                     │
+│20:34:54 · run start · provider=gemini model=gemma-4-26b-a4b-it                               │
+│20:34:55 · oracle frozen · 206 cases · sha 74916654ef002a07                                   │
+│20:34:55 · attempt 1 · generate                                                               │
+│20:35:02 · reject · 1.47x median (below 1.5x threshold)                                       │
+│20:35:02 · attempt 2 · generate                                                               │
+│20:35:17 · reject · 1.30x median (below 1.5x threshold)                                       │
+│20:35:17 · attempt 3 · generate                                                               │
+│20:35:23 · reject · 1.41x median (below 1.5x threshold)                                       │
+│20:35:23 · end · rejected                                                                     │
 │reason · no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.4│
 │                                                                                              │
 │                                                                                              │

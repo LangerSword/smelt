@@ -233,7 +233,9 @@ func (s *RunSummary) buildLog() []string {
 		if ev.Ts <= 0 {
 			return ""
 		}
-		return time.Unix(int64(ev.Ts), 0).Format("15:04:05") + " · "
+		// UTC on purpose: goldens and CI must render identical timestamps
+		// regardless of the machine timezone.
+		return time.Unix(int64(ev.Ts), 0).UTC().Format("15:04:05") + " · "
 	}
 	for _, ev := range s.Events {
 		switch ev.Event {

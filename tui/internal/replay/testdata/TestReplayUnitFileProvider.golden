@@ -13,11 +13,11 @@
 ╰───────────────────────────────────────────╯                                                                             
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
 │ log · 6 lines                                                                                │
-│02:48:49 · run start · provider=file model=— (no model: file fixture)                         │
-│02:48:49 · oracle frozen · 85 cases · sha 033b13d605ac44a7                                    │
-│02:48:49 · attempt 1 · generate                                                               │
-│02:48:54 · accept · 3.28x (lower bound 3.25x)                                                 │
-│02:48:54 · end · accepted                                                                     │
+│21:18:49 · run start · provider=file model=— (no model: file fixture)                         │
+│21:18:49 · oracle frozen · 85 cases · sha 033b13d605ac44a7                                    │
+│21:18:49 · attempt 1 · generate                                                               │
+│21:18:54 · accept · 3.28x (lower bound 3.25x)                                                 │
+│21:18:54 · end · accepted                                                                     │
 │reason · verified 85/85 cases; speedup 3.28x (conservative lower bound 3.25x)                 │
 │                                                                                              │
 │                                                                                              │
