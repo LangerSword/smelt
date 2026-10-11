@@ -30,18 +30,32 @@ def test_scan_classifies(tmp_path):
     assert by[("pure_ok.py", "shout")]["param"] == "str"
 
     assert by[("impure.py", "pick")]["status"] == "skip"
+    assert by[("impure.py", "pick")]["tier"] == "refused"
     assert "impure" in by[("impure.py", "pick")]["reason"]
 
     assert by[("pkg/mod.py", "f")]["status"] == "skip"
     assert "relative imports" in by[("pkg/mod.py", "f")]["reason"]
 
-    assert by[("multi.py", "add")]["status"] == "skip"
-    assert "multiple parameters" in by[("multi.py", "add")]["reason"]
+    # G1/G3 widening: several simple positional parameters are now supported
+    assert by[("multi.py", "add")]["status"] == "candidate"
+    assert by[("multi.py", "add")]["tier"] == "1"
+    assert "2 simple parameters" in by[("multi.py", "add")]["reason"]
 
     assert by[("unannotated.py", "who")]["status"] == "skip"
     assert "unsupported parameter type" in by[("unannotated.py", "who")]["reason"]
 
-    assert res["summary"]["candidates"] == 1
+    assert res["summary"]["candidates"] == 2  # shout + add
+
+
+def test_scan_keyword_only_refused(tmp_path):
+    root = tmp_path / "proj2"
+    _write(str(root / "kw.py"),
+           "def f(value: str, *, flag: bool = False) -> str:\n    return value\n")
+    res = scan_mod.scan_path(str(root))
+    entry = res["candidates"][0]
+    assert entry["status"] == "skip"
+    assert entry["tier"] == "refused"
+    assert "keyword-only" in entry["reason"]
 
 
 def test_scan_examples_has_rle_candidate():

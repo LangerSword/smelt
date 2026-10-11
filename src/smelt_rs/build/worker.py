@@ -91,6 +91,7 @@ def main() -> None:
             params = []
             for name, p in sig.parameters.items():
                 params.append({"name": name, "annotation": _norm_ann(p.annotation),
+                               "kind": p.kind.name,
                                "default": None if p.default is inspect.Parameter.empty else repr(p.default)})
             ret = None if sig.return_annotation is inspect.Signature.empty else _norm_ann(sig.return_annotation)
             out["params"] = params

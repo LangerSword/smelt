@@ -103,6 +103,13 @@ def capture_oracle(*, run_dir: str, target_path: str, module_name: str, func_nam
     ret_ann = intro.get("return_annotation")
     if not params:
         raise CaptureFailed("target function has no parameters (nothing to test)")
+    bad_kinds = [p for p in params
+                 if p.get("kind") in ("KEYWORD_ONLY", "VAR_POSITIONAL", "VAR_KEYWORD")]
+    if bad_kinds:
+        raise RefusedTarget(
+            f"unsupported parameter kind for {bad_kinds[0]['name']!r} "
+            f"({bad_kinds[0].get('kind')}) — refactor hint: make all parameters positional "
+            "(keyword-only / variadic parameters are not supported yet)")
 
     # 2. generate cases, record answers
     cases = generate_cases(params, target_cases, seed)
