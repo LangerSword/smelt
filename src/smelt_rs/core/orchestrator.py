@@ -22,7 +22,7 @@ from smelt_rs.core.failures import (BenchInsufficient, BudgetExhausted, BuildErr
                                     SafetyViolation,
                                     SmeltFailure, TargetChanged, VerifyCrash)
 from smelt_rs.core.state import EventLog, SMELT_VERSION, RunState, new_run_id, sha256_file
-from smelt_rs.oracle.capture import capture_oracle, load_oracle
+from smelt_rs.oracle.capture import capture_oracle, coerce_specs, load_oracle
 from smelt_rs.oracle.verify import compare
 from smelt_rs.providers.providers import build_candidate_prompt, make_provider, map_signature
 from smelt_rs.report import write_report
@@ -212,7 +212,8 @@ def resume(*, run_dir: str, max_attempts: int = 3, python_exe: str | None = None
         provider = make_provider(st.config.get("provider", "local"), st.config.get("model"), None, run_dir)
         code = _loop(st, run_dir, events, st.target["path"], meta["module"], st.target["qualname"],
                      provider, prompt, entries, python_exe,
-                     float(st.config.get("bench_min_s", 0.1)), max_attempts)
+                     float(st.config.get("bench_min_s", 0.1)), max_attempts,
+                     coerce=coerce_specs(meta["params"]))
         if not quiet:
             print(f"[smelt] {st.status.upper()}: {st.stop_reason}")
         return code, _run_info(run_dir, st)
@@ -262,11 +263,11 @@ def _drive(st, run_dir, events, path, func, provider_name, model, candidate,
                                     args_rs=args_rs, ret_rs=ret_rs, golden=GOLDEN_LIB_RS)
     provider = make_provider(provider_name, model, candidate, run_dir)
     return _loop(st, run_dir, events, path, module_name, func, provider, prompt, entries,
-                 python_exe, bench_min_s, max_attempts)
+                 python_exe, bench_min_s, max_attempts, coerce=coerce_specs(meta["params"]))
 
 
 def _loop(st, run_dir, events, path, module_name, func, provider, prompt, entries,
-          python_exe, bench_min_s, max_attempts) -> int:
+          python_exe, bench_min_s, max_attempts, coerce=None) -> int:
     start = len(st.attempts) + 1
     bench_result = None
     for attempt_no in range(start, max_attempts + 1):
@@ -312,6 +313,7 @@ def _loop(st, run_dir, events, path, module_name, func, provider, prompt, entrie
 
         # verify against the frozen oracle
         wreq = {"mode": "run", "side": "rust", "so_path": so, "func": func,
+                "coerce": coerce or [],
                 "cases": [{"case_id": e["case_id"], "args": e["args"], "kwargs": e["kwargs"]}
                           for e in entries]}
         try:
@@ -344,7 +346,7 @@ def _loop(st, run_dir, events, path, module_name, func, provider, prompt, entrie
         try:
             bench_result = _bench(python_exe=python_exe, path=path, module_name=module_name,
                                   so=so, func=func, entries=entries, bench_min_s=bench_min_s,
-                                  run_dir=run_dir, attempt_dir=attempt_dir)
+                                  run_dir=run_dir, attempt_dir=attempt_dir, coerce=coerce)
         except SmeltFailure as e:
             rec.update(bench="-", outcome=f"{e.kind}: {e.message[:100]}")
             st.attempts.append(rec)
@@ -376,18 +378,21 @@ def _loop(st, run_dir, events, path, module_name, func, provider, prompt, entrie
     return EXIT_CODES["rejected"]
 
 
-def _bench(*, python_exe, path, module_name, so, func, entries, bench_min_s, run_dir, attempt_dir) -> dict:
+def _bench(*, python_exe, path, module_name, so, func, entries, bench_min_s, run_dir, attempt_dir,
+           coerce=None) -> dict:
     cases = [{"case_id": e["case_id"], "args": e["args"], "kwargs": e["kwargs"]} for e in entries]
 
     py_once = run_worker(python_exe, {"mode": "time_once", "side": "python", "target_path": path,
-                                      "module": module_name, "func": func, "cases": cases}, timeout=180)
+                                      "module": module_name, "func": func, "cases": cases,
+                                      "coerce": coerce or []}, timeout=180)
     if not py_once.get("ok"):
         raise BenchInsufficient(f"python timing failed: {py_once.get('error')}")
     mult = max(1, min(BENCH_MULT_CAP, int(math.ceil(bench_min_s / max(py_once["duration"], 1e-9)))))
     workload = cases * mult
 
     def bench(side: str, wl: list, reps: int, timeout: int) -> list:
-        req = {"mode": "bench", "side": side, "func": func, "cases": wl, "reps": reps}
+        req = {"mode": "bench", "side": side, "func": func, "cases": wl, "reps": reps,
+               "coerce": coerce or []}
         if side == "python":
             req.update({"target_path": path, "module": module_name})
         else:

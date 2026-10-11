@@ -26,7 +26,8 @@ import urllib.request
 from smelt_rs.core.failures import ProviderError
 
 RUST_ARG_TYPES = {"str": "&str", "int": "i64", "float": "f64", "bool": "bool",
-                  "list[int]": "Vec<i64>", "list[str]": "Vec<String>"}
+                  "list[int]": "Vec<i64>", "list[str]": "Vec<String>",
+                  "tuple[int, int]": "(i64, i64)", "tuple[int,int]": "(i64, i64)"}
 RUST_RET_TYPES = {"str": "String", "int": "i64", "float": "f64", "bool": "bool",
                   "list[int]": "Vec<i64>", "list[str]": "Vec<String>"}
 
