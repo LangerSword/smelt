@@ -1,0 +1,40 @@
+ FURNACE v0.8 · result · 261119-025423-4c8849                                         fake · — (no model: fake fixture)
+ [1 summary]  2 rust   3 compare   4 diff 
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ summary                                                                                                          │
+│verdict   ◆ INGOT — accepted — verified rewrite, speedup above the threshold                                      │
+│reason    verified 85/85 cases; speedup 2.57x (conservative lower bound 2.54x)                                    │
+│oracle    85 cases · sha 813804c8…                                                                                │
+│speedup   2.57x measured · conservative lower bound 2.54x                                                         │
+│attempts  2 — accepted on attempt 2 · 1 repair(s)                                                                 │
+│model     fake · — (no model: fake fixture)                                                                       │
+│time      5s                                                                                                      │
+│target    run_length.py:rle_encode                                                                                │
+│run       261119-025423-4c8849 · 2026-11-19 02:54 · smelt 0.8.0                                                   │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+attempts  1 ✗ mismatch · r0000: output differs
+            in ["!!accebb! a1ae1dcbb abbbca !bbebace "] · want str "!2a1c2e1b2!1 1a111a1e111d1c1b2 1a1b3c1a1 1!1b2e1b1…
+            got str "!2ac2eb2! a1ae1dcb2 ab3ca !b2ebace "
+          2 ↻ mismatch · ◆ accepted · 2.57x (lb 2.54x)
+ 1-4/←→ tabs · tab next · j/k ↑/↓ scroll · r/esc back · q quit

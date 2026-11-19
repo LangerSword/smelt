@@ -57,8 +57,7 @@
             <pre><code>git clone https://github.com/LangerSword/smelt.git &amp;&amp; cd smelt
 uv sync
 uv run smelt doctor
-uv run smelt run examples/demo/run_length.py:rle_encode \
-      --provider gemini --model gemma-4-26b-a4b-it
+uv run smelt run examples/demo/run_length.py:rle_encode   # provider auto-resolves from your keys
 uv run smelt report runs/&lt;run-id&gt;</code></pre>
             <p class="text-dim">Verify and benchmark steps never need the network. Model runs need a provider key.</p>
           </section>
@@ -67,9 +66,9 @@ uv run smelt report runs/&lt;run-id&gt;</code></pre>
             <h2>How it works</h2>
             <pre><code>select ─▶ capture oracle ─▶ generate ─▶ build ─┬─ok─▶ verify ─┬─pass─▶ bench ─▶ accept ─▶ report
                           (model writes       │            │
-                           lib.rs)            └─ errors ────┴─ mismatches ─▶ feed back ↺ (max 3 attempts)
+                           lib.rs)            └─ errors ────┴─ mismatches ─▶ repair with evidence ↺ (max 3)
                                                                              else reject (honest)</code></pre>
-            <p>The orchestrator is deterministic; the model only acts inside <code>generate</code>. Transitions are checkpointed (<code>state.json</code> + <code>events.jsonl</code>), so runs resume.</p>
+            <p>The orchestrator is deterministic; the model only acts inside <code>generate</code>. Attempt 2+ receives the previous candidate plus concrete failure evidence (rustc stderr, mismatched cases) — the gates never change. Transitions are checkpointed (<code>state.json</code> + <code>events.jsonl</code>), so runs resume.</p>
           </section>
 
           <section class="doc-item" id="oracle">
@@ -94,7 +93,8 @@ uv run smelt report runs/&lt;run-id&gt;</code></pre>
           <section class="doc-item" id="cli">
             <h2>CLI reference</h2>
             <p class="text-dim">Full generated reference on the <a href="results.html#cli">Results</a> page and in <a href="https://github.com/LangerSword/smelt/blob/main/docs/cli.md">docs/cli.md</a>.</p>
-            <pre><code>smelt run file.py:fn [--provider p] [--model m] [--candidate lib.rs] [--cases N] [--json]
+            <pre><code>smelt run file.py:fn [--provider p] [--model m] [--candidate lib.rs] [--cases N]
+                     [--repair | --no-repair] [--json]
 smelt capture file.py:fn [--cases N] [--json]
 smelt resume run-dir [--json]
 smelt report run-dir
@@ -103,7 +103,7 @@ smelt apply run-dir          # VIEW ONLY
 smelt doctor [--probe] [--json]
 smelt evals [--provider p] [--model m] [--max-calls N] [--pause-s S] [--out-tag T]
 smelt furnace</code></pre>
-            <p>Exit codes: 0 accepted · 3 refused (impure) · 4 rejected · 5 harness error · 2 config.</p>
+            <p>Exit codes: 0 accepted · 3 refused (impure / unsupported shape / out-of-i64-domain) · 4 rejected · 5 harness error · 2 config.</p>
           </section>
 
           <section class="doc-item" id="skill">
@@ -113,14 +113,16 @@ smelt furnace</code></pre>
 
           <section class="doc-item" id="providers">
             <h2>Providers</h2>
+            <p class="text-dim">Model-agnostic since v0.8 — no model family is hardwired. <code>--provider</code> omitted → first provider whose key exists; <code>--model</code> omitted → <code>SMELT_MODEL</code> → provider default.</p>
             <div class="table-wrap"><table>
-              <thead><tr><th>Provider</th><th>Model</th><th>Status</th></tr></thead>
+              <thead><tr><th>Provider</th><th>Model</th><th>Key</th></tr></thead>
               <tbody>
-                <tr><td><code>gemini</code></td><td>gemma-4-26b-a4b-it (default), gemma-4-31b-it</td><td>working</td></tr>
-                <tr><td><code>local</code></td><td>any llama.cpp / OpenAI-compatible model</td><td>working (offline)</td></tr>
-                <tr><td><code>do</code></td><td>gemma-4-31B-it</td><td>wired, needs DIGITALOCEAN_TOKEN</td></tr>
-                <tr><td><code>openai</code></td><td>any OpenAI-compatible endpoint</td><td>wired</td></tr>
-                <tr><td><code>file</code> / <code>fake</code></td><td>hand-provided / CI candidates</td><td>working</td></tr>
+                <tr><td><code>nvidia</code></td><td>default picked empirically (bake-off); any NIM chat model</td><td>NVIDIA_API_KEY</td></tr>
+                <tr><td><code>gemini</code></td><td>any model the endpoint serves (required)</td><td>GEMINI_API_KEY / GOOGLE_API_KEY</td></tr>
+                <tr><td><code>local</code></td><td>any llama.cpp / OpenAI-compatible model</td><td>none (offline)</td></tr>
+                <tr><td><code>do</code></td><td>required</td><td>DIGITALOCEAN_TOKEN</td></tr>
+                <tr><td><code>openai</code> / <code>openrouter</code></td><td>any OpenAI-compatible endpoint (required)</td><td>SMELT_OPENAI_KEY → OPENAI_API_KEY / OPENROUTER_API_KEY</td></tr>
+                <tr><td><code>file</code> / <code>fake</code></td><td>hand-provided / CI candidates, consumed in order</td><td>—</td></tr>
               </tbody>
             </table></div>
           </section>

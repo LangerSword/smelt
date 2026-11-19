@@ -32,19 +32,25 @@ def test_gcd_pair_verifies_no_mismatch(tmp_path):
     assert code in (0, 4), reason
     assert "verify_mismatch" not in reason, reason
     if code == 4:
-        assert "reject_no_meaningful_gain" in reason, reason
+        # both labels prove verify passed and bench was reached; which side of
+        # 1.0x the noise lands on is machine-dependent, not a stable invariant
+        assert ("reject_no_meaningful_gain" in reason
+                or "reject_regression" in reason), reason
 
 
 def test_manhattan_verifies_no_mismatch(tmp_path):
     """manhattan verifies on every case (reaches bench). Whether it is accepted or
-    honestly rejected for gain depends on the machine; a mismatch would be a bug."""
+    honestly rejected for gain depends on the machine; a mismatch would be a bug.
+    Tiny function: the ratio sits ON the 1.0x noise boundary (measured 0.99-1.14
+    across runs), so either honest rejection label is a valid outcome."""
     code, info = _run(str(REPO / "examples/demo/manhattan.py:manhattan"),
                       FIXTURES / "manhattan_correct.rs", tmp_path)
     reason = info.get("stop_reason") or ""
     assert code in (0, 4), reason
     assert "verify_mismatch" not in reason, reason
     if code == 4:
-        assert "reject_no_meaningful_gain" in reason, reason
+        assert ("reject_no_meaningful_gain" in reason
+                or "reject_regression" in reason), reason
 
 
 def test_wrong_tuple_rewrite_rejected(tmp_path):

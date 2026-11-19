@@ -28,7 +28,8 @@ def _norm_ann(ann) -> str | None:
     if isinstance(ann, type):
         return ann.__name__  # str / int / float / bool
     s = ann if isinstance(ann, str) else str(ann)
-    return s.replace("typing.", "").replace("List", "list").replace("Dict", "dict")
+    return (s.replace("typing.", "").replace("List", "list")
+            .replace("Dict", "dict").replace("Tuple", "tuple"))
 
 
 def _load_fn(req: dict):
@@ -36,8 +37,23 @@ def _load_fn(req: dict):
     import os
     side = req.get("side", "python")
     if side == "python":
-        path = req["target_path"]
-        sys.path.insert(0, os.path.dirname(os.path.abspath(path)))
+        path = os.path.abspath(req["target_path"])
+        d = os.path.dirname(path)
+        # Package context (v0.8, BUG-1 fix): walk up while __init__.py exists and
+        # import the target under its dotted package name so relative imports
+        # resolve exactly as they do in the real project. Standalone files keep
+        # the legacy spec_from_file_location path (byte-identical behavior).
+        pkg_root = d
+        while (os.path.isfile(os.path.join(pkg_root, "__init__.py"))
+               and os.path.dirname(pkg_root) != pkg_root):
+            pkg_root = os.path.dirname(pkg_root)
+        if pkg_root != d:
+            import importlib
+            sys.path.insert(0, pkg_root)
+            dotted = os.path.relpath(path, pkg_root)[:-3].replace(os.sep, ".")
+            mod = importlib.import_module(dotted)
+            return getattr(mod, req["func"])
+        sys.path.insert(0, d)
         spec = importlib.util.spec_from_file_location(req["module"], path)
         assert spec is not None and spec.loader is not None
         mod = importlib.util.module_from_spec(spec)
@@ -69,7 +85,12 @@ def _enc(v, depth: int = 0) -> dict:
         return {"t": "float", "v": v}
     if isinstance(v, str):
         return {"t": "str", "v": v}
-    if isinstance(v, (list, tuple)):
+    if isinstance(v, tuple):
+        # v0.8 return-container fidelity: a tuple is NOT a list. The tag lets
+        # the verifier reject a Vec-returning rewrite where Python returns a
+        # tuple (previously both encoded as "list" — a false-accept hole).
+        return {"t": "tuple", "v": [_enc(x, depth + 1) for x in v]}
+    if isinstance(v, list):
         return {"t": "list", "v": [_enc(x, depth + 1) for x in v]}
     if isinstance(v, dict):
         return {"t": "dict", "v": {str(k): _enc(x, depth + 1) for k, x in v.items()}}
@@ -132,7 +153,15 @@ def main() -> None:
                     if coerce:
                         args = [tuple(a) if (s == "tuple" and isinstance(a, list)) else a
                                 for a, s in zip(args, coerce)]
-                    fn(*args, **case.get("kwargs", {}))
+                    # v0.8: raising cases are timed like any other case. Outcome
+                    # parity (returned vs raised) was already proven in verify;
+                    # bench measures TIME, so exceptions are discarded here —
+                    # identically on both sides. Before this, any target that
+                    # raised on an edge case died as bench_insufficient.
+                    try:
+                        fn(*args, **case.get("kwargs", {}))
+                    except BaseException:
+                        pass
                 durations.append(time.perf_counter() - t0)
             if mode == "time_once":
                 out["duration"] = durations[0]

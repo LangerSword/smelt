@@ -67,20 +67,25 @@ def _default(ctx: typer.Context):
 
 @app.command()
 def run(target: str,
-        provider: str = typer.Option("gemini", help="gemini | local | do | openai | file | fake"),
-        model: str = typer.Option(None, help="model name for the provider"),
+        provider: str = typer.Option(None, help="nvidia | gemini | local | do | openai | openrouter "
+                                                "| file | fake (default: auto — SMELT_PROVIDER or "
+                                                "first provider with a key)"),
+        model: str = typer.Option(None, help="model name (default: SMELT_MODEL / provider default)"),
         candidate: str = typer.Option(None, help="candidate lib.rs path (file/fake providers)"),
         runs_dir: str = typer.Option("runs", help="directory for run artifacts"),
         max_attempts: int = typer.Option(3, help="generation attempts cap"),
         cases: int = typer.Option(200, help="oracle size target"),
         seed: int = typer.Option(None, help="oracle generation seed"),
         bench_min_ms: int = typer.Option(100, help="minimum python-side workload per rep (ms)"),
+        repair: bool = typer.Option(True, "--repair/--no-repair",
+                                    help="feed failure evidence (rustc errors, mismatched cases) "
+                                         "into attempts 2+ (gates unchanged)"),
         json_out: bool = typer.Option(False, "--json", help="machine-readable output")):
     """Run the full smelt loop on one function: path/to/file.py:function"""
     code, info = orchestrator.run(target=target, provider_name=provider, model=model,
                                   candidate=candidate, runs_dir=runs_dir,
                                   max_attempts=max_attempts, target_cases=cases, seed=seed,
-                                  bench_min_s=bench_min_ms / 1000, quiet=json_out)
+                                  bench_min_s=bench_min_ms / 1000, quiet=json_out, repair=repair)
     if json_out:
         print(json.dumps(info, default=str))
     raise typer.Exit(code)
@@ -103,9 +108,12 @@ def capture(target: str,
 @app.command()
 def resume(run_dir: str,
            max_attempts: int = typer.Option(3, help="attempt cap (>= attempts already made)"),
+           repair: bool = typer.Option(None, "--repair/--no-repair",
+                                       help="override the checkpointed repair setting"),
            json_out: bool = typer.Option(False, "--json", help="machine-readable output")):
     """Resume an interrupted run from its checkpoint."""
-    code, info = orchestrator.resume(run_dir=run_dir, max_attempts=max_attempts, quiet=json_out)
+    code, info = orchestrator.resume(run_dir=run_dir, max_attempts=max_attempts, quiet=json_out,
+                                     repair=repair)
     if json_out:
         print(json.dumps(info, default=str))
     raise typer.Exit(code)
@@ -126,10 +134,11 @@ def scan(path: str = typer.Argument(..., help="directory to scan for candidate f
          json_out: bool = typer.Option(False, "--json", help="machine-readable output")):
     """List candidate functions under <path> (source for the TUI picker).
 
-    Honest about current capability: single-file targets, one simple-typed
-    parameter; relative imports are skipped with a clear reason (package
-    loading is not supported yet). Minimal scan for Furnace T3 — the full G3
-    scan (type tiers, profile hints) is separate."""
+    v0.8: package layouts are supported — targets with resolvable relative
+    imports are candidates (loaded in package context at run time); only
+    unresolvable relative imports, impurity and unsupported shapes are skipped.
+    Minimal scan for Furnace T3 — the full G3 scan (type tiers, profile hints)
+    is separate."""
     from smelt_rs import scan as scan_mod
     res = scan_mod.scan_path(path)
     if json_out:
@@ -157,6 +166,19 @@ def apply(run_dir: str = typer.Argument(..., help="run directory of an accepted 
 
 
 @app.command()
+def mcp():
+    """Serve smelt as an MCP server (stdio) for any MCP-capable coding agent.
+
+    Tools: scan / doctor / capture / run (detached job) / job / jobs / kill /
+    verify / report / apply. Stdlib only — no extra dependencies. Wire it into
+    Claude Code / Cursor / OpenCode / Hermes via their MCP config, e.g.:
+    {"mcpServers": {"smelt": {"command": "smelt", "args": ["mcp"]}}}
+    """
+    from smelt_rs.mcp_server import serve
+    serve()
+
+
+@app.command()
 def furnace():
     """Launch the Furnace TUI (Go binary) if installed; print build steps otherwise."""
     bin_ = _find_furnace()
@@ -169,18 +191,18 @@ def furnace():
     raise typer.Exit(subprocess.call([bin_]))
 
 
-def _probe_gemini(key: str):
+def _probe_gemini(key: str, model: str):
     body = json.dumps({
         "contents": [{"parts": [{"text": "Reply with exactly one word: OK"}]}],
         "generationConfig": {"maxOutputTokens": 24,
                              "thinkingConfig": {"thinkingLevel": "minimal"}},
     }).encode()
     req = urllib.request.Request(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent",
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
         data=body, headers={"Content-Type": "application/json", "x-goog-api-key": key})
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
-            return True, "gemma-4-26b-a4b-it answered"
+            return True, f"{model} answered"
     except urllib.error.HTTPError as e:
         detail = ""
         try:
@@ -192,12 +214,15 @@ def _probe_gemini(key: str):
         return False, repr(e)[:80]
 
 
-def _probe_do(token: str):
-    req = urllib.request.Request("https://inference.do-ai.run/v1/models",
-                                 headers={"Authorization": f"Bearer {token}"})
+def _probe_openai_compat(base: str, key: str | None):
+    req = urllib.request.Request(base.rstrip("/") + "/models")
+    if key:
+        req.add_header("Authorization", f"Bearer {key}")
     try:
-        with urllib.request.urlopen(req, timeout=15) as r:
-            return True, "inference.do-ai.run reachable"
+        with urllib.request.urlopen(req, timeout=20) as r:
+            d = json.loads(r.read())
+        n = len(d.get("data", []))
+        return True, f"{base} reachable ({n} models)"
     except urllib.error.HTTPError as e:
         return False, f"HTTP {e.code}"
     except Exception as e:
@@ -260,6 +285,10 @@ def doctor(probe: bool = typer.Option(False, "--probe", help="send tiny live tes
     add("local model server", local_up,
         "http://127.0.0.1:8080" if local_up else "not reachable (start llama-server)", required=False)
 
+    from smelt_rs.providers.providers import resolve_default_provider, resolve_model
+    nkey = resolve_secret("NVIDIA_API_KEY")
+    add("nvidia key", bool(nkey),
+        "present (NVIDIA_API_KEY)" if nkey else "missing — set NVIDIA_API_KEY", required=False)
     gkey = resolve_secret("GEMINI_API_KEY")
     gkey_alt = resolve_secret("GOOGLE_API_KEY")
     if gkey:
@@ -271,17 +300,33 @@ def doctor(probe: bool = typer.Option(False, "--probe", help="send tiny live tes
     dtoken = resolve_secret("DIGITALOCEAN_TOKEN")
     add("digitalocean token", bool(dtoken),
         "present (DIGITALOCEAN_TOKEN)" if dtoken else "missing — set DIGITALOCEAN_TOKEN", required=False)
-    okey = resolve_secret("SMELT_OPENAI_KEY")
+    okey = resolve_secret("SMELT_OPENAI_KEY", "OPENAI_API_KEY")
     add("openai-compat key", bool(okey), "present" if okey else "not set (optional)", required=False)
+    default_provider = resolve_default_provider()
+    default_model = resolve_model(default_provider, None)
+    add("default provider", True,
+        f"{default_provider}" + (f" · model {default_model}" if default_model
+                                 else " · needs --model / SMELT_MODEL"), required=False)
 
     if probe:
+        if nkey:
+            ok, detail = _probe_openai_compat("https://integrate.api.nvidia.com/v1", nkey)
+            add("nvidia probe", ok, detail, required=False)
         probe_key = gkey or gkey_alt
         if probe_key:
-            ok, detail = _probe_gemini(probe_key)
-            add("gemini probe", ok, detail, required=False)
+            gmodel = resolve_model("gemini", None)
+            if gmodel:
+                ok, detail = _probe_gemini(probe_key, gmodel)
+                add("gemini probe", ok, detail, required=False)
+            else:
+                add("gemini probe", False, "skipped — set SMELT_GEMINI_MODEL to probe", required=False)
         if dtoken:
-            ok, detail = _probe_do(dtoken)
+            ok, detail = _probe_openai_compat("https://inference.do-ai.run/v1", dtoken)
             add("do probe", ok, detail, required=False)
+        if okey:
+            obase = os.environ.get("SMELT_OPENAI_BASE", "https://api.openai.com/v1")
+            ok, detail = _probe_openai_compat(obase, okey)
+            add("openai probe", ok, detail, required=False)
 
     fails = [r for r in rows if not r["ok"] and r["required"]]
     warns = [r for r in rows if not r["ok"] and not r["required"]]
@@ -308,20 +353,24 @@ def doctor(probe: bool = typer.Option(False, "--probe", help="send tiny live tes
 @app.command()
 def evals(corpus: str = typer.Option("evals/corpus", help="corpus dir: <category>/<function>.py"),
           runs_dir: str = typer.Option("evals/runs", help="where per-task runs go"),
-          provider: str = typer.Option("gemini", help="provider used for generation"),
+          provider: str = typer.Option(None, help="provider used for generation (default: auto)"),
           model: str = typer.Option(None, help="model override"),
           max_calls: int = typer.Option(120, help="global provider-call cap (HTTP attempts)"),
           pause_s: float = typer.Option(3.0, help="pause between tasks (rate-limit courtesy)"),
           max_attempts: int = typer.Option(3, help="generation attempts per task"),
           cases: int = typer.Option(200, help="oracle size target"),
           out_tag: str = typer.Option("", help="suffix for output files (e.g. '-local')"),
+          repair: bool = typer.Option(True, "--repair/--no-repair",
+                                      help="feed failure evidence into attempts 2+"),
+          task_timeout_s: int = typer.Option(600, help="per-task wall-clock cap in seconds "
+                                                       "(0 disables; capped tasks record as timeout)"),
           json_out: bool = typer.Option(False, "--json", help="machine-readable summary")):
     """Run the frozen corpus sequentially; writes evals/results.json + results.md."""
     from smelt_rs import evals as evals_mod
     code, info = evals_mod.run_corpus(corpus_dir=corpus, runs_dir=runs_dir, provider=provider,
                                       model=model, max_calls=max_calls, pause_s=pause_s,
                                       max_attempts=max_attempts, cases=cases, quiet=json_out,
-                                      out_tag=out_tag)
+                                      out_tag=out_tag, repair=repair, task_timeout_s=task_timeout_s)
     if json_out:
         print(json.dumps(info["summary"], default=str))
     raise typer.Exit(code)

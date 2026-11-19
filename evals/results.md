@@ -1,32 +1,33 @@
 # smelt eval results (generated — never hand-edited)
 
-- provider `gemini` · model `gemma-4-26b-a4b-it` · ran on laptop
-- tasks 24 · completed 24 · accepted 20 · rejected 4 · other 0
-- provider calls: {'attempts': 36, 'ok': 36, 'by_model': {'gemma-4-26b-a4b-it': 36}} (cap 120)
+- provider `nvidia` · model `mistralai/mistral-large-4-1t-a52b` · ran on laptop
+- tasks 24 · completed 24 · accepted 10 · rejected 0 · timeouts 12 · other 2
+- provider calls: {'attempts': 44, 'ok': 21, 'by_model': {'mistralai/mistral-large-4-1t-a52b': 21}} (cap 120)
+- repair loop: on · per-task wall-clock cap: 600s (capped tasks record as timeout — NIM stalls on long-reasoning prompts)
 
 | function | cat | status | attempts | oracle | speedup | lb | notes |
 |---|---|---|---|---|---|---|---|
-| `linear_score` | float | rejected | 3 | 206 | 1.41x | 1.37x | no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.41x, l |
-| `sigmoid_approx` | float | accepted | 2 | 206 | 1.65x | 1.60x | verified 206/206 cases; speedup 1.65x (conservative lower bound 1.60x) |
-| `collatz_steps` | int | accepted | 1 | 209 | 22.68x | 21.79x | verified 209/209 cases; speedup 22.68x (conservative lower bound 21.79x) |
-| `digital_root` | int | accepted | 1 | 209 | 3.32x | 3.24x | verified 209/209 cases; speedup 3.32x (conservative lower bound 3.24x) |
-| `popcount` | int | accepted | 1 | 209 | 4.99x | 4.72x | verified 209/209 cases; speedup 4.99x (conservative lower bound 4.72x) |
-| `reverse_digits` | int | accepted | 1 | 209 | 2.19x | 2.16x | verified 209/209 cases; speedup 2.19x (conservative lower bound 2.16x) |
-| `sum_digits_sq` | int | accepted | 1 | 209 | 3.01x | 2.83x | verified 209/209 cases; speedup 3.01x (conservative lower bound 2.83x) |
-| `triangular` | int | accepted | 1 | 209 | 47.14x | 46.97x | verified 209/209 cases; speedup 47.14x (conservative lower bound 46.97x) |
-| `bucket_hash` | list | accepted | 2 | 204 | 2.23x | 2.17x | verified 204/204 cases; speedup 2.23x (conservative lower bound 2.17x) |
-| `count_peaks` | list | accepted | 1 | 204 | 2.13x | 2.02x | verified 204/204 cases; speedup 2.13x (conservative lower bound 2.02x) |
-| `longest_run` | list | accepted | 2 | 204 | 1.64x | 1.54x | verified 204/204 cases; speedup 1.64x (conservative lower bound 1.54x) |
-| `max_subarray` | list | accepted | 1 | 204 | 1.72x | 1.56x | verified 204/204 cases; speedup 1.72x (conservative lower bound 1.56x) |
-| `median_doubled` | list | rejected | 3 | 204 | 1.38x | 1.35x | no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.38x, l |
-| `prefix_max_sum` | list | rejected | 3 | 204 | 1.46x | 1.41x | no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.46x, l |
-| `sum_squares` | list | accepted | 1 | 204 | 1.74x | 1.66x | verified 204/204 cases; speedup 1.74x (conservative lower bound 1.66x) |
-| `caesar_shift` | string | accepted | 1 | 225 | 11.51x | 11.48x | verified 225/225 cases; speedup 11.51x (conservative lower bound 11.48x) |
-| `count_vowel_runs` | string | accepted | 1 | 225 | 5.96x | 5.28x | verified 225/225 cases; speedup 5.96x (conservative lower bound 5.28x) |
-| `count_words` | string | accepted | 1 | 225 | 7.36x | 6.74x | verified 225/225 cases; speedup 7.36x (conservative lower bound 6.74x) |
-| `is_palindrome_norm` | string | accepted | 1 | 225 | 2.40x | 2.39x | verified 225/225 cases; speedup 2.40x (conservative lower bound 2.39x) |
-| `longest_alpha_run` | string | accepted | 1 | 225 | 6.77x | 6.30x | verified 225/225 cases; speedup 6.77x (conservative lower bound 6.30x) |
-| `normalize_spaces` | string | rejected | 3 | 225 | 1.22x | 1.20x | no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.22x, l |
-| `reverse_words` | string | accepted | 1 | 225 | 1.61x | 1.58x | verified 225/225 cases; speedup 1.61x (conservative lower bound 1.58x) |
-| `snake_to_camel` | string | accepted | 1 | 225 | 2.66x | 2.49x | verified 225/225 cases; speedup 2.66x (conservative lower bound 2.49x) |
-| `top_word` | string | accepted | 2 | 225 | 4.96x | 4.74x | verified 225/225 cases; speedup 4.96x (conservative lower bound 4.74x) |
+| `linear_score` | float | timeout | 0 | None | — | — | task wall-clock cap (600s) — provider call did not return |
+| `sigmoid_approx` | float | timeout | 0 | None | — | — | task wall-clock cap (600s) — provider call did not return |
+| `collatz_steps` | int | accepted | 1 | 209 | 7.80x | 7.77x | verified 209/209 cases; speedup 7.80x (conservative lower bound 7.77x) |
+| `digital_root` | int | accepted | 1 | 209 | 1.79x | 1.76x | verified 209/209 cases; speedup 1.79x (conservative lower bound 1.76x) |
+| `popcount` | int | accepted | 1 | 209 | 2.25x | 2.24x | verified 209/209 cases; speedup 2.25x (conservative lower bound 2.24x) |
+| `reverse_digits` | int | accepted | 1 | 209 | 1.65x | 1.64x | verified 209/209 cases; speedup 1.65x (conservative lower bound 1.64x) |
+| `sum_digits_sq` | int | accepted | 1 | 209 | 1.55x | 1.53x | verified 209/209 cases; speedup 1.55x (conservative lower bound 1.53x) |
+| `triangular` | int | accepted | 1 | 209 | 19598.27x | 19567.82x | verified 209/209 cases; speedup 19598.27x (conservative lower bound 19567.82x) |
+| `bucket_hash` | list | accepted | 1 | 204 | 1.60x | 1.60x | verified 204/204 cases; speedup 1.60x (conservative lower bound 1.60x) |
+| `count_peaks` | list | timeout | 0 | None | — | — | task wall-clock cap (600s) — provider call did not return |
+| `longest_run` | list | timeout | 0 | None | — | — | task wall-clock cap (600s) — provider call did not return |
+| `max_subarray` | list | error | 2 | 204 | 1.33x | 1.33x | provider_error: empty completion from provider (finish_reason=length; reasoning may have e |
+| `median_doubled` | list | error | 1 | 204 | — | — | provider_error: empty completion from provider (finish_reason=length; reasoning may have e |
+| `prefix_max_sum` | list | timeout | 0 | None | — | — | task wall-clock cap (600s) — provider call did not return |
+| `sum_squares` | list | timeout | 0 | None | — | — | task wall-clock cap (600s) — provider call did not return |
+| `caesar_shift` | string | accepted | 1 | 225 | 5.93x | 5.91x | verified 225/225 cases; speedup 5.93x (conservative lower bound 5.91x) |
+| `count_vowel_runs` | string | accepted | 1 | 225 | 2.33x | 2.32x | verified 225/225 cases; speedup 2.33x (conservative lower bound 2.32x) |
+| `count_words` | string | timeout | 0 | None | — | — | task wall-clock cap (600s) — provider call did not return |
+| `is_palindrome_norm` | string | timeout | 0 | None | — | — | task wall-clock cap (600s) — provider call did not return |
+| `longest_alpha_run` | string | accepted | 1 | 225 | 3.44x | 3.42x | verified 225/225 cases; speedup 3.44x (conservative lower bound 3.42x) |
+| `normalize_spaces` | string | timeout | 0 | None | — | — | task wall-clock cap (600s) — provider call did not return |
+| `reverse_words` | string | timeout | 0 | None | — | — | task wall-clock cap (600s) — provider call did not return |
+| `snake_to_camel` | string | timeout | 0 | None | — | — | task wall-clock cap (600s) — provider call did not return |
+| `top_word` | string | timeout | 0 | None | — | — | task wall-clock cap (600s) — provider call did not return |

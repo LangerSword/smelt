@@ -55,7 +55,8 @@ type ResultData struct {
 }
 
 // ResultAttempt is one row of the attempts strip (the feedback loop made
-// visible: compile error → mismatch → no gain → accepted).
+// visible: compile error → mismatch → no gain → accepted). Repair is the
+// evidence kind this attempt received from the previous failure (v0.8).
 type ResultAttempt struct {
 	N       int
 	Source  string
@@ -63,6 +64,7 @@ type ResultAttempt struct {
 	Verify  string
 	Bench   string
 	Outcome string
+	Repair  string
 	Sample  *MismatchSample
 }
 
@@ -120,6 +122,7 @@ func LoadResult(dir string) *ResultData {
 					Verify:  asStr(am["verify"]),
 					Bench:   asStr(am["bench"]),
 					Outcome: asStr(am["outcome"]),
+					Repair:  asStr(am["repair"]),
 				})
 			}
 		}
@@ -336,6 +339,9 @@ func attemptsFromSummary(sum *RunSummary) []ResultAttempt {
 		switch ev.Event {
 		case "attempt_start":
 			ensure(int(asFloat(ev.Raw["attempt"])))
+		case "repair":
+			i := ensure(int(asFloat(ev.Raw["attempt"])))
+			out[i].Repair = asStr(ev.Raw["kind"])
 		case "safety_violation":
 			i := ensure(int(asFloat(ev.Raw["attempt"])))
 			out[i].Outcome = "safety_violation: safety scan failed"

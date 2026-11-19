@@ -1,0 +1,16 @@
+{
+  "python_med_s": 0.03911789399717236,
+  "python_ci_lo_s": 0.03866571399703389,
+  "python_ci_hi_s": 0.04042476800532313,
+  "rust_med_s": 0.01519332999305334,
+  "rust_ci_lo_s": 0.014901742993970402,
+  "rust_ci_hi_s": 0.016826015002152417,
+  "ratio": 2.5746754671331273,
+  "ratio_ci_lo": 2.544913722976631,
+  "ratio_scaled_4x": 2.306435858434979,
+  "flags": [],
+  "decision": "accept",
+  "workload_cases": 20400,
+  "reps": 10,
+  "warmup": 3
+}

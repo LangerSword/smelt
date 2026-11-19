@@ -61,6 +61,14 @@
       "schema_version",
       "ts"
     ],
+    "repair": [
+      "attempt",
+      "event",
+      "kind",
+      "node",
+      "schema_version",
+      "ts"
+    ],
     "resume": [
       "event",
       "from_attempt",
@@ -101,5 +109,5 @@
       "ts"
     ]
   },
-  "version": "1"
+  "version": "2"
 }

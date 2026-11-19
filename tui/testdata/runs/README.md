@@ -20,6 +20,7 @@ instead of the compare columns on a mismatch.
 | `mismatch-file/` | `runs/261011-054116-299276` | `file` · **— (no model)** | rejected | 3 verify mismatches on case `e0074` ("outcome kind differs: returned vs raised"); it1–it3 `verify.json` + it3 candidate; source `divide.py` |
 | `missing-artifacts/` | `runs/261011-045519-892ab0` sliced | `local` · **`gemma-4-e2b-qat`** | accepted | real run with `attempts/` REMOVED to pin the missing-artifact rendering (clear message, never a crash); source `run_length.py` |
 | `unit-file-provider/` | `runs/261011-024849-b4f411` (T0 golden run) | `file` · — | accepted | fast unit fixture with **no model involved**, labeled as such in the UI (`— (no model: file fixture)`) |
+| `accepted-repair-fake/` | scratch run `261119-025423-4c8849` (v0.8 repair gate) | `fake` · **— (no model)** | accepted | REAL repair run, events schema 2: attempt 1 mismatched 70/85, attempt 2 received the mismatch evidence (`repair` event + `feedback.json`) and verified 85/85 — 2.57x (lb 2.54x); it1 candidate + verify, it2 candidate + verify + feedback + bench; source `run_length.py` |
 
 ## Regenerating
 

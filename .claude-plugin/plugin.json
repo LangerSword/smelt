@@ -1,0 +1,13 @@
+{
+  "name": "smelt",
+  "version": "0.8.0",
+  "description": "Verified Python-to-Rust hotspot conversion: freeze a differential oracle, let a model write the pyo3 rewrite, accept only what code proves (safety scan + 100% case verification + measured speedup with a conservative 1.5x lower bound). Detached run jobs, approval-friendly CLI, honest refusals and rejections.",
+  "author": {
+    "name": "Lakshaya Sharma",
+    "url": "https://github.com/LangerSword"
+  },
+  "homepage": "https://github.com/LangerSword/smelt",
+  "repository": "https://github.com/LangerSword/smelt",
+  "license": "MIT",
+  "keywords": ["performance", "rust", "pyo3", "python", "verification", "optimization"]
+}

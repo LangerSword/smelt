@@ -33,7 +33,15 @@
       <div class="page-header"><h1>Changelog</h1><p>Release history. <a href="https://github.com/LangerSword/smelt/releases">Full releases on GitHub →</a></p></div>
       <section class="section">
         <article class="stack-item">
-          <h2>v0.6.0 — furnace <span class="mono-label">current</span></h2>
+          <h2>v0.8.0 — model-agnostic <span class="mono-label">current</span></h2>
+          <p class="text-dim">Gemma-4 defaults removed: providers are model-agnostic (<code>nvidia</code> preset with a bake-off-picked default, auto provider/model resolution). Repair loop: attempts 2+ receive failure evidence — rustc stderr, mismatched cases, safety findings — with the gates unchanged (events schema 2). Package-context loading (relative imports work). Type widening: <code>list[float]</code> and tuple returns with true tuple-vs-list fidelity. i64 domain guard refuses out-of-domain outputs at capture. Bench works on targets that raise. Meta-eval extended to 22/22 wrong rewrites rejected, 0 false accepts; 70 pytest + 58 Go tests green.</p>
+        </article>
+        <article class="stack-item">
+          <h2>v0.7.0 — submission</h2>
+          <p class="text-dim">Furnace UX upgrade (live panel, autocomplete, pickers, result screen with summary/rust/compare/diff tabs), bare-<code>smelt</code> TUI launcher, photographic site rebuild. Tag <code>v0.7-submission</code>.</p>
+        </article>
+        <article class="stack-item">
+          <h2>v0.6.0 — furnace</h2>
           <p class="text-dim">Core loop + CLI + evals + validated agent skill + Furnace TUI + multi-parameter oracle. Wheel and sdist build green and install-verified; PyPI upload pending.</p>
         </article>
         <article class="stack-item">

@@ -225,6 +225,7 @@ func attemptsLine(d *ResultData) string {
 	}
 	acceptedAt := 0
 	allNoGain := true
+	repairs := 0
 	for _, a := range d.Attempts {
 		if a.Outcome == "ACCEPTED" {
 			acceptedAt = a.N
@@ -232,14 +233,21 @@ func attemptsLine(d *ResultData) string {
 		if !strings.HasPrefix(a.Outcome, "reject_no_meaningful_gain") {
 			allNoGain = false
 		}
+		if a.Repair != "" {
+			repairs++
+		}
+	}
+	repairNote := ""
+	if repairs > 0 {
+		repairNote = fmt.Sprintf(" · %d repair(s)", repairs)
 	}
 	switch {
 	case acceptedAt > 0:
-		return fmt.Sprintf("%d — accepted on attempt %d", n, acceptedAt)
+		return fmt.Sprintf("%d — accepted on attempt %d%s", n, acceptedAt, repairNote)
 	case allNoGain:
-		return fmt.Sprintf("%d — no meaningful gain (below the 1.5x threshold) — budget exhausted", n)
+		return fmt.Sprintf("%d — no meaningful gain (below the 1.5x threshold) — budget exhausted%s", n, repairNote)
 	default:
-		return fmt.Sprintf("%d — last: %s", n, stripOutcome(d.Attempts[n-1]))
+		return fmt.Sprintf("%d — last: %s%s", n, stripOutcome(d.Attempts[n-1]), repairNote)
 	}
 }
 
@@ -440,9 +448,13 @@ func (m *Model) resultStrip() []string {
 }
 
 // stripAttemptLines renders one attempt: normally one line; a mismatch with a
-// recorded sample also spells out the first failing input, expected and got.
+// recorded sample spells out the first failing input, expected and got. An
+// attempt that received repair evidence (v0.8) carries a ↻ marker naming it.
 func stripAttemptLines(a ResultAttempt) []string {
 	head := fmt.Sprintf("%d %s", a.N, stripOutcome(a))
+	if a.Repair != "" {
+		head = fmt.Sprintf("%d ↻ %s · %s", a.N, repairShort(a.Repair), stripOutcome(a))
+	}
 	s := a.Sample
 	if s == nil || !strings.HasPrefix(a.Outcome, "verify_mismatch") {
 		return []string{head}

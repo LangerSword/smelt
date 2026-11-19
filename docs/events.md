@@ -6,7 +6,7 @@ the source of truth for run state; the Python core never depends on Furnace.
 
 ## Versioning
 
-Every record carries `schema_version` — a string. The current value is `1`
+Every record carries `schema_version` — a string. The current value is `2`
 (matching `EVENT_SCHEMA_VERSION` in `src/smelt_rs/core/state.py`). Adding a
 field is a non-breaking change; removing, renaming, or retyping a field is a
 breaking change and requires bumping the constant. `tests/test_events_schema.py`
@@ -14,13 +14,16 @@ fails on any emitter change until the version is bumped AND the fingerprint
 (`tests/fixtures/events/schema_fingerprint.json`) is regenerated with
 `python scripts/schema_fingerprint.py --write`.
 
+Schema `2` (v0.8) added the `repair` event. Schema `1` streams remain readable
+by Furnace (the version is carried per record, never assumed).
+
 Missing `schema_version` means pre-1 output; treat those records as legacy and
 mark them in Furnace status lists.
 
 ## Record shape (common fields)
 
 ```json
-{"ts": 1791667129.5195718, "schema_version": "1", "event": "purity_ok", "node": ""}
+{"ts": 1795037063.6232953, "schema_version": "2", "event": "purity_ok", "node": ""}
 ```
 
 - `ts` — float seconds, wall clock (`time.time()`).
@@ -43,6 +46,7 @@ Furnace renders these as a horizontal flow; each event advances the flow.
 | `purity_ok` | select | — | no | Purity probe passed; target accepted |
 | `capture_done` | oracle | `n_cases` (int), `sha256` (str, first 16 hex chars) | no | Oracle frozen (full hash in `runs/<id>/oracle/sha256`) |
 | `attempt_start` | generate | `attempt` (int, 1-based) | no | A fresh generation attempt begins |
+| `repair` | generate | `attempt` (int), `kind` (str: `build_error`\|`safety_violation`\|`verify_mismatch`\|`load_error`\|`no_gain`) | no | Attempt ≥2 receives failure evidence from the previous attempt (repair loop). The evidence itself lives in `attempts/itN/feedback.json` — never in the event stream |
 | `resume` | generate | `from_attempt` (int) | no | Run resumed; the loop continues at attempt `from_attempt` |
 | `safety_violation` | generate | `attempt` | no | Candidate failed the static scan — attempt continues |
 | `build_error` | build | `attempt`, `subkind` (str: `api_drift`\|`compile_error`\|`network`\|`missing_artifact`) | no | Cargo build failed |
@@ -63,17 +67,22 @@ No other status is defined.
 
 ## Examples — real lines (verbatim)
 
-Copied from `runs/261011-024849-b4f411/events.jsonl` — a real accepted run
-(provider `file`, no model involved; 85/85 cases verified, 3.28x lower bound
-3.25x). The same stream is the test fixture `tests/fixtures/events/golden_run.jsonl`.
+Copied from `runs/261119-025423-4c8849/events.jsonl` — a real accepted REPAIR run
+(provider `fake`, no model involved): attempt 1 mismatched 70/85 cases, attempt 2
+received the mismatch evidence (`repair` event), verified 85/85, measured 2.57x
+(lower bound 2.54x). The same stream is the test fixture
+`tests/fixtures/events/golden_run.jsonl`.
 
 ```json
-{"ts": 1791667129.5195718, "schema_version": "1", "event": "run_start", "node": "", "target": "/home/lakshaya/projects/smelt/examples/demo/run_length.py:rle_encode", "provider": "file", "model": "-"}
-{"ts": 1791667129.519995, "schema_version": "1", "event": "purity_ok", "node": ""}
-{"ts": 1791667129.5949135, "schema_version": "1", "event": "capture_done", "node": "", "n_cases": 85, "sha256": "033b13d605ac44a7"}
-{"ts": 1791667129.5954425, "schema_version": "1", "event": "attempt_start", "node": "", "attempt": 1}
-{"ts": 1791667134.8142703, "schema_version": "1", "event": "accept", "node": "", "ratio": 3.27883864270321, "ratio_ci_lo": 3.2458072733424155, "flags": []}
-{"ts": 1791667134.8144522, "schema_version": "1", "event": "run_end", "node": "", "status": "accepted", "reason": "verified 85/85 cases; speedup 3.28x (conservative lower bound 3.25x)"}
+{"ts": 1795037063.6228533, "schema_version": "2", "event": "run_start", "node": "", "target": "/home/lakshaya/projects/smelt/examples/demo/run_length.py:rle_encode", "provider": "fake", "model": "-"}
+{"ts": 1795037063.6232953, "schema_version": "2", "event": "purity_ok", "node": ""}
+{"ts": 1795037063.7070034, "schema_version": "2", "event": "capture_done", "node": "", "n_cases": 85, "sha256": "813804c805d4d5ca"}
+{"ts": 1795037063.7077131, "schema_version": "2", "event": "attempt_start", "node": "", "attempt": 1}
+{"ts": 1795037065.638686, "schema_version": "2", "event": "verify_mismatch", "node": "", "attempt": 1, "n_bad": 70}
+{"ts": 1795037065.6387572, "schema_version": "2", "event": "attempt_start", "node": "", "attempt": 2}
+{"ts": 1795037065.6394076, "schema_version": "2", "event": "repair", "node": "", "attempt": 2, "kind": "verify_mismatch"}
+{"ts": 1795037068.3509138, "schema_version": "2", "event": "accept", "node": "", "ratio": 2.5746754671331273, "ratio_ci_lo": 2.544913722976631, "flags": []}
+{"ts": 1795037068.3510118, "schema_version": "2", "event": "run_end", "node": "", "status": "accepted", "reason": "verified 85/85 cases; speedup 2.57x (conservative lower bound 2.54x)"}
 ```
 
 ## Invariants
@@ -87,7 +96,9 @@ Copied from `runs/261011-024849-b4f411/events.jsonl` — a real accepted run
    `attempt_start`. Furnace shows the latest attempt with a counter.
 5. Nothing in events ever contains a secret: no API key, no candidate Rust source
    text, no token — only sizes and metadata. Mismatch events carry counts (`n_bad`),
-   never the offending values.
+   never the offending values. Repair evidence (failing cases, compiler stderr,
+   previous candidate) is written to `attempts/itN/feedback.json` on disk, never
+   into the event stream.
 
 ## Implementation (Python side)
 

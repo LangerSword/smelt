@@ -1,4 +1,4 @@
- FURNACE v0.7 · replay · 261011-020454-f5e8d0                           gemini · gemma-4-26b-a4b-it
+ FURNACE v0.8 · replay · 261011-020454-f5e8d0                           gemini · gemma-4-26b-a4b-it
  select✔ ─▶ oracle✔ ─▶ generate✔ ─▶ build✔ ─▶ verify✔ ─▶ bench✔ ─▶ verdict★                        ╭───────────────────────────────────────────╮
  VERDICT: ◇ SLAG                                                                                   │status                                     │
  rejected — correct but no meaningful gain (or budget exhausted)                                   │oracle   [████████████████████████████████…│

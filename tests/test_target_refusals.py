@@ -51,14 +51,17 @@ def test_dotted_qualname_is_config_error(tmp_path):
 def test_multi_param_now_captures(tmp_path):
     """G1 widening: two-parameter targets are supported — the oracle freezes them.
 
-    (Previously a typed refusal; the meta-eval multi-param battery plus the
-    divide_correct.rs accept are the end-to-end gates.)"""
+    (Previously a typed refusal; the meta-eval multi-param battery is the
+    end-to-end gate.) v0.8: the function must stay in the i64 domain on the
+    edge battery — plain a+b overflows on (i64::MAX, i64::MAX) and is now
+    refused by the domain guard, so this uses (a+b)//2, which stays in domain
+    for every edge pair."""
     import glob
     import json
     from smelt_rs.core import orchestrator
     src = tmp_path / "m.py"
-    _write(str(src), "def add(a: int, b: int) -> int:\n    return a + b\n")
-    code, info = orchestrator.capture_only(target=f"{src}:add",
+    _write(str(src), "def avg2(a: int, b: int) -> int:\n    return (a + b) // 2\n")
+    code, info = orchestrator.capture_only(target=f"{src}:avg2",
                                            runs_dir=str(tmp_path / "runs"),
                                            target_cases=60, quiet=True)
     assert code == 0, info

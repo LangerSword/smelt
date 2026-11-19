@@ -29,6 +29,7 @@ SAMPLES = [
     ("purity_ok", {}),
     ("capture_done", {"n_cases": 85, "sha256": "0" * 16}),
     ("attempt_start", {"attempt": 1}),
+    ("repair", {"attempt": 2, "kind": "verify_mismatch"}),
     ("resume", {"from_attempt": 2}),
     ("safety_violation", {"attempt": 1}),
     ("build_error", {"attempt": 1, "subkind": "compile_error"}),

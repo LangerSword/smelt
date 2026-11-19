@@ -24,7 +24,9 @@ from smelt_rs.core.failures import (BenchInsufficient, BudgetExhausted, BuildErr
 from smelt_rs.core.state import EventLog, SMELT_VERSION, RunState, new_run_id, sha256_file
 from smelt_rs.oracle.capture import capture_oracle, coerce_specs, load_oracle
 from smelt_rs.oracle.verify import compare
-from smelt_rs.providers.providers import build_candidate_prompt, make_provider, map_signature
+from smelt_rs.providers.providers import (build_candidate_prompt, build_repair_prompt,
+                                          make_provider, map_signature,
+                                          resolve_default_provider, resolve_model)
 from smelt_rs.report import write_report
 from smelt_rs.scaffold.templates import GOLDEN_LIB_RS
 from smelt_rs.worker_client import run_worker
@@ -137,11 +139,14 @@ def _run_info(run_dir, st) -> dict:
 
 # ---------------------------------------------------------------- entry points
 
-def run(*, target: str, provider_name: str, model: str | None = None, candidate: str | None = None,
+def run(*, target: str, provider_name: str | None = None, model: str | None = None,
+        candidate: str | None = None,
         runs_dir: str = "runs", max_attempts: int = 3, target_cases: int = 200,
         seed: int | None = None, bench_min_s: float = 0.1, python_exe: str | None = None,
-        quiet: bool = False) -> tuple[int, dict]:
+        quiet: bool = False, repair: bool = True, domain_guard: bool = True) -> tuple[int, dict]:
     python_exe = python_exe or sys.executable
+    provider_name = provider_name or resolve_default_provider()
+    model = resolve_model(provider_name, model)
     st = None
     run_dir = None
     events = None
@@ -160,13 +165,14 @@ def run(*, target: str, provider_name: str, model: str | None = None, candidate:
                       oracle={},
                       config={"provider": provider_name, "model": model,
                               "max_attempts": max_attempts, "cases": target_cases,
-                              "bench_min_s": bench_min_s})
+                              "bench_min_s": bench_min_s, "repair": repair})
         st.save(run_dir)
         events.emit("run_start", target=f"{path}:{func}", provider=provider_name, model=model or "-")
         if not quiet:
             print(f"[smelt] run {run_id} · {path}:{func} · provider={provider_name}")
         code = _drive(st, run_dir, events, path, func, provider_name, model, candidate,
-                      max_attempts, target_cases, seed, bench_min_s, python_exe, quiet)
+                      max_attempts, target_cases, seed, bench_min_s, python_exe, quiet, repair,
+                      domain_guard)
         if not quiet:
             print(f"[smelt] {st.status.upper()}: {st.stop_reason}")
         return code, _run_info(run_dir, st)
@@ -187,8 +193,40 @@ def run(*, target: str, provider_name: str, model: str | None = None, candidate:
         return code, _run_info(run_dir, st)
 
 
+def _reconstruct_feedback(run_dir: str, st) -> dict | None:
+    """Rebuild repair evidence from the last checkpointed attempt (resume path).
+
+    Reads the attempt's own artifacts — verify.json, cargo_stderr.txt, lib.rs —
+    never re-runs anything. Kinds without durable evidence (no_gain) resume with
+    the base prompt; that is honest, not a silent retry of the same failure.
+    """
+    if not st.attempts:
+        return None
+    last = st.attempts[-1]
+    ad = os.path.join(run_dir, "attempts", f"it{last.get('attempt')}")
+    lib_path = os.path.join(ad, "lib.rs")
+    if not os.path.exists(lib_path):
+        return None
+    candidate = open(lib_path).read()
+    outcome = last.get("outcome", "")
+    vp = os.path.join(ad, "verify.json")
+    if outcome.startswith("verify_mismatch") and os.path.exists(vp):
+        v = json.load(open(vp))
+        if v.get("n_mismatch"):
+            return {"kind": "verify_mismatch", "n_bad": v["n_mismatch"],
+                    "n_cases": v.get("n_cases"), "sample": v.get("sample") or [],
+                    "candidate": candidate}
+    err_path = os.path.join(ad, "build", "cargo_stderr.txt")
+    if outcome.startswith("build_error") and os.path.exists(err_path):
+        return {"kind": "build_error", "stderr": open(err_path).read()[-3000:],
+                "candidate": candidate}
+    if outcome.startswith("safety_violation"):
+        return {"kind": "safety_violation", "violations": [outcome], "candidate": candidate}
+    return None
+
+
 def resume(*, run_dir: str, max_attempts: int = 3, python_exe: str | None = None,
-           quiet: bool = False) -> tuple[int, dict]:
+           quiet: bool = False, repair: bool | None = None) -> tuple[int, dict]:
     python_exe = python_exe or sys.executable
     st = None
     events = None
@@ -209,11 +247,14 @@ def resume(*, run_dir: str, max_attempts: int = 3, python_exe: str | None = None
         prompt = build_candidate_prompt(func_name=st.target["qualname"],
                                         py_source=extract_function_source(st.target["path"], st.target["qualname"]),
                                         args_rs=args_rs, ret_rs=ret_rs, golden=GOLDEN_LIB_RS)
-        provider = make_provider(st.config.get("provider", "local"), st.config.get("model"), None, run_dir)
+        provider = make_provider(st.config.get("provider") or resolve_default_provider(),
+                                 st.config.get("model"), None, run_dir)
+        repair_on = bool(st.config.get("repair", True)) if repair is None else repair
         code = _loop(st, run_dir, events, st.target["path"], meta["module"], st.target["qualname"],
                      provider, prompt, entries, python_exe,
                      float(st.config.get("bench_min_s", 0.1)), max_attempts,
-                     coerce=coerce_specs(meta["params"]))
+                     coerce=coerce_specs(meta["params"]), repair=repair_on,
+                     initial_feedback=_reconstruct_feedback(run_dir, st) if repair_on else None)
         if not quiet:
             print(f"[smelt] {st.status.upper()}: {st.stop_reason}")
         return code, _run_info(run_dir, st)
@@ -237,7 +278,8 @@ def resume(*, run_dir: str, max_attempts: int = 3, python_exe: str | None = None
 # ---------------------------------------------------------------- pipeline stages
 
 def _drive(st, run_dir, events, path, func, provider_name, model, candidate,
-           max_attempts, target_cases, seed, bench_min_s, python_exe, quiet: bool = False) -> int:
+           max_attempts, target_cases, seed, bench_min_s, python_exe, quiet: bool = False,
+           repair: bool = True, domain_guard: bool = True) -> int:
     reasons = purity.probe(path, func)
     if reasons:
         _purity_failure(reasons)
@@ -247,7 +289,7 @@ def _drive(st, run_dir, events, path, func, provider_name, model, candidate,
     module_name = os.path.splitext(os.path.basename(path))[0]
     meta, oh = capture_oracle(run_dir=run_dir, target_path=path, module_name=module_name,
                               func_name=func, python_exe=python_exe,
-                              target_cases=target_cases, seed=seeded)
+                              target_cases=target_cases, seed=seeded, domain_guard=domain_guard)
     st.oracle = {"dir": "oracle", "sha256": oh, "n_cases": meta["n_cases"], "seed": seeded}
     st.save(run_dir)
     events.emit("capture_done", n_cases=meta["n_cases"], sha256=oh[:16])
@@ -263,20 +305,30 @@ def _drive(st, run_dir, events, path, func, provider_name, model, candidate,
                                     args_rs=args_rs, ret_rs=ret_rs, golden=GOLDEN_LIB_RS)
     provider = make_provider(provider_name, model, candidate, run_dir)
     return _loop(st, run_dir, events, path, module_name, func, provider, prompt, entries,
-                 python_exe, bench_min_s, max_attempts, coerce=coerce_specs(meta["params"]))
+                 python_exe, bench_min_s, max_attempts, coerce=coerce_specs(meta["params"]),
+                 repair=repair)
 
 
 def _loop(st, run_dir, events, path, module_name, func, provider, prompt, entries,
-          python_exe, bench_min_s, max_attempts, coerce=None) -> int:
+          python_exe, bench_min_s, max_attempts, coerce=None, repair: bool = True,
+          initial_feedback=None) -> int:
     start = len(st.attempts) + 1
     bench_result = None
+    feedback = initial_feedback  # evidence from the previous failed attempt (repair loop)
     for attempt_no in range(start, max_attempts + 1):
         events.emit("attempt_start", attempt=attempt_no)
         attempt_dir = os.path.join(run_dir, "attempts", f"it{attempt_no}")
         os.makedirs(attempt_dir, exist_ok=True)
         rec = {"attempt": attempt_no, "source": provider.name}
+        use_prompt = prompt
+        if repair and feedback is not None:
+            use_prompt = build_repair_prompt(prompt, feedback)
+            rec["repair"] = feedback.get("kind", "unknown")
+            with open(os.path.join(attempt_dir, "feedback.json"), "w") as f:
+                json.dump(feedback, f, indent=2)
+            events.emit("repair", attempt=attempt_no, kind=feedback.get("kind", "unknown"))
         try:
-            texts = provider.generate(prompt, n=1)
+            texts = provider.generate(use_prompt, n=1)
         except ProviderError as e:
             rec.update(build="-", verify="-", bench="-", outcome=f"provider_error: {e.message[:120]}")
             st.attempts.append(rec)
@@ -301,6 +353,7 @@ def _loop(st, run_dir, events, path, module_name, func, provider, prompt, entrie
             st.attempts.append(rec)
             st.save(run_dir)
             events.emit("safety_violation", attempt=attempt_no)
+            feedback = {"kind": "safety_violation", "violations": [e.message], "candidate": lib_rs}
             continue
         except BuildError as e:
             rec.update(build=f"build_error({e.subkind})", verify="-", bench="-",
@@ -308,6 +361,7 @@ def _loop(st, run_dir, events, path, module_name, func, provider, prompt, entrie
             st.attempts.append(rec)
             st.save(run_dir)
             events.emit("build_error", attempt=attempt_no, subkind=e.subkind)
+            feedback = {"kind": "build_error", "stderr": e.details, "candidate": lib_rs}
             continue
         rec["build"] = "ok"
 
@@ -322,12 +376,14 @@ def _loop(st, run_dir, events, path, module_name, func, provider, prompt, entrie
             rec.update(verify="worker_crash", bench="-", outcome=f"verify_crash: {e.message[:100]}")
             st.attempts.append(rec)
             st.save(run_dir)
+            feedback = {"kind": "load_error", "error": e.message, "candidate": lib_rs}
             continue
         if not wres.get("ok") or "results" not in wres:
             rec.update(verify=f"load_error: {str(wres.get('error'))[:110]}", bench="-",
                        outcome="verify_crash")
             st.attempts.append(rec)
             st.save(run_dir)
+            feedback = {"kind": "load_error", "error": str(wres.get("error")), "candidate": lib_rs}
             continue
         n_bad, sample = compare(entries, wres["results"])
         with open(os.path.join(attempt_dir, "verify.json"), "w") as f:
@@ -339,6 +395,8 @@ def _loop(st, run_dir, events, path, module_name, func, provider, prompt, entrie
             st.attempts.append(rec)
             st.save(run_dir)
             events.emit("verify_mismatch", attempt=attempt_no, n_bad=n_bad)
+            feedback = {"kind": "verify_mismatch", "n_bad": n_bad, "n_cases": len(entries),
+                        "sample": sample, "candidate": lib_rs}
             continue
         rec["verify"] = f"pass {len(entries)}/{len(entries)}"
 
@@ -351,6 +409,7 @@ def _loop(st, run_dir, events, path, module_name, func, provider, prompt, entrie
             rec.update(bench="-", outcome=f"{e.kind}: {e.message[:100]}")
             st.attempts.append(rec)
             st.save(run_dir)
+            feedback = {"kind": "load_error", "error": e.message, "candidate": lib_rs}
             continue
         dec = bench_result["decision"]
         rec["bench"] = f"{bench_result['ratio']:.2f}x (lb {bench_result['ratio_ci_lo']:.2f}x)"
@@ -370,6 +429,8 @@ def _loop(st, run_dir, events, path, module_name, func, provider, prompt, entrie
         st.attempts.append(rec)
         st.save(run_dir)
         events.emit(dec, ratio=bench_result["ratio"])
+        feedback = {"kind": "no_gain", "ratio": bench_result["ratio"],
+                    "ratio_ci_lo": bench_result["ratio_ci_lo"], "candidate": lib_rs}
 
     st.status = "rejected"
     last = st.attempts[-1].get("outcome", "") if st.attempts else "no attempts completed"

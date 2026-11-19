@@ -148,7 +148,7 @@ func NewApp(smeltBin, runsDir string) *App {
 	ti.Placeholder = "type a command (/scan, /run, /help) or a target file.py:fn"
 	ti.Prompt = "❯ "
 	ti.Focus()
-	a := &App{SmeltBin: smeltBin, RunsDir: runsDir, Provider: "gemini",
+	a := &App{SmeltBin: smeltBin, RunsDir: runsDir, Provider: "",
 		Input: ti, Width: 100, Height: 30}
 	a.loadHistory()
 	return a
@@ -176,6 +176,13 @@ func (a *App) modelDisplay() string {
 		return "(provider default)"
 	}
 	return a.Model
+}
+
+func (a *App) providerDisplay() string {
+	if a.Provider == "" {
+		return "(auto)"
+	}
+	return a.Provider
 }
 
 // menuMatches filters the slash-command list by the current input.
@@ -261,8 +268,12 @@ func (a *App) pickerEnter() (tea.Model, tea.Cmd) {
 	a.Picker = nil
 	switch p.kind {
 	case "provider":
-		a.Provider = sel
-		a.Status = "provider set: " + a.Provider
+		if sel == "(auto)" {
+			a.Provider = ""
+		} else {
+			a.Provider = sel
+		}
+		a.Status = "provider set: " + a.providerDisplay()
 	case "model":
 		if sel == "(provider default)" {
 			a.Model = ""
@@ -612,18 +623,24 @@ func (a *App) execute(line string) tea.Cmd {
 		return a.runSmeltCmd("doctor", "", "doctor")
 	case "/provider":
 		if len(parts) >= 2 {
-			a.Provider = parts[1]
+			if parts[1] == "auto" {
+				a.Provider = ""
+			} else {
+				a.Provider = parts[1]
+			}
 			if len(parts) >= 3 {
 				a.Model = parts[2]
 			}
-			a.Status = "provider set: " + a.Provider + " · model " + a.modelDisplay()
+			a.Status = "provider set: " + a.providerDisplay() + " · model " + a.modelDisplay()
 			return nil
 		}
-		a.openPicker("provider", []string{"gemini", "local", "do", "openai", "file", "fake"}, a.Provider)
+		a.openPicker("provider", []string{"(auto)", "nvidia", "gemini", "local", "do", "openai", "openrouter", "file", "fake"}, a.providerDisplay())
 		return nil
 	case "/model":
 		a.openPicker("model",
-			[]string{"gemma-4-26b-a4b-it", "gemma-4-31b-it", "(provider default)"},
+			[]string{"(provider default)", "mistralai/mistral-large-4-1t-a52b",
+				"moonshotai/kimi-k3.1-pro", "nvidia/nemotron-3-ultra-550b-a55b",
+				"z-ai/glm-5.3-flash"},
 			a.modelDisplay())
 		return nil
 	case "/sessions":
@@ -838,7 +855,7 @@ func banner() string {
 
 func (a *App) homeView() string {
 	var b strings.Builder
-	right := fit(a.Provider+" · "+a.modelDisplay(), a.Width/3)
+	right := fit(a.providerDisplay()+" · "+a.modelDisplay(), a.Width/3)
 	left := fit("FURNACE v"+Version+" · smelt home", a.Width-lipgloss.Width(right)-3)
 	pad := a.Width - 2 - lipgloss.Width(left) - lipgloss.Width(right)
 	if pad < 1 {

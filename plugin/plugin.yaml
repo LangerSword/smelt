@@ -1,0 +1,31 @@
+name: smelt
+label: Smelt
+kind: standalone
+version: 0.8.0
+author: Lakshaya Sharma (LangerSword)
+homepage: https://github.com/LangerSword/smelt
+description: >
+  Verified Python-to-Rust hotspot conversion for Hermes. Smelt freezes ONE slow
+  pure Python function's real behavior into a differential oracle, lets a model
+  write an equivalent pyo3 extension, and accepts ONLY what code proves: safety
+  scan, 100% oracle-case verification, and a measured speedup whose conservative
+  lower bound clears 1.5x. Runs are detached jobs that survive the agent call
+  (poll, tail, kill, mtime-verify); refusals and rejections are honest outcomes.
+  Mutating verbs are approval-gated; job children get an allowlisted environment
+  plus exactly the provider keys smelt resolves — never the host's full env.
+  Requires the smelt CLI on PATH (or SMELT_BIN / a uv checkout).
+requires_hermes: ">=0.22.0"
+python_dependencies: []
+provides_hooks:
+  - pre_tool_call
+provides_tools:
+  - smelt_scan
+  - smelt_doctor
+  - smelt_capture
+  - smelt_run
+  - smelt_job
+  - smelt_jobs
+  - smelt_kill
+  - smelt_verify
+  - smelt_report
+  - smelt_apply

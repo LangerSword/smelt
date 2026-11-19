@@ -54,7 +54,7 @@ jobs:
       - name: Run (same-repo PRs only)
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch' }}
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}   # or any supported provider key
         run: python tools/bot_run.py scan.json --max 3 --out comment.md
       - name: Comment once
         run: gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
@@ -86,8 +86,9 @@ rejected / refused), measured speedups with lower bounds, and view-only diffs.
   push — a run costs model calls and a Rust build.
 - **Candidates**: `smelt scan <repo> --json`, filtered to tier-1 functions in
   files the PR touched; cap at 3.
-- **Run**: `smelt run <file>:<fn> --provider gemini` (model `gemma-4-26b-a4b-it`),
-  max attempts 2, per-candidate timeout.
+- **Run**: `smelt run <file>:<fn>` (provider auto-resolves from the job's key,
+  e.g. `NVIDIA_API_KEY`; or explicit `--provider/--model`), max attempts 2,
+  per-candidate timeout.
 - **Comment**: one PR comment — table (function · status · exit code · speedup lb ·
   attempts · model) + `smelt apply` diff blocks (view only) + the exact commands
   a human can run to reproduce.
@@ -95,8 +96,8 @@ rejected / refused), measured speedups with lower bounds, and view-only diffs.
   view-only by design. Fork PRs: no secrets are exposed; the job skips model runs
   and says so (public repo + no key = capture/verify still work offline, but no
   generation).
-- **Cost control**: `GEMINI_API_KEY` secret (same-repo PRs only), global call cap
-  per run, `concurrency` group to kill duplicate runs.
+- **Cost control**: one provider-key secret (e.g. `NVIDIA_API_KEY`, same-repo PRs
+  only), global call cap per run, `concurrency` group to kill duplicate runs.
 
 `tools/bot_run.py` does not exist yet — it would read `scan.json`, run smelt per
 candidate with a call cap, and render the markdown table + diffs.

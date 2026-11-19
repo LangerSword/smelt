@@ -23,9 +23,16 @@ This file records how AI was used to build smelt, and who reviewed what.
 
 ## Runtime AI (the product)
 
-- A model (Gemma 4 — `gemma-4-e2b-qat` locally tonight; `gemma-4-31b-it` via API
-  when funded) generates candidate Rust code. That is the product's core loop, not
-  a build shortcut. Every generated candidate is verified by code before acceptance.
+- A model generates candidate Rust code — that is the product's core loop, not a
+  build shortcut. Since v0.8 the harness is model-agnostic: no model family is
+  hardwired (the Gemma-4 defaults were removed). The `nvidia` provider's default
+  model is picked empirically by `scripts/model_bakeoff.py` (record:
+  `evals/bakeoff-v08.json`); every other provider takes an explicit model. Every
+  generated candidate is verified by code before acceptance, and attempts 2+
+  receive failure evidence (repair loop) — the gates themselves never change.
+- Historical note: all pre-v0.8 results were produced by Gemma-4 models
+  (`gemma-4-26b-a4b-it` via the Gemini API, `gemma-4-e2b-qat` locally via
+  llama.cpp). Those tables remain in `evals/` labeled with their model.
 
 ## Phase log
 
@@ -101,6 +108,44 @@ This file records how AI was used to build smelt, and who reviewed what.
   exit 4), accept proof `gcd_pair` (loop-heavy; tiny `manhattan` verifies 208/208 then
   is honestly rejected at 1.43x < 1.5x). All gates green before the developer's 06:50
   limit; merged to main.
+
+- **v0.8 upgrade (main, 2026-11-19)**: Hermes build agent (post-event upgrade session,
+  developer-directed: "remove gemma 4 integration, maximize potential") performed a
+  source-level teardown of the whole harness, then: (1) removed every hardwired Gemma-4
+  default — providers are model-agnostic, added the `nvidia` preset and key-based auto
+  provider resolution, model resolution chain `--model → SMELT_MODEL → SMELT_<PROVIDER>_MODEL
+  → default`; (2) added the repair loop (attempts 2+ receive rustc stderr / mismatch cases /
+  safety findings / no-gain ratio; gates unchanged; evidence checkpointed to feedback.json;
+  events schema bumped to 2 with a `repair` event, fingerprint + golden regenerated from a
+  real repair run); (3) fixed BUG-1 — package-context loading in the worker + static
+  relative-import resolution in scan; (4) widened the type domain to list[float] and tuple
+  RETURNS, meta-eval-first (RED observed: float-list battery refused exit 3 pre-support;
+  tuple-return g02_list_not_tuple passed verify pre-fidelity — a false-accept hole — then
+  rejected on merits post-fix); (5) added return-container fidelity (tuple ≠ list tag);
+  (6) added the i64 domain guard at capture (typed refusal instead of misleading mismatch);
+  (7) fixed bench on raising targets (exceptions discarded identically on both sides) and
+  the FileProvider cursor (candidates now consumed in order across attempts). Evidence:
+  meta-eval **22/22 rejected on merits, 0 false accepts**; pytest suite extended (repair,
+  package loading, float list, tuple return, domain guard); Furnace goldens regenerated
+  (version header only) and Go tests green; NVIDIA default model chosen by
+  `scripts/model_bakeoff.py` (evals/bakeoff-v08.json). Developer reviews the high-risk
+  modules (oracle/verify/capture/worker/orchestrator) line-by-line as before.
+
+- **v0.8 plugin layer (main, 2026-11-19, developer-directed: "smelt should be
+  able to run as a plugin with its own skills and tools and hooks and MCP
+  servers if needed with any coding agents too")**: Hermes build agent added
+  `src/smelt_rs/agent_api.py` (one stdlib-only handler core, detached-job
+  supervisor with allowlisted child environments and mtime-based verify) and
+  `src/smelt_rs/mcp_server.py` (`smelt mcp`, MCP stdio JSON-RPC, zero new
+  dependencies); the Hermes plugin (`plugin/`: 10 tools + pre_tool_call
+  approval hook + vendored core synced by scripts/sync_plugin.py + bundled
+  skill symlink + smoke_load.py served-surface proof); the Claude Code plugin
+  (`.claude-plugin/plugin.json`, three slash commands, PostToolUse candidate
+  hint hook, `.mcp.json`); docs/agent-integration.md; CI plugin job + repair
+  and domain-guard gate steps. Evidence: 17 new pytest (job lifecycle, env
+  secret isolation, stale-artifact verify, real MCP stdio round-trip),
+  smoke_load ALL CHECKS PASSED, hook round-trip on a real edit payload.
+  Developer reviews the approval hook and the child-env allowlist.
 
 ## Scope note
 

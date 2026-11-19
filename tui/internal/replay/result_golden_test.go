@@ -51,6 +51,16 @@ func TestResultAccepted120x40(t *testing.T) {
 	runResultGolden(t, "accepted-gemini", 0, 120, 40, "INGOT")
 }
 
+// v0.8 repair run: summary tab carries the repair note, the attempts strip
+// marks attempt 2 with ↻ mismatch.
+func TestResultAcceptedRepair80x24(t *testing.T) {
+	runResultGolden(t, "accepted-repair-fake", 0, 80, 24, "INGOT")
+}
+
+func TestResultAcceptedRepair120x40(t *testing.T) {
+	runResultGolden(t, "accepted-repair-fake", 0, 120, 40, "INGOT")
+}
+
 func TestResultRejected80x24(t *testing.T) {
 	runResultGolden(t, "rejected-gemini", 0, 80, 24, "SLAG")
 }

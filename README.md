@@ -3,12 +3,14 @@
 **Smelt a slow, pure Python function into a verified Rust extension. Only proven metal ships.**
 
 smelt takes ONE slow, pure Python function and freezes its real behavior into a
-differential oracle: 200+ recorded input/output cases, hashed and read-only. A model
-(**Gemma 4** via the Gemini API — or any configured provider) writes an equivalent
-Rust extension (`pyo3`). **Code, not the model, checks that the Rust answers
-identically on every recorded case.** Only then does smelt time both and report the
-measured speedup with a confidence interval. Failing rewrites are rejected. The
-Python original stays as the fallback.
+differential oracle: 200+ recorded input/output cases, hashed and read-only. A
+model — **any model, any provider** (v0.8 removed the hardwired Gemma-4 defaults)
+— writes an equivalent Rust extension (`pyo3`). **Code, not the model, checks
+that the Rust answers identically on every recorded case.** Only then does smelt
+time both and report the measured speedup with a confidence interval. Failing
+rewrites are rejected — and since v0.8, attempt 2+ receives the concrete failure
+evidence (compiler errors, mismatched cases) to repair itself. The Python
+original stays as the fallback.
 
 The honest claim: **no wrong rewrite is accepted on the tested inputs.**
 
@@ -20,14 +22,19 @@ Built live at **sudo Hacktober** (MLH · SRM AP Amaravati, Oct 10–11 2026, sol
 git clone https://github.com/LangerSword/smelt.git && cd smelt
 uv sync
 uv run smelt doctor          # toolchain + provider check
-uv run smelt run examples/demo/run_length.py:rle_encode --provider gemini
+
+# no network, no model — deterministic demo with a hand-provided candidate:
+uv run smelt run examples/demo/run_length.py:rle_encode --provider fake \
+  --candidate tests/fixtures/candidates/rle_encode_correct.rs
+
+# with a provider key (e.g. NVIDIA_API_KEY in env or ~/.hermes/.env):
+uv run smelt run examples/demo/run_length.py:rle_encode   # provider auto-resolves
 uv run smelt report runs/<run-id>
 ```
 
-The v0.6.0 wheel and sdist build green and install cleanly from disk:
-`uv tool install ./dist/smelt_rs-0.6.0-py3-none-any.whl`. The PyPI upload is
-pending the maintainer's go (the name `smelt-rs` is unclaimed). Capture, verify
-and benchmark need no network.
+Capture, verify and benchmark need no network. The v0.8.0 wheel and sdist build
+green and install cleanly from disk: `uv tool install ./dist/smelt_rs-0.8.0-py3-none-any.whl`.
+The PyPI upload is pending the maintainer's go (the name `smelt-rs` is unclaimed).
 
 ## Commands
 
@@ -35,13 +42,18 @@ and benchmark need no network.
 |---|---|
 | `smelt run file.py:fn` | full loop: purity → oracle → generate → build → verify → bench → report |
 | `smelt capture file.py:fn` | freeze an oracle, no generation |
-| `smelt resume runs/<id>` | continue an interrupted run |
+| `smelt resume runs/<id>` | continue an interrupted run (repair evidence reconstructed) |
 | `smelt report runs/<id>` | print the run report (markdown) |
 | `smelt scan <path>` | list candidates with tier + skip reasons (`--json` available) |
 | `smelt apply runs/<id>` | VIEW ONLY: diff + fallback shim; never writes into your repo |
 | `smelt doctor [--probe]` | environment + provider checks |
 | `smelt evals` | run the frozen corpus (call cap + pause) |
+| `smelt mcp` | serve smelt as an MCP server (stdio) for any coding agent |
 | `smelt furnace` | launch the Go TUI if installed |
+
+`smelt run` flags worth knowing: `--provider` (default: auto from your keys),
+`--model`, `--repair/--no-repair` (evidence-fed attempts 2+, default on),
+`--max-attempts`, `--cases`, `--seed`.
 
 Exit codes: **0** accepted · **2** config error · **3** refused (impure or
 unsupported shape, with a refactor hint) · **4** rejected (honest — mismatch or no
@@ -49,11 +61,47 @@ meaningful gain) · **5** harness error.
 
 ## Results (every number labeled with its model)
 
-Provider `gemini` · model **`gemma-4-26b-a4b-it`** (default; free-tier friendly).
+### v0.8 — model-agnostic pipeline (repair loop on)
+
+Provider `nvidia` · model **`mistralai/mistral-large-4-1t-a52b`** — picked
+empirically by the bake-off ([`evals/bakeoff-v08.json`](evals/bakeoff-v08.json):
+4 models × 3 tasks, ranked by accepted tasks → provider calls → median speedup
+lower bound; per-task wall-clock caps record NIM stalls as `timeout`).
+
+- **Corpus, 24 tasks** ([`evals/results.md`](evals/results.md)): **10 accepted /
+  0 rejected / 12 timeouts / 2 errors**, 44 calls. The 12 timeouts are NVIDIA
+  NIM stalls on long generations (600s task cap), not pipeline failures; the 2
+  errors are typed `finish_reason=length` (reasoning exhausted the token
+  budget). Accepted median **2.29x**: collatz 7.80x · caesar 5.93x ·
+  longest_alpha_run 3.44x · count_vowel_runs 2.33x · popcount 2.25x.
+  `triangular` verified 209/209 and measured 19598x but is flagged
+  **`timer_limited`** (O(1) closed form vs Python's loop; Rust median below the
+  0.5 ms timer floor) — reported flagged, not as a headline.
+- **Blind re-run** (same frozen list, [`evals/general-v08.md`](evals/general-v08.md)):
+  0 accepted / 9 refused / 1 config error / 0 errors / 0 provider calls.
+  Package loading now reaches the REAL boundaries: missing build artifacts
+  (`humanize._version`) and third-party deps — the old ImportError wall is gone.
+- **Meta-eval (false-accept gate)**: **22/22** hand-written wrong rewrites
+  rejected on merits across five batteries (str, multi-param, tuple-arg,
+  list[float], tuple-return incl. a wrong-container candidate) —
+  [`scripts/meta_eval.py`](scripts/meta_eval.py). Each widening was observed
+  RED before its support landed.
+- **Tests**: 87 pytest (repair loop, package loading, float lists, tuple
+  returns, domain guard, providers, agent API, MCP) + 66 Go (incl. goldens over
+  a real repair run). CI on every push.
+- **Plugin layer**: `smelt mcp` (MCP server, zero extra deps), Hermes plugin
+  (10 tools + approval hook, `hermes plugins validate` passes), Claude Code
+  plugin (commands + PostToolUse hint hook + `.mcp.json`) —
+  [`docs/agent-integration.md`](docs/agent-integration.md).
+
+### Historical — Gemma-4 era (pre-v0.8, kept verbatim)
+
+Provider `gemini` · model **`gemma-4-26b-a4b-it`** (the former default; removed
+in v0.8). These tables are the event-era record, labeled with their model.
 
 - **Corpus, 24 tasks, two full runs**: 20 accepted / 4 rejected / 0 errors
   (36 calls, median 2.83x) and 23 accepted / 1 rejected / 0 errors (27 calls,
-  median 2.72x). Full tables: [`evals/results.md`](evals/results.md) ·
+  median 2.72x). Full tables: [`evals/results-gemma.md`](evals/results-gemma.md) ·
   [`evals/results-after.md`](evals/results-after.md).
   Why the two runs differ: each run draws a fresh random seed and the model
   samples — the single-parameter generator is byte-identical, prompts and scaffold
@@ -63,27 +111,51 @@ Provider `gemini` · model **`gemma-4-26b-a4b-it`** (default; free-tier friendly
   11.51x. Rejections stay at 1.22–1.46x — never reported as wins.
 - **Local arm** (`gemma-4-e2b-qat` via llama.cpp, fully offline): 18 accepted /
   6 rejected / 0 errors — [`evals/results-local.md`](evals/results-local.md).
-- **Meta-eval (false-accept gate)**: 13/13 hand-written wrong rewrites rejected —
-  [`scripts/meta_eval.py`](scripts/meta_eval.py). (A tuple battery — 16/16 — sits
-  on `feature/general`, unmerged.)
+- **Meta-eval at the time**: 16/16 wrong rewrites rejected (extended to 22/22
+  in v0.8).
 - **Blind test** (3 real open-source repos, 10 functions, list frozen before the
   run): **0 accepted, 9 refused, 1 config error, 0 errors, 0 provider calls.**
   Refusal reasons: 6 package layouts (relative imports), 2 impurity, 1 unsupported
-  type; the config error is a dotted qualname (exit 2). This shows **safety, not
-  generality**: every outcome is typed, nothing crashed, nothing was accepted — the
-  list is honestly non-convertible today. [`evals/general.md`](evals/general.md)
+  type; the config error is a dotted qualname (exit 2). This showed **safety, not
+  generality**. The v0.8 re-run ([`evals/general-v08.md`](evals/general-v08.md))
+  measures what package loading changed — same frozen list, no tuning.
+  [`evals/general.md`](evals/general.md)
 
 ## Providers
 
-| provider | model | status |
-|---|---|---|
-| `gemini` — Google AI Studio | `gemma-4-26b-a4b-it` (default), `gemma-4-31b-it` (strongest, slower) | used for all results above |
-| `local` — llama.cpp / any OpenAI-compatible server | any local model | working, fully offline |
-| `do` — DigitalOcean Inference | `gemma-4-31B-it` | wired; activates with `DIGITALOCEAN_TOKEN` |
-| `file` / `fake` | hand-provided candidates | gate runs + CI |
+Model-agnostic since v0.8 — no model family is hardwired.
 
+| provider | endpoint | model | key |
+|---|---|---|---|
+| `nvidia` | NVIDIA NIM (OpenAI-compatible) | default picked empirically by [`scripts/model_bakeoff.py`](scripts/model_bakeoff.py); any NIM chat model via `--model` | `NVIDIA_API_KEY` |
+| `gemini` | Google AI Studio, native REST | required (`--model` / `SMELT_GEMINI_MODEL`) | `GEMINI_API_KEY` / `GOOGLE_API_KEY` |
+| `local` | llama.cpp / any OpenAI-compatible server | server's model (name ignored) | none |
+| `do` | DigitalOcean Inference | required | `DIGITALOCEAN_TOKEN` |
+| `openai` / `openrouter` | any OpenAI-compatible endpoint | required | `SMELT_OPENAI_KEY` → `OPENAI_API_KEY` / `OPENROUTER_API_KEY` |
+| `file` / `fake` | hand-provided candidates, consumed in order across attempts | — | gate runs + CI |
+
+`--provider` omitted → `SMELT_PROVIDER` → first provider with a key → local.
+`--model` omitted → `SMELT_MODEL` → `SMELT_<PROVIDER>_MODEL` → provider default.
 Secrets resolve env → project `.env` → `~/.hermes/.env`; they are never logged,
-printed or committed.
+printed or committed. Details: [`docs/providers.md`](docs/providers.md).
+
+## Agent integration — plugin anywhere
+
+One stdlib-only handler core behind three surfaces (no second implementation):
+
+- **MCP server** — `smelt mcp` (zero extra dependencies): 10 tools incl.
+  detached run jobs with poll/kill/mtime-verify. Works with Claude Code,
+  Cursor, OpenCode, Goose, Hermes — any MCP-capable agent.
+- **Hermes plugin** — [`plugin/`](plugin/README.md): the same 10 tools + a
+  `pre_tool_call` approval hook for mutating verbs + the bundled skill.
+- **Claude Code plugin** — this repo: `.claude-plugin/`, `/smelt-scan`
+  `/smelt-run` `/smelt-report` commands, a PostToolUse hook that surfaces
+  smelt-able candidates after Python edits (never runs anything unprompted),
+  the skill, and `.mcp.json`.
+- **Any other agent** — the validated Agent Skill (`skills/smelt`) or the
+  plain `--json` CLI with typed exit codes.
+
+Setup + security notes: [`docs/agent-integration.md`](docs/agent-integration.md).
 
 ## TUI — Furnace (Go)
 
@@ -155,7 +227,7 @@ jobs:
       - name: Run (same-repo PRs only)
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch' }}
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}   # or any supported provider key
         run: python tools/bot_run.py scan.json --max 3 --out comment.md
       - name: Comment once
         run: gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
@@ -186,17 +258,22 @@ What each step does:
 
 ## Honest limits
 
-- One argument of `str/int/float/bool/list[int]/list[str]`; multi-parameter
-  targets work too. `tuple[int, int]` is on `feature/general`, unmerged. Anything
-  else: typed refusal + refactor hint, never a crash.
-- Integers are tested inside i64. Inputs whose Python result exceeds i64 (e.g.
-  `i64::MIN // -1`) cannot be matched by an i64 rewrite — such candidates are
-  honestly rejected; the domain policy is open.
+- Parameters: `str/int/float/bool/list[int]/list[float]/list[str]/tuple[int, int]`,
+  any number of positional parameters. Returns: the same set plus `tuple[int, int]`
+  (v0.8 — with true tuple-vs-list fidelity: a `Vec` return where Python returns a
+  tuple is rejected). Anything else: typed refusal + refactor hint, never a crash.
+- Package layouts with relative imports ARE supported (v0.8): targets load in
+  their package context. Unresolvable imports / missing third-party deps: typed
+  refusal with a hint.
+- Integers are tested inside i64. Targets whose recorded outputs leave i64 are
+  refused AT CAPTURE with a hint (v0.8 domain guard) — no wasted model calls, no
+  misleading mismatch. Big-int domains remain an open policy; never silently
+  truncated.
 - The oracle proves equivalence **on the tested inputs** — exactly that claim.
 - Tiny functions can legitimately fail to beat pyo3 overhead (`manhattan` verifies
-  208/208, then is rejected at 1.43x).
-- Package layouts (relative imports) are not supported yet — typed refusal with a
-  hint.
+  every case, then is honestly rejected near 1.0x).
+- Targets that raise on edge cases are fully supported (v0.8): outcome parity in
+  verify, exceptions discarded identically on both sides in bench.
 
 ## Docs
 

@@ -172,7 +172,7 @@ func (m *Model) lastEventIsGenerate() bool {
 		return false
 	}
 	last := m.Sum.Events[len(m.Sum.Events)-1].Event
-	return last == "attempt_start" || last == "resume"
+	return last == "attempt_start" || last == "resume" || last == "repair"
 }
 
 func (m *Model) refreshLog() {
@@ -226,7 +226,7 @@ func (m *Model) activePhase() string {
 		return "select"
 	case "capture_done":
 		return "oracle"
-	case "attempt_start", "resume", "safety_violation":
+	case "attempt_start", "resume", "safety_violation", "repair":
 		return "generate"
 	case "build_error":
 		return "build"

@@ -2,8 +2,9 @@ use pyo3::prelude::*;
 
 // NOTE: this fixture is correct for all in-domain inputs, but the edge battery
 // includes (a = i64::MIN, b = -1), where Python's floor division returns 2**63 —
-// a value beyond i64. An i64 rewrite cannot match it, so this candidate is
-// expected to be REJECTED on that edge. Kept as the documented example of the
+// a value beyond i64. Since v0.8 the i64 domain guard REFUSES the divide target
+// at capture (exit 3, typed hint) before any build — previously this surfaced as
+// a verify_mismatch after a wasted build. Kept as the documented example of the
 // i64 domain gap (see README "Honest limits"). The accepted multi-param proof
 // is clamp_all_correct.rs.
 #[pyfunction]

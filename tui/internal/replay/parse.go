@@ -39,6 +39,8 @@ type RunSummary struct {
 	NCases     int
 	OracleSHA  string
 	Attempts   int
+	Repairs    int    // repair events (v0.8): attempts fed with failure evidence
+	LastRepairKind string
 	Speedup    float64
 	SpeedupLB  float64
 	HasSpeedup bool
@@ -138,6 +140,9 @@ func (s *RunSummary) consume(ev Event) {
 		s.OracleSHA = asStr(ev.Raw["sha256"])
 	case "attempt_start":
 		s.Attempts++
+	case "repair":
+		s.Repairs++
+		s.LastRepairKind = asStr(ev.Raw["kind"])
 	case "accept":
 		s.Speedup = asFloat(ev.Raw["ratio"])
 		s.SpeedupLB = asFloat(ev.Raw["ratio_ci_lo"])
@@ -245,6 +250,9 @@ func (s *RunSummary) buildLog() []string {
 			out = append(out, stamp(ev)+fmt.Sprintf("oracle frozen · %d cases · sha %s", s.NCases, s.OracleSHA))
 		case "attempt_start":
 			out = append(out, stamp(ev)+fmt.Sprintf("attempt %d · generate", int(asFloat(ev.Raw["attempt"]))))
+		case "repair":
+			out = append(out, stamp(ev)+fmt.Sprintf("↻ repair · attempt %d · evidence: %s",
+				int(asFloat(ev.Raw["attempt"])), repairEvidence(asStr(ev.Raw["kind"]))))
 		case "resume":
 			out = append(out, stamp(ev)+fmt.Sprintf("resume · from attempt %d", int(asFloat(ev.Raw["from_attempt"]))))
 		case "safety_violation":
@@ -279,7 +287,7 @@ func FlowNode(ev string) string {
 		return "select"
 	case "capture_done":
 		return "oracle"
-	case "attempt_start", "resume", "safety_violation":
+	case "attempt_start", "resume", "safety_violation", "repair":
 		return "generate"
 	case "build_error":
 		return "build"
@@ -329,7 +337,7 @@ func Verdict(status string) (string, string) {
 	case "rejected":
 		return "SLAG", "rejected — correct but no meaningful gain (or budget exhausted)"
 	case "refused":
-		return "ASH", "refused — impure target (a correct outcome)"
+		return "ASH", "refused — impure or unsupported target (a correct outcome)"
 	case "error":
 		return "ASH", "stopped with an error — see the log"
 	case "config_error":
@@ -339,6 +347,42 @@ func Verdict(status string) (string, string) {
 	default:
 		return strings.ToUpper(status), status
 	}
+}
+
+// repairEvidence renders a repair kind as the evidence the model received
+// (docs/events.md, schema 2). The evidence itself lives in the run's
+// attempts/itN/feedback.json — never in the event stream.
+func repairEvidence(kind string) string {
+	switch kind {
+	case "verify_mismatch":
+		return "mismatched cases"
+	case "build_error":
+		return "compiler errors"
+	case "safety_violation":
+		return "safety findings"
+	case "no_gain":
+		return "measured no-gain"
+	case "load_error":
+		return "load failure"
+	}
+	return kind
+}
+
+// repairShort is the compact strip label for a repair kind.
+func repairShort(kind string) string {
+	switch kind {
+	case "verify_mismatch":
+		return "mismatch"
+	case "build_error":
+		return "build"
+	case "safety_violation":
+		return "safety"
+	case "no_gain":
+		return "no-gain"
+	case "load_error":
+		return "load"
+	}
+	return kind
 }
 
 // DisplayModel renders the model label, honestly distinguishing the

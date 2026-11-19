@@ -17,9 +17,11 @@ go build -o furnace .        # requires Go 1.27+
 # replay a finished run
 ./furnace replay ../runs/261011-024849-b4f411
 
-# run smelt live and watch it
+# run smelt live and watch it (provider auto-resolves from your keys)
+./furnace run ../examples/demo/run_length.py:rle_encode
+# or explicit:
 ./furnace run ../examples/demo/run_length.py:rle_encode \
-      --provider gemini --model gemma-4-26b-a4b-it
+      --provider nvidia --model mistralai/mistral-large-4-1t-a52b
 ```
 
 ## One-command install
@@ -33,14 +35,16 @@ use `@feature/furnace-ux`. Release binaries via `gh release` are planned; the
 PyPI `smelt-rs` package and the `smelt furnace` launcher stay the Python side's
 job (this TUI must not depend on them to build).
 
-## UX layout (v0.7)
+## UX layout (v0.8)
 
-- **Header** (persistent): FURNACE v0.7 · run id · provider · model.
+- **Header** (persistent): FURNACE v0.8 · run id · provider · model.
 - **Two columns when width ≥ 100** (stacked below): left = the loop flow
   (`select → … → verdict` with heating/poured marks) + verdict + results;
   right = live panel — oracle progress bar, cases passed, attempts, speedup
   with lower bound, and the last build/verify message.
-- **Transcript** with timestamps; error lines carry a `✗` label. `j/k`,
+- **Transcript** with timestamps; error lines carry a `✗` label, repair
+  evidence (v0.8) a `↻` label naming what the model received (mismatched
+  cases, compiler errors, safety findings, measured no-gain). `j/k`,
   `↑/↓`, `pgup/pgdn` scroll from either focus.
 - **Composer**: slash-command autocomplete (tab completes, arrows choose,
   esc cancels), prompt history (↑/↓).
@@ -56,9 +60,10 @@ job (this TUI must not depend on them to build).
   crate file + shim, +/- colouring, build command, revert note). An
   **attempts strip** below the tabs shows each attempt's outcome — compile
   error / mismatch with the first failing input, expected and got / no gain /
-  accepted — so the feedback loop stays visible. Everything is read from
-  `runs/<id>/` artifacts only; a missing artifact renders a clear message,
-  never a crash.
+  accepted — and marks attempts that received repair evidence with `↻` plus
+  the evidence kind (v0.8), so the feedback loop stays visible. Everything is
+  read from `runs/<id>/` artifacts only; a missing artifact renders a clear
+  message, never a crash.
 - **Status line**: state (ready/running/waiting for the model/done) · elapsed ·
   verdict word. Colour never carries meaning; `--no-anim`, `NO_COLOR` and
   `TERM=dumb` respected. Renders at 80×24 and 160×45; resize-safe.
@@ -88,7 +93,7 @@ The interactive layer, in the style of Hermes' prompt box:
 
 - **prompt box** — type a slash command or a bare `file.py:fn` target;
 - **`/scan <path>`** — lists candidates from `smelt scan --json` with skip
-  reasons (e.g. "relative imports — package loading not supported yet");
+  reasons (e.g. "relative import '.missing' not found in package");
   `enter` on a candidate starts the run (the scan root is joined into the path);
 - **`/run <target> [--provider p] [--model m]`**, **`/resume <run-dir>`**,
   **`/report <run-dir>`**, **`/provider <name> [model]`** (bare: availability
@@ -116,15 +121,16 @@ from your project root).
 ## Tests
 
 ```bash
-go test ./...                       # 58 tests: unit + teatest goldens (run + result screens) + fake-smelt suite
+go test ./...                       # 66 tests: unit + teatest goldens (run + result screens) + fake-smelt suite
 go test ./internal/replay -update   # regenerate goldens after a deliberate change
 ```
 
 Fixtures under `testdata/runs/` are real run slices: REAL Gemini runs
 (`gemma-4-26b-a4b-it`: accepted / rejected / refused, incl. one refusal with a
-refactor hint), a file-provider mismatch run (**no model**), a sliced run that
-pins the missing-artifact path, and one file-provider unit fixture — each
-labeled with its model in
+refactor hint — historical, pre-v0.8), a REAL v0.8 repair run (fake provider,
+events schema 2: mismatch → evidence → accepted), a file-provider mismatch run
+(**no model**), a sliced run that pins the missing-artifact path, and one
+file-provider unit fixture — each labeled with its model in
 [`testdata/runs/README.md`](testdata/runs/README.md). Result-screen fixtures
 store the target path run-relative (`source/…`) so goldens render identically
 everywhere; the recorded sha256 must match the copied source.

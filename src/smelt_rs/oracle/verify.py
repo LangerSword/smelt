@@ -6,6 +6,8 @@ Semantics (documented limits):
 - if both returned: encoded values must be equal (ints/str exact; floats with a
   relative tolerance; NaN==NaN; inf==inf).
 - lists compared element-wise; dicts by key.
+- v0.8: tuples carry their own tag — a tuple and a list with identical elements
+  are NOT equal (return-container fidelity; see meta-eval g02_list_not_tuple).
 Reviewed closely by the developer.
 """
 
@@ -23,7 +25,7 @@ def values_equal(a: dict | None, b: dict | None, rtol: float = 1e-9) -> bool:
         if av in ("nan", "inf", "-inf") or bv in ("nan", "inf", "-inf"):
             return av == bv
         return _num_close(av, bv, rtol)
-    if t == "list":
+    if t in ("list", "tuple"):
         if len(a.get("v", [])) != len(b.get("v", [])):
             return False
         return all(values_equal(x, y, rtol) for x, y in zip(a["v"], b["v"]))

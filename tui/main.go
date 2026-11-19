@@ -24,8 +24,8 @@ const usage = `usage:
   furnace run <file.py:fn> [flags]         run smelt live and watch it
 
 flags for run:
-  --provider <name>   provider passed to smelt (default "gemini")
-  --model <name>      model passed to smelt (default: provider default, e.g. gemma-4-26b-a4b-it)
+  --provider <name>   provider passed to smelt (default: auto — smelt resolves from keys)
+  --model <name>      model passed to smelt (default: provider default, e.g. mistralai/mistral-large-4-1t-a52b)
   --smelt <path>      smelt binary (default: found on PATH)
   --runs-dir <dir>    where smelt writes runs (default "runs")`
 
@@ -68,7 +68,7 @@ func replayCmd(dir string) {
 }
 
 func runCmd(args []string) {
-	target, provider, model, smeltBin, runsDir := "", "gemini", "", "", "runs"
+	target, provider, model, smeltBin, runsDir := "", "", "", "", "runs"
 	noAnim := false
 	for i := 0; i < len(args); i++ {
 		need := func(flag string) string {

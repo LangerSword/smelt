@@ -1,4 +1,4 @@
- FURNACE v0.7 · replay · 261011-024849-b4f411                     file · — (no model: file fixture)
+ FURNACE v0.8 · replay · 261011-024849-b4f411                     file · — (no model: file fixture)
  select✔ ─▶ oracle✔ ─▶ generate✔ ─▶ build✔ ─▶ verify✔ ─▶ bench✔ ─▶ verdict★  ╭───────────────────────────────────────────╮
  VERDICT: ◆ INGOT                                                            │status                                     │
  accepted — verified rewrite, speedup above the threshold                    │oracle   [████████████████████████████████…│

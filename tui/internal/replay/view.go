@@ -19,7 +19,7 @@ var (
 )
 
 // Version is the Furnace build shown in the persistent header.
-const Version = "0.7"
+const Version = "0.8"
 
 // fit truncates s to at most w display columns (ellipsis when cut).
 func fit(s string, w int) string {
@@ -132,7 +132,7 @@ func (m *Model) livePanel(w int) string {
 	lines := []string{
 		"oracle   " + bar,
 		fmt.Sprintf("cases    %d/%d passed", passed, s.NCases),
-		fmt.Sprintf("attempts %d", s.Attempts),
+		attemptsCountLine(s),
 	}
 	switch {
 	case s.HasSpeedup && s.HasLB:
@@ -153,6 +153,16 @@ func (m *Model) livePanel(w int) string {
 		style = borderFocused
 	}
 	return style.Render(fit(title, w-4) + "\n" + body)
+}
+
+// attemptsCountLine is the attempts counter; since v0.8 it also shows how
+// many attempts were fed with failure evidence (the repair loop), but only
+// when repairs happened — runs without them render exactly as before.
+func attemptsCountLine(s *RunSummary) string {
+	if s.Repairs > 0 {
+		return fmt.Sprintf("attempts %d · %d repair(s)", s.Attempts, s.Repairs)
+	}
+	return fmt.Sprintf("attempts %d", s.Attempts)
 }
 
 // speedupBar renders the measured speedup as a bar with the conservative lower
@@ -324,7 +334,7 @@ func (m *Model) resultsBoxW(w int) string {
 		"target   " + shortTarget(s.Target),
 		"provider " + s.Provider + " · model " + DisplayModel(s.Provider, s.Model),
 		fmt.Sprintf("oracle   %d cases · sha %s", s.NCases, shortSHA(s.OracleSHA)),
-		fmt.Sprintf("attempts %d", s.Attempts),
+		attemptsCountLine(s),
 	}
 	switch {
 	case s.HasSpeedup && s.HasLB:

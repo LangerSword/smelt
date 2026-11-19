@@ -54,7 +54,10 @@ func StartLive(smeltBin, target, provider, model, runsDir string) (*LiveRun, err
 			}
 		}
 	}
-	args := []string{"run", target, "--provider", provider, "--json"}
+	args := []string{"run", target, "--json"}
+	if provider != "" {
+		args = append(args, "--provider", provider)
+	}
 	if model != "" {
 		args = append(args, "--model", model)
 	}

@@ -1,14 +1,21 @@
-"""Provider layer: thin, fake-able, transcript-logged.
+"""Provider layer: thin, fake-able, transcript-logged, model-agnostic.
 
 One interface: `generate(prompt) -> list[str]` (complete lib.rs contents).
 
-Providers:
-- gemini   — Google AI Studio, native REST (`gemma-4-26b-a4b-it` default), key: GEMINI_API_KEY
-- do       — DigitalOcean Inference, OpenAI-compatible, model `gemma-4-31B-it`, key: DIGITALOCEAN_TOKEN
+Providers (v0.8: no model family is hardwired — Gemma defaults were removed):
+- nvidia   — NVIDIA NIM, OpenAI-compatible (https://integrate.api.nvidia.com/v1), key: NVIDIA_API_KEY
+- gemini   — Google AI Studio, native REST (model required), key: GEMINI_API_KEY / GOOGLE_API_KEY
+- do       — DigitalOcean Inference, OpenAI-compatible (model required), key: DIGITALOCEAN_TOKEN
 - local    — llama.cpp / any OpenAI-compatible server (default http://127.0.0.1:8080/v1)
-- openai   — generic OpenAI-compatible (set SMELT_OPENAI_BASE / SMELT_OPENAI_KEY)
+- openai   — generic OpenAI-compatible (SMELT_OPENAI_BASE, default https://api.openai.com/v1;
+             key: SMELT_OPENAI_KEY -> OPENAI_API_KEY; model required)
 - file     — hand-provided candidates (gate checks, fixtures)
 - fake     — like file, for CI usage without any model
+
+Model resolution: --model -> SMELT_MODEL -> SMELT_<PROVIDER>_MODEL -> provider default
+(only nvidia and local ship a default; the rest require an explicit model).
+Default provider resolution (when --provider is omitted): SMELT_PROVIDER -> first
+provider whose key exists (nvidia, gemini, openai, do) -> local.
 
 All HTTP goes through one retrying poster (3 retries, exponential backoff + jitter,
 honors Retry-After on 429/5xx). Transcripts log model + sizes + usage only — never keys.
@@ -27,9 +34,12 @@ from smelt_rs.core.failures import ProviderError
 
 RUST_ARG_TYPES = {"str": "&str", "int": "i64", "float": "f64", "bool": "bool",
                   "list[int]": "Vec<i64>", "list[str]": "Vec<String>",
+                  "list[float]": "Vec<f64>",
                   "tuple[int, int]": "(i64, i64)", "tuple[int,int]": "(i64, i64)"}
 RUST_RET_TYPES = {"str": "String", "int": "i64", "float": "f64", "bool": "bool",
-                  "list[int]": "Vec<i64>", "list[str]": "Vec<String>"}
+                  "list[int]": "Vec<i64>", "list[str]": "Vec<String>",
+                  "list[float]": "Vec<f64>",
+                  "tuple[int, int]": "(i64, i64)", "tuple[int,int]": "(i64, i64)"}
 
 RETRY_STATUS = (429, 500, 502, 503, 504)
 
@@ -128,7 +138,53 @@ Requirements:
 - Keep the `#[pymodule] fn smelt_ext(...)` glue exactly like the golden example, calling `wrap_pyfunction!({func_name}, m)?`.
 - Only the `pyo3` crate and Rust std. No unsafe. No build scripts. No file, network, or process access.
 - Behavior must match the Python function for all tested inputs, including edge cases (empty input, repeated characters, unicode).
-- Reply with ONLY the content of src/lib.rs. No explanation, no markdown fences."""
+- Reply with ONLY the content of src/lib.rs. No explanation, no markdown fences.
+
+Semantic fidelity (the divergence traps that fail verification most often):
+- Python ints are arbitrary precision; the tested domain is i64. Python `//` floors toward negative infinity and `%` takes the divisor's sign; Rust `/` truncates toward zero and `%` takes the dividend's sign. When the Python uses `//` or `%` on possibly-negative values, adjust the Rust result to floor semantics.
+- Python str iterates Unicode code points; Rust &str is UTF-8 bytes. Use `.chars()` (never `.bytes()`) when the Python iterates or indexes characters.
+- Where the Python raises, return `Err(...)` (any pyo3 exception type is fine); where the Python returns a value, never panic and never return Err.
+- Match the return container exactly: a Rust tuple `(a, b)` becomes a Python tuple; `Vec<T>` becomes a Python list. They are NOT interchangeable."""
+
+
+def build_repair_prompt(base_prompt: str, feedback: dict) -> str:
+    """Attempt 2+ prompt: the base contract plus EVIDENCE from the failed attempt.
+
+    feedback kinds: build_error (rustc stderr), safety_violation (scan findings),
+    verify_mismatch (failing cases: args, expected, got), no_gain (measured ratio).
+    The gates never change — only the information the model gets does.
+    """
+    kind = feedback.get("kind", "")
+    parts = [base_prompt, "", "---",
+             "REPAIR: your previous attempt (reproduced at the end) failed. "
+             "Fix the specific problem below and reply with ONLY the complete corrected src/lib.rs."]
+    if kind == "build_error":
+        parts.append("The Rust compiler rejected it:\n```\n"
+                     + str(feedback.get("stderr", ""))[-3000:] + "\n```")
+    elif kind == "safety_violation":
+        parts.append("The static safety scan rejected it: "
+                     + "; ".join(feedback.get("violations", []))
+                     + ". Only pyo3 + Rust std are allowed; no unsafe, no fs/net/process access.")
+    elif kind == "verify_mismatch":
+        sample = (feedback.get("sample") or [])[:5]
+        parts.append(f"It compiled, but {feedback.get('n_bad')} of {feedback.get('n_cases')} "
+                     "recorded oracle cases differ from the Python original. Failing cases "
+                     "(args, expected vs got — encoded values):\n```json\n"
+                     + json.dumps(sample, indent=1)[:3000] + "\n```\n"
+                     "Match the Python behavior on these cases AND keep every other case correct.")
+    elif kind == "load_error":
+        parts.append("It failed to load or run in the sandbox worker: "
+                     + str(feedback.get("error", ""))[:1000]
+                     + ". The module must import cleanly and the function must not abort the process.")
+    elif kind == "no_gain":
+        parts.append(f"It verified 100% of cases but measured only {feedback.get('ratio', 0):.2f}x "
+                     f"(conservative lower bound {feedback.get('ratio_ci_lo', 0):.2f}x); acceptance "
+                     "needs lower bound >= 1.5x. Keep behavior IDENTICAL and make it faster: avoid "
+                     "per-item allocations, batch work, use slices/iterators instead of collecting "
+                     "where possible. Do not change what the function computes.")
+    parts.append("Previous attempt:\n```rust\n"
+                 + str(feedback.get("candidate", ""))[:20000] + "\n```")
+    return "\n".join(parts)
 
 
 def strip_fences(text: str) -> str:
@@ -208,15 +264,27 @@ def _post_with_retries(url: str, body: dict, headers: dict, timeout: int, *,
 # ------------------------------------------------------------------ providers
 
 class FileProvider:
-    """Candidates read from file(s). Used for hand-injected rewrites and fixtures."""
+    """Candidates read from file(s), consumed IN ORDER across attempts (v0.8).
+
+    Previously every call re-read paths[:n], so multi-attempt runs (and the
+    repair loop) could never see candidate 2+. Now the cursor advances; when
+    the list is exhausted it wraps — a single candidate is retried, preserving
+    the gate-run semantics (wrong candidate -> honest rejection, exit 4).
+    """
 
     name = "file"
 
     def __init__(self, paths: list[str]):
         self.paths = paths
+        self._cursor = 0
 
     def generate(self, prompt: str, n: int = 1) -> list[str]:
-        return [open(p).read() for p in self.paths[:n]]
+        if not self.paths:
+            return []
+        out = [open(self.paths[(self._cursor + j) % len(self.paths)]).read()
+               for j in range(n)]
+        self._cursor += n
+        return out
 
 
 class FakeProvider(FileProvider):
@@ -226,17 +294,18 @@ class FakeProvider(FileProvider):
 
 
 class OpenAICompatProvider:
-    """Any OpenAI-compatible chat-completions server (llama.cpp, DigitalOcean Inference, ...)."""
+    """Any OpenAI-compatible chat-completions server (llama.cpp, NVIDIA NIM, DigitalOcean, ...)."""
 
     def __init__(self, *, base_url: str, model: str, name: str = "openai-compat",
-                 key_env: str | None = None, timeout: int = 300,
+                 key_env: str | tuple[str, ...] | None = None, timeout: int = 300,
                  transcript_path: str | None = None):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.name = name
         self.timeout = timeout
         self.transcript_path = transcript_path
-        self.api_key = resolve_secret(key_env) if key_env else None
+        names = (key_env,) if isinstance(key_env, str) else (key_env or ())
+        self.api_key = resolve_secret(*names) if names else None
         if self.api_key is None:
             self.api_key = resolve_secret("SMELT_PROVIDER_KEY")
 
@@ -244,10 +313,13 @@ class OpenAICompatProvider:
         return [self._one(prompt) for _ in range(n)]
 
     def _one(self, prompt: str) -> str:
+        # Reasoning models spend completion tokens on thinking before content;
+        # 2400 truncated them into content=null (observed on NVIDIA NIM).
+        max_tokens = int(os.environ.get("SMELT_MAX_TOKENS", "8192"))
         body = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 2400,
+            "max_tokens": max_tokens,
             "temperature": 0.2,
         }
         headers = {"Content-Type": "application/json"}
@@ -256,19 +328,23 @@ class OpenAICompatProvider:
         d = _post_with_retries(self.base_url + "/chat/completions", body, headers,
                                self.timeout, transcript_path=self.transcript_path,
                                model=self.model, prompt_chars=len(prompt))
-        text = ((d.get("choices") or [{}])[0].get("message") or {}).get("content", "")
+        choice = (d.get("choices") or [{}])[0]
+        text = (choice.get("message") or {}).get("content") or ""
         if not text.strip():
-            raise ProviderError("empty completion from provider")
+            raise ProviderError(
+                f"empty completion from provider (finish_reason={choice.get('finish_reason')}; "
+                "reasoning may have exhausted the token budget — raise SMELT_MAX_TOKENS)")
         return extract_lib_rs(text)
 
 
 class GeminiProvider:
-    """Google AI Studio (Gemini API), native REST. Default model: gemma-4-26b-a4b-it
-    (fast, free-tier friendly); pass gemma-4-31b-it for the strongest (slower) option."""
+    """Google AI Studio (Gemini API), native REST. Model-agnostic: any model the
+    endpoint serves (pass --model or set SMELT_GEMINI_MODEL). No built-in default
+    since v0.8 — the former Gemma defaults were removed."""
 
     name = "gemini"
 
-    def __init__(self, model: str = "gemma-4-26b-a4b-it", timeout: int = 300,
+    def __init__(self, model: str, timeout: int = 300,
                  transcript_path: str | None = None):
         self.model = model
         self.timeout = timeout
@@ -283,7 +359,7 @@ class GeminiProvider:
     def _one(self, prompt: str) -> str:
         url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
                f"{self.model}:generateContent")
-        gen: dict = {"maxOutputTokens": 3000}
+        gen: dict = {"maxOutputTokens": int(os.environ.get("SMELT_MAX_TOKENS", "8192"))}
         level = os.environ.get("SMELT_GEMINI_THINKING", "minimal")
         if level != "default":
             gen["thinkingConfig"] = {"thinkingLevel": level}
@@ -303,6 +379,50 @@ class GeminiProvider:
         return extract_lib_rs(text)
 
 
+# ------------------------------------------------------------------ resolution
+# v0.8: no model family is hardwired. Defaults exist only where they are generic
+# (nvidia: picked empirically on the corpus; local: the server ignores the name).
+# Everything else requires an explicit model — honest failure beats a stale default.
+
+NVIDIA_DEFAULT_MODEL = "mistralai/mistral-large-4-1t-a52b"
+
+PROVIDER_KEY_ENVS = {
+    "nvidia": ("NVIDIA_API_KEY",),
+    "gemini": ("GEMINI_API_KEY", "GOOGLE_API_KEY"),
+    "openai": ("SMELT_OPENAI_KEY", "OPENAI_API_KEY"),
+    "openrouter": ("SMELT_OPENAI_KEY", "OPENROUTER_API_KEY"),
+    "do": ("DIGITALOCEAN_TOKEN",),
+}
+
+
+def resolve_default_provider() -> str:
+    """--provider omitted: SMELT_PROVIDER env, else first provider with a key, else local."""
+    env = os.environ.get("SMELT_PROVIDER")
+    if env:
+        return env
+    for name in ("nvidia", "gemini", "openai", "do"):
+        if resolve_secret(*PROVIDER_KEY_ENVS[name]):
+            return name
+    return "local"
+
+
+def resolve_model(provider: str, model: str | None) -> str | None:
+    """--model -> SMELT_MODEL -> SMELT_<PROVIDER>_MODEL -> provider default (may be None)."""
+    if model:
+        return model
+    env = os.environ.get("SMELT_MODEL")
+    if env:
+        return env
+    env = os.environ.get(f"SMELT_{provider.upper().replace('-', '_')}_MODEL")
+    if env:
+        return env
+    if provider == "nvidia":
+        return NVIDIA_DEFAULT_MODEL
+    if provider == "local":
+        return "local-model"
+    return None
+
+
 def make_provider(name: str, model: str | None, candidate: str | None, run_dir: str | None):
     tp = os.path.join(run_dir, "transcripts", "provider.jsonl") if run_dir else None
     if name in ("file", "fake"):
@@ -312,21 +432,34 @@ def make_provider(name: str, model: str | None, candidate: str | None, run_dir: 
         if not paths:
             raise ProviderError(f"no candidate files match {candidate!r}")
         return FakeProvider(paths) if name == "fake" else FileProvider(paths)
+    model = resolve_model(name, model)
     if name == "local":
         base = os.environ.get("SMELT_LOCAL_BASE", "http://127.0.0.1:8080/v1")
-        return OpenAICompatProvider(base_url=base, model=model or "gemma-4-e2b-qat",
+        return OpenAICompatProvider(base_url=base, model=model or "local-model",
                                     name="local", transcript_path=tp)
+    if name == "nvidia":
+        if not resolve_secret("NVIDIA_API_KEY"):
+            raise ProviderError("no NVIDIA key found — set NVIDIA_API_KEY in env or ~/.hermes/.env")
+        return OpenAICompatProvider(base_url="https://integrate.api.nvidia.com/v1",
+                                    model=model or NVIDIA_DEFAULT_MODEL, name="nvidia",
+                                    key_env="NVIDIA_API_KEY", transcript_path=tp)
     if name in ("do", "digitalocean"):
+        if not model:
+            raise ProviderError("the do provider needs a model — pass --model or set SMELT_DO_MODEL")
         return OpenAICompatProvider(base_url="https://inference.do-ai.run/v1",
-                                    model=model or "gemma-4-31B-it", name="do",
+                                    model=model, name="do",
                                     key_env="DIGITALOCEAN_TOKEN", transcript_path=tp)
     if name in ("openai", "openai-compat", "openrouter"):
-        default = "https://openrouter.ai/api/v1" if name == "openrouter" else ""
+        default = "https://openrouter.ai/api/v1" if name == "openrouter" else "https://api.openai.com/v1"
         base = os.environ.get("SMELT_OPENAI_BASE", default)
-        if not base:
-            raise ProviderError("set SMELT_OPENAI_BASE for the openai-compat provider")
-        return OpenAICompatProvider(base_url=base, model=model or "gemma-4-31b-it",
-                                    name=name, key_env="SMELT_OPENAI_KEY", transcript_path=tp)
+        if not model:
+            raise ProviderError(f"the {name} provider needs a model — pass --model or set SMELT_MODEL")
+        return OpenAICompatProvider(base_url=base, model=model,
+                                    name=name, key_env=PROVIDER_KEY_ENVS.get(name, ("SMELT_OPENAI_KEY",)),
+                                    transcript_path=tp)
     if name == "gemini":
-        return GeminiProvider(model=model or "gemma-4-26b-a4b-it", transcript_path=tp)
-    raise ProviderError(f"unknown provider {name!r} (local|gemini|do|openai|file|fake)")
+        if not model:
+            raise ProviderError("the gemini provider needs a model — pass --model or set "
+                                "SMELT_GEMINI_MODEL (built-in Gemma defaults were removed in v0.8)")
+        return GeminiProvider(model=model, transcript_path=tp)
+    raise ProviderError(f"unknown provider {name!r} (nvidia|gemini|local|do|openai|openrouter|file|fake)")

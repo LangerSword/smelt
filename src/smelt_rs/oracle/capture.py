@@ -23,6 +23,38 @@ EDGE_STRINGS = ["", "a", "aa", "aaa", "aab", "abb", "abab", "a" * 8, "a" * 33,
 EDGE_INTS = [0, 1, -1, 7, 255, 10 ** 6, 2 ** 31, 2 ** 63 - 1, -(2 ** 63)]
 EDGE_FLOATS = [0.0, -0.0, 1.5, -2.25, 3.14159, 1e-12]
 EDGE_LISTS_INT = [[], [0], [1, 2, 3], list(range(32))]
+EDGE_LISTS_FLOAT = [[], [0.0], [1.5, -2.25, 3.14159], [1e-12] * 8, [-0.0, 0.0],
+                    [float(i) for i in range(32)]]
+
+I64_MIN, I64_MAX = -(2 ** 63), 2 ** 63 - 1
+
+
+def first_out_of_i64(enc: dict | None):
+    """First encoded int outside the i64 domain (nested containers included), else None.
+
+    v0.8 domain guard: the Rust mapping returns i64, so an output beyond i64 can
+    never be matched by an i64 rewrite. Refusing at capture (typed, with a hint)
+    is honest; letting it surface later as a verify_mismatch would blame the model
+    for a domain limit. bools encode as t='bool', floats as t='float' — untouched.
+    """
+    if enc is None:
+        return None
+    t = enc.get("t")
+    if t == "int":
+        v = enc.get("v")
+        if isinstance(v, int) and not (I64_MIN <= v <= I64_MAX):
+            return v
+    elif t in ("list", "tuple"):
+        for x in enc.get("v", []):
+            r = first_out_of_i64(x)
+            if r is not None:
+                return r
+    elif t == "dict":
+        for x in enc.get("v", {}).values():
+            r = first_out_of_i64(x)
+            if r is not None:
+                return r
+    return None
 
 
 def gen_cases_for_param(annotation: str, rnd: random.Random, n_random: int):
@@ -41,14 +73,18 @@ def gen_cases_for_param(annotation: str, rnd: random.Random, n_random: int):
         random_cases = [[rnd.randint(-50, 50) for _ in range(rnd.randint(0, 16))]
                         for _ in range(n_random)]
         return random_cases, EDGE_LISTS_INT
+    if annotation == "list[float]":
+        random_cases = [[round(rnd.uniform(-50, 50), 4) for _ in range(rnd.randint(0, 16))]
+                        for _ in range(n_random)]
+        return random_cases, EDGE_LISTS_FLOAT
     if annotation.replace(" ", "") == "tuple[int,int]":
         random_cases = [[rnd.randint(-50, 50), rnd.randint(-50, 50)] for _ in range(n_random)]
         edges = [[0, 0], [1, 1], [-1, -1], [1, -1], [-50, 50], [50, -50], [0, 50], [-7, 0]]
         return random_cases, edges
     raise RefusedTarget(
         f"unsupported parameter type {annotation!r} — refactor hint: use one of "
-        "str/int/float/bool/list[int]/list[str]/tuple[int, int], or convert the argument "
-        "before the call")
+        "str/int/float/bool/list[int]/list[float]/list[str]/tuple[int, int], or convert "
+        "the argument before the call")
 
 
 def coerce_specs(params: list[dict]) -> list:
@@ -96,8 +132,13 @@ def generate_cases(params: list[dict], target_cases: int, seed: int) -> list[dic
 
 
 def capture_oracle(*, run_dir: str, target_path: str, module_name: str, func_name: str,
-                   python_exe: str, target_cases: int, seed: int):
-    """Returns (meta dict, oracle hash). Raises CaptureFailed / OracleTampered."""
+                   python_exe: str, target_cases: int, seed: int, domain_guard: bool = True):
+    """Returns (meta dict, oracle hash). Raises CaptureFailed / OracleTampered.
+
+    domain_guard=False is a harness-only knob (meta-eval): it lets the verifier
+    battery run against targets that deliberately straddle the i64 domain edge.
+    Production runs keep the guard on.
+    """
     # 1. introspect (types only; the worker imports the module, not the parent)
     req = {"mode": "introspect", "target_path": target_path, "module": module_name, "func": func_name}
     try:
@@ -109,8 +150,9 @@ def capture_oracle(*, run_dir: str, target_path: str, module_name: str, func_nam
         if "import" in err.lower() or "no module named" in err.lower():
             raise RefusedTarget(
                 f"could not load the target module: {err} — package layouts (relative "
-                "imports) are not supported yet; refactor hint: point smelt at a "
-                "standalone module or copy the target file out of the package")
+                "imports) ARE supported since v0.8, so this is a real import failure; "
+                "refactor hint: install the missing dependency into the smelt "
+                "environment, or fix the broken import in the target's package")
         raise CaptureFailed(f"could not load the target: {err}")
     params = intro.get("params") or []
     ret_ann = intro.get("return_annotation")
@@ -146,6 +188,17 @@ def capture_oracle(*, run_dir: str, target_path: str, module_name: str, func_nam
     mutated = [r["id"] for r in res["results"] if r.get("mutated")]
     if mutated:
         raise CaptureFailed(f"function mutates its arguments (cases: {mutated[:3]})")
+
+    # 3.5 i64 domain guard (v0.8): refuse outputs the i64 mapping can never match.
+    if domain_guard:
+        for case, r in zip(cases, res["results"]):
+            if r.get("ok"):
+                bad = first_out_of_i64(r.get("out"))
+                if bad is not None:
+                    raise RefusedTarget(
+                        f"output leaves the i64 domain (case {case['case_id']}: {bad}) — "
+                        "smelt rewrites return i64; refactor hint: bound the output domain "
+                        "(scale inputs down) or split the big-int part out of the function")
 
     # 4. freeze
     entries = []

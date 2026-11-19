@@ -38,6 +38,32 @@ jobs:
           code=$?
           echo "exit=$code"
           test "$code" -eq 4
+      - name: repair gate (wrong -> evidence -> correct must exit 0)
+        run: |
+          mkdir -p /tmp/smelt-repair-cands
+          cp tests/fixtures/candidates/rle_encode_wrong.rs /tmp/smelt-repair-cands/01_wrong.rs
+          cp tests/fixtures/candidates/rle_encode_correct.rs /tmp/smelt-repair-cands/02_correct.rs
+          uv run smelt run examples/demo/run_length.py:rle_encode --provider fake --candidate '/tmp/smelt-repair-cands/*.rs' --cases 60
+      - name: domain guard (out-of-i64 output must exit 3)
+        run: |
+          set +e
+          uv run smelt capture examples/demo/scale_up.py:scale_up --cases 60
+          code=$?
+          echo "exit=$code"
+          test "$code" -eq 3
+
+  plugin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+      - run: uv sync --dev
+      - name: vendored plugin core in sync
+        run: python3 scripts/sync_plugin.py --check
+      - name: served-surface smoke (register + hook dispatch + real handler)
+        run: SMELT_BIN="$PWD/.venv/bin/smelt" python3 plugin/smoke_load.py
 
   go:
     runs-on: ubuntu-latest

@@ -1,0 +1,188 @@
+{
+  "summary": {
+    "tasks": [
+      "evals/corpus/string/caesar_shift.py:caesar_shift",
+      "evals/corpus/int/collatz_steps.py:collatz_steps",
+      "evals/corpus/list/max_subarray.py:max_subarray"
+    ],
+    "max_calls": 60,
+    "task_timeout_s": 420,
+    "provider_calls": {
+      "attempts": 17,
+      "ok": 16,
+      "by_model": {
+        "mistralai/mistral-large-4-1t-a52b": 3,
+        "nvidia/nemotron-3.5-lightning-30b-a3b": 4,
+        "minimaxai/minimax-m3.1-flash": 4,
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": 5
+      }
+    },
+    "per_model": {
+      "mistralai/mistral-large-4-1t-a52b": {
+        "tasks": 3,
+        "accepted": 2,
+        "median_lb": 5.323535866082703,
+        "calls": 3
+      },
+      "nvidia/nemotron-3.5-lightning-30b-a3b": {
+        "tasks": 3,
+        "accepted": 2,
+        "median_lb": 6.627520392205993,
+        "calls": 4
+      },
+      "minimaxai/minimax-m3.1-flash": {
+        "tasks": 3,
+        "accepted": 2,
+        "median_lb": 7.131584580648342,
+        "calls": 4
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": {
+        "tasks": 3,
+        "accepted": 1,
+        "median_lb": 8.506723356761531,
+        "calls": 5
+      }
+    },
+    "ranking": [
+      "mistralai/mistral-large-4-1t-a52b",
+      "minimaxai/minimax-m3.1-flash",
+      "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+    ],
+    "selected_default": "mistralai/mistral-large-4-1t-a52b"
+  },
+  "results": [
+    {
+      "model": "mistralai/mistral-large-4-1t-a52b",
+      "target": "evals/corpus/string/caesar_shift.py:caesar_shift",
+      "exit_code": 0,
+      "status": "accepted",
+      "attempts": 1,
+      "speedup": 2.3671217977198196,
+      "speedup_lb": 1.81116696771089,
+      "reason": "verified 225/225 cases; speedup 2.37x (conservative lower bound 1.81x)",
+      "wall_s": 190.2
+    },
+    {
+      "model": "mistralai/mistral-large-4-1t-a52b",
+      "target": "evals/corpus/int/collatz_steps.py:collatz_steps",
+      "exit_code": 0,
+      "status": "accepted",
+      "attempts": 1,
+      "speedup": 8.895508316472219,
+      "speedup_lb": 8.835904764454517,
+      "reason": "verified 209/209 cases; speedup 8.90x (conservative lower bound 8.84x)",
+      "wall_s": 113.3
+    },
+    {
+      "model": "mistralai/mistral-large-4-1t-a52b",
+      "target": "evals/corpus/list/max_subarray.py:max_subarray",
+      "exit_code": -1,
+      "status": "timeout",
+      "attempts": 0,
+      "speedup": null,
+      "speedup_lb": null,
+      "reason": "task wall-clock cap (420s) \u2014 provider call did not return (NIM stall)",
+      "wall_s": 420.0
+    },
+    {
+      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "target": "evals/corpus/string/caesar_shift.py:caesar_shift",
+      "exit_code": 0,
+      "status": "accepted",
+      "attempts": 1,
+      "speedup": 4.405917362507428,
+      "speedup_lb": 4.283658429084384,
+      "reason": "verified 225/225 cases; speedup 4.41x (conservative lower bound 4.28x)",
+      "wall_s": 25.7
+    },
+    {
+      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "target": "evals/corpus/int/collatz_steps.py:collatz_steps",
+      "exit_code": 0,
+      "status": "accepted",
+      "attempts": 1,
+      "speedup": 9.070528210301648,
+      "speedup_lb": 8.9713823553276,
+      "reason": "verified 209/209 cases; speedup 9.07x (conservative lower bound 8.97x)",
+      "wall_s": 27.8
+    },
+    {
+      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "target": "evals/corpus/list/max_subarray.py:max_subarray",
+      "exit_code": 5,
+      "status": "error",
+      "attempts": 2,
+      "speedup": 1.110498481864583,
+      "speedup_lb": 1.0751719676046323,
+      "reason": "provider_error: empty completion from provider (finish_reason=length; reasoning may have exhausted the token budget \u2014 raise SMELT_MAX_TOKENS)",
+      "wall_s": 79.8
+    },
+    {
+      "model": "minimaxai/minimax-m3.1-flash",
+      "target": "evals/corpus/string/caesar_shift.py:caesar_shift",
+      "exit_code": 0,
+      "status": "accepted",
+      "attempts": 1,
+      "speedup": 5.550053844485019,
+      "speedup_lb": 5.496915109497476,
+      "reason": "verified 225/225 cases; speedup 5.55x (conservative lower bound 5.50x)",
+      "wall_s": 121.1
+    },
+    {
+      "model": "minimaxai/minimax-m3.1-flash",
+      "target": "evals/corpus/int/collatz_steps.py:collatz_steps",
+      "exit_code": 0,
+      "status": "accepted",
+      "attempts": 1,
+      "speedup": 8.911160771116105,
+      "speedup_lb": 8.766254051799207,
+      "reason": "verified 209/209 cases; speedup 8.91x (conservative lower bound 8.77x)",
+      "wall_s": 94.1
+    },
+    {
+      "model": "minimaxai/minimax-m3.1-flash",
+      "target": "evals/corpus/list/max_subarray.py:max_subarray",
+      "exit_code": 5,
+      "status": "error",
+      "attempts": 2,
+      "speedup": 1.141763873243976,
+      "speedup_lb": 1.1348120897071858,
+      "reason": "provider_error: empty completion from provider (finish_reason=length; reasoning may have exhausted the token budget \u2014 raise SMELT_MAX_TOKENS)",
+      "wall_s": 361.7
+    },
+    {
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+      "target": "evals/corpus/string/caesar_shift.py:caesar_shift",
+      "exit_code": 5,
+      "status": "error",
+      "attempts": 1,
+      "speedup": null,
+      "speedup_lb": null,
+      "reason": "provider_error: empty completion from provider (finish_reason=length; reasoning may have exhausted the token budget \u2014 raise SMELT_MAX_TOKENS)",
+      "wall_s": 70.9
+    },
+    {
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+      "target": "evals/corpus/int/collatz_steps.py:collatz_steps",
+      "exit_code": 0,
+      "status": "accepted",
+      "attempts": 1,
+      "speedup": 8.583733059598096,
+      "speedup_lb": 8.506723356761531,
+      "reason": "verified 209/209 cases; speedup 8.58x (conservative lower bound 8.51x)",
+      "wall_s": 18.2
+    },
+    {
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+      "target": "evals/corpus/list/max_subarray.py:max_subarray",
+      "exit_code": 4,
+      "status": "rejected",
+      "attempts": 3,
+      "speedup": 1.1462732525927688,
+      "speedup_lb": 1.1179256199144108,
+      "reason": "no candidate accepted within 3 attempt(s); last: reject_no_meaningful_gain: ratio 1.15x, lower bound 1.12x",
+      "wall_s": 83.6
+    }
+  ]
+}

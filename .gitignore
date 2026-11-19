@@ -18,3 +18,7 @@ site/.lighthouseci/
 
 # stray Go build output
 /furnace
+
+# eval run artifacts (results tables ARE committed; raw run dirs are not)
+evals/runs-bakeoff/
+evals/runs-blind*/

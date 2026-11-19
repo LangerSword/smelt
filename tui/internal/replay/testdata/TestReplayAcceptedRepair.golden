@@ -1,0 +1,41 @@
+ FURNACE v0.8 · replay · 261119-025423-4c8849                                         fake · — (no model: fake fixture)
+ select✔ ─▶ oracle✔ ─▶ generate✔ ─▶ build✔ ─▶ verify✔ ─▶ bench✔ ─▶ verdict★  ╭─────────────────────────────────────────────────────╮
+ VERDICT: ◆ INGOT                                                            │status                                               │
+ accepted — verified rewrite, speedup above the threshold                    │oracle   [██████████████████████████████████████████…│
+ verified 85/85 cases; speedup 2.57x (conservative lower bound 2.54x)        │cases    85/85 passed                                │
+╭─────────────────────────────────────────────────────╮                      │attempts 2 · 1 repair(s)                             │
+│target   run_length.py:rle_encode                    │                      │speedup  2.57x · lb 2.54x                            │
+│provider fake · model — (no model: fake fixture)     │                      │last     reason · verified 85/85 cases; speedup 2.57…│
+│oracle   85 cases · sha 813804c8…                    │                      ╰─────────────────────────────────────────────────────╯
+│attempts 2 · 1 repair(s)                             │                                                                             
+│speedup  [███████░░░░░░░░░░░░░░░░░░░░░░] 2.57x lb 2.…│                                                                             
+│time     5s                                          │                                                                             
+╰─────────────────────────────────────────────────────╯                                                                             
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ log · 9 lines                                                                                                    │
+│21:24:23 · run start · provider=fake model=— (no model: fake fixture)                                             │
+│21:24:23 · oracle frozen · 85 cases · sha 813804c805d4d5ca                                                        │
+│21:24:23 · attempt 1 · generate                                                                                   │
+│21:24:25 · ✗ verify mismatch · attempt 1 · 70 case(s) differ                                                      │
+│21:24:25 · attempt 2 · generate                                                                                   │
+│21:24:25 · ↻ repair · attempt 2 · evidence: mismatched cases                                                      │
+│21:24:28 · accept · 2.57x (lower bound 2.54x)                                                                     │
+│21:24:28 · end · accepted                                                                                         │
+│reason · verified 85/85 cases; speedup 2.57x (conservative lower bound 2.54x)                                     │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+│                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+ done · accepted · 5s · verdict INGOT
+ ? help · tab panes · ↑/↓ j/k scroll · r result · d diff · q quit

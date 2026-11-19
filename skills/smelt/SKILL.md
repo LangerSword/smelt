@@ -2,22 +2,24 @@
 name: smelt
 description: Convert ONE slow pure Python function into an equivalent pyo3 Rust extension, verified by a frozen differential oracle — code, not the model, checks equivalence and measures the real speedup. Use when a single Python function (not the whole project) is too slow, when asked to "make this function faster", "port this function to Rust", or "optimize this hot path with proof". Refuses impure functions; rejects rewrites with no real speedup; never accepts a wrong rewrite on the tested inputs. Do not use for whole-project ports, impure functions (I/O, globals, randomness), functions with no runnable inputs, or machines without a Rust toolchain.
 license: MIT
-compatibility: Requires Python 3.11+, Rust (cargo, rustc) and crates.io access for the first build. Model calls need either a Gemini API key (GEMINI_API_KEY, falls back to GOOGLE_API_KEY) or any OpenAI-compatible server (llama.cpp locally). The verify and benchmark steps need no network.
+compatibility: Requires Python 3.11+, Rust (cargo, rustc) and crates.io access for the first build. Model calls need any supported provider key (NVIDIA_API_KEY, GEMINI_API_KEY/GOOGLE_API_KEY, DIGITALOCEAN_TOKEN, SMELT_OPENAI_KEY/OPENAI_API_KEY) or a local OpenAI-compatible server (llama.cpp). The verify and benchmark steps need no network.
 metadata:
   author: LangerSword
   homepage: https://github.com/LangerSword/smelt
-  version: "0.4"
+  version: "0.8"
 ---
 
 # smelt — verified Python→Rust hotspot conversion
 
 smelt takes ONE slow, pure Python function and freezes what it actually does into a
 differential oracle (200+ recorded input/output cases, hashed and read-only). A model
-(Gemma 4) writes an equivalent Rust extension (`pyo3`). **Code, not the model, checks
-that the Rust answers identically on every recorded case.** Only then does smelt
-benchmark both sides and report the measured speedup with a confidence interval.
-Anything that fails the oracle or shows no real gain is rejected. The original Python
-function stays as the fallback.
+— any model, any provider (v0.8 is model-agnostic; no family is hardwired) — writes
+an equivalent Rust extension (`pyo3`). **Code, not the model, checks that the Rust
+answers identically on every recorded case.** Only then does smelt benchmark both
+sides and report the measured speedup with a confidence interval. Anything that
+fails the oracle or shows no real gain is rejected; attempt 2+ receives the concrete
+failure evidence (compiler errors, mismatched cases) to repair itself — the gates
+never change. The original Python function stays as the fallback.
 
 The honest claim: *no wrong rewrite is accepted on the tested inputs.*
 
@@ -42,15 +44,19 @@ The honest claim: *no wrong rewrite is accepted on the tested inputs.*
 2. **Check the target is pure.** The purity probe scans for blocked imports
    (`os`, `socket`, `time`, `random`, …), blocked calls (`open`, `eval`, …) and
    global/nonlocal state. Impure targets are refused with the reasons listed.
-3. **Run:** `smelt run path/to/file.py:function --provider gemini --model gemma-4-26b-a4b-it`
+3. **Run:** `smelt run path/to/file.py:function` (provider auto-resolves from your
+   keys; or `--provider nvidia|gemini|local|do|openai|openrouter --model <name>`).
    - Oracle capture: generated seeded cases + a fixed edge battery (empty, repeats,
-     long runs, unicode), recorded by RUNNING the current function.
+     long runs, unicode), recorded by RUNNING the current function. Outputs outside
+     the i64 domain are refused here with a hint (v0.8 domain guard).
    - Generation attempts (max 3): the model writes `src/lib.rs`, which must compile
      against smelt's pinned scaffold (pyo3 =0.29.3, golden example embedded in the
-     prompt — this is the fix for API drift).
+     prompt — this is the fix for API drift). Attempt 2+ gets the previous candidate
+     plus failure evidence (`--repair`, default on; `--no-repair` to disable).
    - Safety scan of every candidate before build: no `unsafe`, no extra crates, no
      build scripts, no `std::net`/`std::process`/`std::fs`, no `include_*!`/`env!`.
    - Verify: the built extension runs every oracle case in a sandboxed worker.
+     Tuple returns must be tuples (a Vec return is rejected — container fidelity).
    - Benchmark: warmup + ≥7 measured reps; median + bootstrap 95% CI; acceptance
      requires the CONSERVATIVE lower bound ≥ 1.5x. Flags: `suspicious_scaling`
      (ratios >100x re-checked at 4x workload), `timer_limited` (<0.5 ms Rust median).
@@ -65,10 +71,10 @@ The honest claim: *no wrong rewrite is accepted on the tested inputs.*
 | code | meaning |
 |---|---|
 | 0 | accepted — verified, speedup ≥ conservative 1.5x |
-| 3 | refused — impure target (a correct, explicit outcome) |
+| 3 | refused — impure target, unsupported shape, or out-of-i64-domain outputs (a correct, explicit outcome) |
 | 4 | rejected — no acceptable rewrite within budget (also correct) |
 | 5 | harness/internal error (report the run dir) |
-| 2 | configuration error (bad target, unsupported type) |
+| 2 | configuration error (bad target, missing required model) |
 
 ## Safety rules
 
@@ -76,8 +82,21 @@ The honest claim: *no wrong rewrite is accepted on the tested inputs.*
   separate worker process with resource limits; smelt never writes into your project.
 - Secrets resolve env → project `.env` → `~/.hermes/.env` and are never logged;
   transcripts record model + sizes + usage only.
-- Out-of-domain inputs: integers are tested inside the 64-bit range; big Python ints
-  are outside the tested domain and are never silently truncated (documented in README).
+- Out-of-domain inputs/outputs: integers are tested inside the 64-bit range; targets
+  whose recorded outputs leave i64 are refused at capture with a hint (v0.8). Big
+  Python ints are never silently truncated (documented in README).
+- Supported types (v0.8): params str/int/float/bool/list[int]/list[float]/list[str]/
+  tuple[int, int] (any count, positional); returns the same set plus tuple[int, int].
+  Package layouts with relative imports load in package context.
+
+## Agent surfaces (v0.8)
+
+smelt is also a plugin: `smelt mcp` serves the same loop as an MCP server
+(stdio, zero extra dependencies) for any MCP-capable agent; `plugin/` is a
+Hermes plugin (10 tools + approval hook + this skill); the repo root is a
+Claude Code plugin (commands + PostToolUse hint hook + .mcp.json). Detached
+run jobs: `smelt_run` returns a job_id, poll `smelt_job`, then `smelt_verify`
++ `smelt_report`. See docs/agent-integration.md in the repo.
 
 ## References
 

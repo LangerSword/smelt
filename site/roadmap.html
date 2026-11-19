@@ -51,7 +51,7 @@
           </div>
           <div class="stack-item">
             <h3>Does it work on any code?</h3>
-            <p class="text-dim">No. It works on ONE pure function of simple types (str / int / float / bool / list[int] / list[str]). Impure targets (I/O, randomness, time, globals) are refused with a hint. Package layouts with relative imports are refused today. Rejections are honest outcomes, not failures.</p>
+            <p class="text-dim">No. It works on ONE pure function of supported types (str / int / float / bool / list[int] / list[float] / list[str] / tuple[int, int], single or multi-parameter; tuple returns too). Impure targets (I/O, randomness, time, globals) are refused with a hint. Package layouts with relative imports load in package context (v0.8). Outputs outside the i64 domain are refused at capture. Rejections are honest outcomes, not failures.</p>
           </div>
           <div class="stack-item">
             <h3>Is the generated code safe?</h3>
@@ -59,7 +59,7 @@
           </div>
           <div class="stack-item">
             <h3>Which models?</h3>
-            <p class="text-dim"><code>gemma-4-26b-a4b-it</code> (default, free-tier friendly) and <code>gemma-4-31b-it</code> (strongest, slower) via the Gemini API. A fully offline <code>local</code> provider (llama.cpp, <code>gemma-4-e2b-qat</code>) is also tested. Every result in this repo names the exact model that produced it.</p>
+            <p class="text-dim">Any model, any provider — v0.8 removed the hardwired Gemma-4 defaults. The <code>nvidia</code> provider's default is picked empirically by a bake-off (<code>scripts/model_bakeoff.py</code>); <code>gemini</code>, <code>do</code>, <code>openai</code>/<code>openrouter</code> take an explicit model; <code>local</code> runs fully offline on llama.cpp. Every result in this repo names the exact model that produced it — including the historical Gemma-4 tables.</p>
           </div>
           <div class="stack-item">
             <h3>Is it a thin wrapper around a model?</h3>

@@ -1,5 +1,11 @@
 # Submission payload — DRAFT (do NOT submit until the maintainer says "submit now")
 
+> **HISTORICAL (v0.7, Gemma-4 era).** This is the sudo Hacktober (Oct 2026)
+> submission draft, kept verbatim as the event record. Since v0.8 (Nov 2026)
+> smelt is model-agnostic — the Gemma-4 defaults were removed; see README and
+> AI_USE.md for the current state. Do not reuse these fields for a new
+> submission without updating them.
+
 Platform: **mlh.com OrganizerHQ → Challenges → Add Submission** (sudo Hacktober).
 
 ## Fields

@@ -1,0 +1,144 @@
+{
+  "kind": "verify_mismatch",
+  "n_bad": 70,
+  "n_cases": 85,
+  "sample": [
+    {
+      "case_id": "r0000",
+      "why": "output differs",
+      "args": [
+        "!!accebb! a1ae1dcbb abbbca !bbebace "
+      ],
+      "expected": {
+        "t": "str",
+        "v": "!2a1c2e1b2!1 1a111a1e111d1c1b2 1a1b3c1a1 1!1b2e1b1a1c1e1 1"
+      },
+      "got": {
+        "t": "str",
+        "v": "!2ac2eb2! a1ae1dcb2 ab3ca !b2ebace "
+      },
+      "expected_err": null,
+      "got_err": null
+    },
+    {
+      "case_id": "r0001",
+      "why": "output differs",
+      "args": [
+        "eecbce 1dcdeaab"
+      ],
+      "expected": {
+        "t": "str",
+        "v": "e2c1b1c1e1 111d1c1d1e1a2b1"
+      },
+      "got": {
+        "t": "str",
+        "v": "e2cbce 1dcdea2b"
+      },
+      "expected_err": null,
+      "got_err": null
+    },
+    {
+      "case_id": "r0002",
+      "why": "output differs",
+      "args": [
+        "bbda 1ebaaedcbe!!!e1cdde1d c1bd1e!d"
+      ],
+      "expected": {
+        "t": "str",
+        "v": "b2d1a1 111e1b1a2e1d1c1b1e1!3e111c1d2e111d1 1c111b1d111e1!1d1"
+      },
+      "got": {
+        "t": "str",
+        "v": "b2da 1eba2edcbe!3e1cd2e1d c1bd1e!d"
+      },
+      "expected_err": null,
+      "got_err": null
+    },
+    {
+      "case_id": "r0003",
+      "why": "output differs",
+      "args": [
+        "ea!ad1dd1b"
+      ],
+      "expected": {
+        "t": "str",
+        "v": "e1a1!1a1d111d211b1"
+      },
+      "got": {
+        "t": "str",
+        "v": "ea!ad1d21b"
+      },
+      "expected_err": null,
+      "got_err": null
+    },
+    {
+      "case_id": "r0004",
+      "why": "output differs",
+      "args": [
+        "bde1b!ad!ead1aadbad11!aa! ! 1a bca!bee"
+      ],
+      "expected": {
+        "t": "str",
+        "v": "b1d1e111b1!1a1d1!1e1a1d111a2d1b1a1d112!1a2!1 1!1 111a1 1b1c1a1!1b1e2"
+      },
+      "got": {
+        "t": "str",
+        "v": "bde1b!ad!ead1a2dbad12!a2! ! 1a bca!be2"
+      },
+      "expected_err": null,
+      "got_err": null
+    },
+    {
+      "case_id": "r0005",
+      "why": "output differs",
+      "args": [
+        " !e! e1ba"
+      ],
+      "expected": {
+        "t": "str",
+        "v": " 1!1e1!1 1e111b1a1"
+      },
+      "got": {
+        "t": "str",
+        "v": " !e! e1ba"
+      },
+      "expected_err": null,
+      "got_err": null
+    },
+    {
+      "case_id": "r0006",
+      "why": "output differs",
+      "args": [
+        "1! b!1a! bad!!e"
+      ],
+      "expected": {
+        "t": "str",
+        "v": "11!1 1b1!111a1!1 1b1a1d1!2e1"
+      },
+      "got": {
+        "t": "str",
+        "v": "1! b!1a! bad!2e"
+      },
+      "expected_err": null,
+      "got_err": null
+    },
+    {
+      "case_id": "r0007",
+      "why": "output differs",
+      "args": [
+        "bbeae!cae!d aa!11bcc 1d!d!baa 1 c1 ae"
+      ],
+      "expected": {
+        "t": "str",
+        "v": "b2e1a1e1!1c1a1e1!1d1 1a2!112b1c2 111d1!1d1!1b1a2 111 1c111 1a1e1"
+      },
+      "got": {
+        "t": "str",
+        "v": "b2eae!cae!d a2!12bc2 1d!d!ba2 1 c1 ae"
+      },
+      "expected_err": null,
+      "got_err": null
+    }
+  ],
+  "candidate": "// Intentionally WRONG candidate: omits the count for single-character runs.\n// The oracle must catch this (spec: counts are always included).\nuse pyo3::prelude::*;\n\n#[pyfunction]\nfn rle_encode(text: &str) -> String {\n    let chars: Vec<char> = text.chars().collect();\n    let mut out = String::new();\n    let mut i = 0;\n    while i < chars.len() {\n        let mut j = i;\n        while j < chars.len() && chars[j] == chars[i] {\n            j += 1;\n        }\n        out.push(chars[i]);\n        if j - i > 1 {\n            out.push_str(&(j - i).to_string());\n        }\n        i = j;\n    }\n    out\n}\n\n#[pymodule]\nfn smelt_ext(m: &Bound<'_, PyModule>) -> PyResult<()> {\n    m.add_function(wrap_pyfunction!(rle_encode, m)?)?;\n    Ok(())\n}\n"
+}

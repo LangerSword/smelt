@@ -1,6 +1,6 @@
 [project]
 name = "smelt-rs"
-version = "0.6.0"
+version = "0.8.0"
 description = "Smelt a slow pure Python function into a verified Rust extension. Oracle first, speedup measured — only proven metal ships. Not a networking tool."
 readme = "README.md"
 requires-python = ">=3.11"

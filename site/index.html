@@ -70,7 +70,8 @@
             <span class="trust-item">Python 3.11+<small>the source language</small></span>
             <span class="trust-item">Rust · PyO3 0.29.3<small>the target</small></span>
             <span class="trust-item">maturin<small>packaging</small></span>
-            <span class="trust-item">Gemma 4<small>candidate writer</small></span>
+            <span class="trust-item">NVIDIA NIM<small>verified provider</small></span>
+            <span class="trust-item">any model<small>candidate writer</small></span>
             <span class="trust-item">llama.cpp<small>offline arm</small></span>
             <span class="trust-item">MIT<small>license</small></span>
           </div>
@@ -101,22 +102,22 @@
           <div class="feature-media">
             <div class="terminal" id="demo-terminal"
                  data-lines='[
-                   ["prompt","$ smelt run examples/demo/run_length.py:rle_encode --provider gemini",600],
-                   ["dim","  provider: gemini · model: gemma-4-26b-a4b-it",300],
+                   ["prompt","$ smelt run examples/demo/run_length.py:rle_encode",600],
+                   ["dim","  provider: nvidia (auto) · model: mistralai/mistral-large-4-1t-a52b",300],
                    ["","  ▶ select    purity_ok",400],
-                   ["","  ▶ oracle    capture 225 cases · hash 60ec55285b23",500],
-                   ["","  ▶ generate  writing lib.rs via gemma-4-26b-a4b-it",900],
+                   ["","  ▶ oracle    capture 85 cases · hash 172f32d1ba65",500],
+                   ["","  ▶ generate  writing lib.rs via mistralai/mistral-large-4-1t-a52b",900],
                    ["","  ▶ build     ok (pyo3 =0.29.3)",600],
-                   ["","  ▶ verify    pass 225/225",600],
-                   ["","  ▶ bench     rust 11.17ms · python 46.21ms",700],
-                   ["bold","  ✔ ACCEPTED — speedup 4.14x (conservative lower bound 4.00x)",0],
+                   ["","  ▶ verify    pass 85/85",600],
+                   ["","  ▶ bench     rust 13.70ms · python 39.45ms",700],
+                   ["bold","  ✔ ACCEPTED — speedup 2.88x (conservative lower bound 2.86x)",0],
                    ["ok","  INGOT",0]
                  ]'>
               <div class="terminal-bar">
                 <span class="terminal-dot r"></span>
                 <span class="terminal-dot y"></span>
                 <span class="terminal-dot g"></span>
-                <span class="terminal-title">smelt — recorded run · gemma-4-26b-a4b-it</span>
+                <span class="terminal-title">smelt — recorded run · mistralai/mistral-large-4-1t-a52b</span>
               </div>
               <div class="terminal-body" aria-live="polite"></div>
             </div>
@@ -126,8 +127,8 @@
             <h3>A real run, replayed</h3>
             <p>
               This is a recorded run against the frozen oracle — not a mock-up. The model wrote the
-              Rust once, the build passed, 225/225 cases matched, and the benchmark measured a
-              <strong>4.14x</strong> speedup with a conservative lower bound of 4.00x.
+              Rust once, the build passed, 85/85 cases matched, and the benchmark measured a
+              <strong>2.88x</strong> speedup with a conservative lower bound of 2.86x.
             </p>
             <ul class="feature-list">
               <li>Deterministic orchestrator — resume any run from its checkpoint</li>
@@ -152,7 +153,7 @@
               cannot be tuned to fit a candidate.
             </p>
             <ul class="feature-list">
-              <li>str / int / float / bool / list[int] / list[str], single or multi-parameter</li>
+              <li>str / int / float / bool / list[int] / list[float] / list[str] / tuple[int, int] — single or multi-parameter, tuple returns too</li>
               <li>Panics are recorded as Python exceptions, so error paths are tested too</li>
               <li>The claim is exactly "equivalent on the tested inputs" — no more</li>
             </ul>
@@ -219,15 +220,15 @@
           </div>
           <div class="card">
             <h3>Rejections are results</h3>
-            <p>Four of twenty-four corpus tasks were rejected at 1.22–1.46x rather than reported as wins. Small functions legitimately fail to beat PyO3 call overhead.</p>
+            <p>Twelve of twenty-four corpus tasks hit provider stalls and were recorded as timeouts, two as typed token-budget errors — never silently dropped, never reported as wins. Small functions legitimately fail to beat PyO3 call overhead.</p>
           </div>
           <div class="card">
             <h3>Wrong rewrites get caught</h3>
-            <p>A false-accept gate: 13/13 deliberately wrong rewrites rejected (plus a 16/16 tuple battery) — wrong values, wrong exceptions, and panics all fail the oracle.</p>
+            <p>A false-accept gate: 22/22 deliberately wrong rewrites rejected across five batteries — wrong values, wrong exceptions, panics, and wrong return containers (a list where the contract is a tuple) all fail the oracle.</p>
           </div>
           <div class="card">
             <h3>Runs offline too</h3>
-            <p>Capture, verify and bench never need the network. A fully local arm runs on <code>gemma-4-e2b-qat</code> via llama.cpp — 18 accepted, 6 rejected, 0 errors.</p>
+            <p>Capture, verify and bench never need the network. Any local OpenAI-compatible server works via <code>--provider local</code>; the pre-v0.8 offline arm ran <code>gemma-4-e2b-qat</code> on llama.cpp — 18 accepted, 6 rejected, 0 errors.</p>
           </div>
         </div>
       </div>
@@ -243,23 +244,23 @@
             <span class="sub">frozen, run sequentially</span>
           </div>
           <div class="stat">
-            <span class="num gold" data-count="20">20</span>
+            <span class="num gold" data-count="10">10</span>
             <span class="lbl">Accepted</span>
             <span class="sub">verified on every case</span>
           </div>
           <div class="stat">
-            <span class="num" data-count="47.14">47.14</span>
-            <span class="lbl">Best speedup</span>
-            <span class="sub">triangular · lower bound 46.97x</span>
+            <span class="num" data-count="7.80">7.80</span>
+            <span class="lbl">Best clean speedup</span>
+            <span class="sub">collatz_steps · lower bound 7.77x</span>
           </div>
           <div class="stat">
             <span class="num" data-count="0">0</span>
             <span class="lbl">Harness errors</span>
-            <span class="sub">across the full corpus</span>
+            <span class="sub">provider stalls recorded as timeouts</span>
           </div>
         </div>
         <p class="text-dim stats-source">
-          gemma-4-26b-a4b-it · 36 provider calls (cap 120) · ran on a laptop · generated from evals/results.json
+          mistralai/mistral-large-4-1t-a52b · 44 provider calls (cap 120) · ran on a laptop · generated from evals/results.json
         </p>
       </div>
     </section>

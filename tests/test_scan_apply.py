@@ -34,7 +34,7 @@ def test_scan_classifies(tmp_path):
     assert "impure" in by[("impure.py", "pick")]["reason"]
 
     assert by[("pkg/mod.py", "f")]["status"] == "skip"
-    assert "relative imports" in by[("pkg/mod.py", "f")]["reason"]
+    assert "relative import '.nothing' not found" in by[("pkg/mod.py", "f")]["reason"]
 
     # G1/G3 widening: several simple positional parameters are now supported
     assert by[("multi.py", "add")]["status"] == "candidate"

@@ -58,6 +58,12 @@ func TestReplayAcceptedGemini(t *testing.T) {
 	runReplayTeatest(t, "accepted-gemini", 100, 30, "INGOT")
 }
 
+// v0.8: a real repair run — the log shows the ↻ repair evidence line and the
+// results box counts the repair (attempts 2 · 1 repair(s)).
+func TestReplayAcceptedRepair(t *testing.T) {
+	runReplayTeatest(t, "accepted-repair-fake", 120, 40, "INGOT")
+}
+
 func TestReplayRejectedGemini(t *testing.T) {
 	runReplayTeatest(t, "rejected-gemini", 100, 30, "SLAG")
 }

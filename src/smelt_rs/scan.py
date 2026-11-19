@@ -1,9 +1,9 @@
 """Candidate scanner for the Furnace T3 picker: lists functions with status + reason.
 
-Honest about current capability: single-file targets with one simple-typed
-parameter. Relative imports are skipped with a clear reason (package loading is
-not supported yet — see evals/general.md BUG-1). This is the minimal scan the
-TUI picker needs; the full G3 scan (type tiers, profile hints) is separate.
+v0.8: package layouts are supported (BUG-1 fixed) — the worker loads targets in
+their package context, so relative imports are no longer a blanket skip. Scan
+still checks statically that each relative import points at a real module in
+the package; unresolvable ones are skipped with a precise reason.
 """
 
 import ast
@@ -11,7 +11,7 @@ import os
 
 from smelt_rs.core import purity
 
-SUPPORTED_PARAMS = {"str", "int", "float", "bool", "list[int]", "list[str]",
+SUPPORTED_PARAMS = {"str", "int", "float", "bool", "list[int]", "list[float]", "list[str]",
                     "tuple[int, int]"}
 SKIP_DIRS = {".git", ".venv", "venv", "__pycache__", "node_modules", ".mypy_cache",
              ".pytest_cache", "dist", "build", ".tox", "site-packages", ".hermes"}
@@ -50,6 +50,35 @@ def _has_relative_import(tree) -> bool:
     return False
 
 
+def _relative_import_issues(tree, file_dir: str) -> list[str]:
+    """Statically resolve relative imports against the package tree.
+
+    `from .helpers import x` needs helpers.py (or helpers/__init__.py) next to
+    the file; `from . import name` needs name.py / name/ at the right level.
+    Unresolvable -> precise skip reason (the runtime would ImportError anyway).
+    """
+    issues: list[str] = []
+
+    def exists(base: str, name: str) -> bool:
+        p = os.path.join(base, *name.split("."))
+        return os.path.isfile(p + ".py") or os.path.isfile(os.path.join(p, "__init__.py"))
+
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.ImportFrom) and (node.level or 0) > 0):
+            continue
+        base = file_dir
+        for _ in range(node.level - 1):
+            base = os.path.dirname(base)
+        if node.module:
+            if not exists(base, node.module):
+                issues.append(f"relative import '.{node.module}' not found in package")
+        else:
+            for alias in node.names:
+                if not exists(base, alias.name):
+                    issues.append(f"relative import '.{alias.name}' not found in package")
+    return issues
+
+
 def scan_path(root: str) -> dict:
     root = os.path.abspath(root)
     files = []
@@ -72,12 +101,15 @@ def scan_path(root: str) -> dict:
         funcs = [n for n in tree.body if isinstance(n, ast.FunctionDef)]
         if not funcs:
             continue
-        relative = _has_relative_import(tree)
+        rel_issues = (_relative_import_issues(tree, os.path.dirname(path))
+                      if _has_relative_import(tree) else [])
+        in_pkg = os.path.isfile(os.path.join(os.path.dirname(path), "__init__.py"))
         for fn_node in funcs:
             entry = {"file": rel, "function": fn_node.name, "line": fn_node.lineno}
-            if relative:
-                entry.update(status="skip", tier="refused",
-                             reason="relative imports — package loading not supported yet (BUG-1)")
+            if in_pkg:
+                entry["package"] = True
+            if rel_issues:
+                entry.update(status="skip", tier="refused", reason=rel_issues[0])
                 candidates.append(entry)
                 continue
             reasons = purity.probe(path, fn_node.name)
@@ -107,7 +139,8 @@ def scan_path(root: str) -> dict:
             if bad:
                 entry.update(status="skip", tier="refused",
                              reason=f"unsupported parameter type: {bad[0] or 'unannotated'} — "
-                                    "refactor hint: use str/int/float/bool/list[int]/list[str]/tuple[int, int]")
+                                    "refactor hint: use str/int/float/bool/list[int]/list[float]"
+                                    "/list[str]/tuple[int, int]")
                 candidates.append(entry)
                 continue
             n = len(positional)

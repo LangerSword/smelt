@@ -25,8 +25,8 @@ OUT = SITE / "_partials" / "cli-ref.html"
 
 EXIT_ROWS = [
     ("0", "accepted — verified, speedup clears the conservative 1.5x lower bound"),
-    ("2", "config error (bad target, dotted qualname, unsupported annotation on a required path)"),
-    ("3", "refused — impure target or unsupported-but-understood shape (typed, with a hint)"),
+    ("2", "config error (bad target, dotted qualname, missing required model)"),
+    ("3", "refused — impure target, unsupported shape, or output outside the i64 domain (typed, with a hint)"),
     ("4", "rejected — no acceptable rewrite within budget (a correct, honest outcome)"),
     ("5", "harness/internal error (report the run dir)"),
 ]
